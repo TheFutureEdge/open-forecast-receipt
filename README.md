@@ -1,5 +1,7 @@
 # Open Forecast Receipt
 
+[![CI](https://github.com/TheFutureEdge/open-forecast-receipt/actions/workflows/ci.yml/badge.svg)](https://github.com/TheFutureEdge/open-forecast-receipt/actions/workflows/ci.yml)
+
 Open Forecast Receipt (OFR) is an open standard and verification toolkit for portable, tamper-evident forecast records. The first reference profile covers individual AI-generated market forecasts from iPulse AI and a compact Ethereum Attestation Service projection for Base.
 
 ## Current phase

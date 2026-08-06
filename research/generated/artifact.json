@@ -1,0 +1,200 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Five Public Assets, 60 Individual Onchain Forecast Receipts",
+    "description": "A production-grounded Open Forecast Receipt standard, Base transaction policy, five-dollar cost gate, and AI Factory hackathon plan for iPulse AI.",
+    "generatedAt": "2026-08-05T17:45:00Z",
+    "charts": [
+      {
+        "id": "cost_envelope_chart",
+        "title": "Conservative cost envelope for the five-asset cohort",
+        "subtitle": "Base execution model using the exact PepsiCo receipt-size mix. It assumes separate-attestation gas, so it excludes multiAttest savings and the exact serialized L1 fee. The hard issuance ceiling is $4.25.",
+        "showDescription": true,
+        "type": "bar",
+        "dataset": "cost_envelope",
+        "sourceId": "cost_model",
+        "valueFormat": "currency",
+        "layout": "full",
+        "encodings": {
+          "x": { "field": "scenario", "type": "nominal", "label": "Cohort and gas price" },
+          "y": { "field": "modeled_cost_usd", "type": "quantitative", "label": "Modeled execution cost", "unit": "USD" },
+          "tooltip": [
+            { "field": "asset_count", "type": "quantitative", "label": "Assets" },
+            { "field": "uid_count", "type": "quantitative", "label": "Independent UIDs" },
+            { "field": "transaction_count", "type": "quantitative", "label": "Asset transactions" },
+            { "field": "gas_price_gwei", "type": "quantitative", "label": "Gas price" },
+            { "field": "budget_result", "type": "nominal", "label": "Policy result" }
+          ]
+        }
+      }
+    ],
+    "sources": [
+      {
+        "id": "cost_model",
+        "label": "PepsiCo receipt byte and five-dollar cost model",
+        "query": {
+          "engine": "deterministic local model from production-safe PepsiCo fields and observed Base EAS transactions",
+          "language": "python",
+          "description": "Uses the final 17-field PepsiCo EAS payload sizes, a conservative direct-attestation gas fit, current Base fee mechanics, and the locked five-public-asset Phase 1 cohort.",
+          "executed_at": "2026-08-05T17:45:00Z",
+          "tables_used": ["base_cost_observations", "pepsi_batch6_receipt_sizes"],
+          "filters": { "network": "Base mainnet", "forecasts_per_asset": 12, "issuance_ceiling_usd": 4.25 },
+          "metric_definitions": {
+            "modeled_cost_usd": "Conservative L2 execution estimate before exact L1 fee and before multiAttest savings.",
+            "uid_count": "Number of independent EAS attestations and forecast proof links.",
+            "transaction_count": "One native EAS multiAttest transport transaction per selected asset."
+          },
+          "sql": "SELECT scenario, asset_count, uid_count, transaction_count, gas_price_gwei, modeled_cost_usd, budget_result FROM cost_envelope ORDER BY ordinal;"
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# Five Public Assets, 60 Individual Onchain Forecast Receipts\n\n## Open Forecast Receipt, Base transport, and AI Factory Phase 1 plan for iPulse AI"
+      },
+      {
+        "id": "executive_summary",
+        "type": "markdown",
+        "body": "## Executive decision\n\n- **One advisor forecast remains one receipt and one EAS UID.** PepsiCo Batch 6 creates 12 independently decoded records and 12 direct proof links; consensus is excluded because it is a derived average.\n- **Transport the 12 records in one asset-level EAS `multiAttest`.** This is native EAS batching, not a shared batch hash. It reduces signatures, broadcasts, confirmations, nonce handling, and the pilot from 60 transactions to 5.\n- **Keep all 20 quarterly returns.** The full path is compact enough and preserves the actual forecast.\n- **Lock Phase 1 to five public assets.** PepsiCo, NVIDIA, Bitcoin, Alphabet Class C, and SPY use Batch 6; random and larger cohorts are out of hackathon scope.\n- **Use Batch 6 as a labeled retrospective anchor.** Future eligible batches issue soon after the public-live gate.\n- **Adopt a layered open standard.** OFR Core applies to any forecast; a Market profile adds instrument and path semantics; an optional AI profile adds model and agent provenance; the compact EAS projection stays market-specific.\n- **Build the hackathon explorer in native.builder.** Codex supplies the specification, fixtures, test vectors, QA, and production integration design."
+      },
+      {
+        "id": "batching_decision",
+        "type": "markdown",
+        "body": "## Twelve receipts, one transport transaction\n\nTwelve separate `attest` transactions and one `multiAttest` both produce 12 forecast entities, 12 UIDs, and 12 proof links. The reviewed PepsiCo payload encodes to 16,656 bytes across separate calls and 16,036 bytes in one call: only 620 bytes, or 3.7%, less. Cost therefore will not fall by an order of magnitude because the 12 storage writes and events still occur.\n\nThe operational win is larger: one signature, broadcast, confirmation, transaction hash, and retry surface per asset instead of 12. A signer can broadcast consecutive nonces quickly, but later transactions queue behind a stuck nonce. Native `multiAttest` avoids that complexity without inventing custom aggregation.\n\nThe exact transaction open in Blockscout (`0x0844...e06`) makes the terminology clear: 736 bytes of EAS `data`, 1,060 submitted calldata bytes, but about 2,772 bytes in the RPC receipt JSON with two logs. That JSON response is not extra onchain storage. It used 776,045 gas and cost about $0.00874 at the analysis-time ETH price.\n\nThe trade-off is atomicity: one invalid record reverts the asset transaction. Prevalidate all records. If `estimateGas + 20%` exceeds Base's cap, split deterministically 6 + 6. Never combine multiple assets in one transaction."
+      },
+      {
+        "id": "byte_limit",
+        "type": "markdown",
+        "body": "## Exact answer: how many bytes fit?\n\nBase has no fixed transaction-byte limit; it has a **16,777,216 gas** maximum per transaction. EIP-7623's data-heavy floor charges 10 gas per zero byte and 40 per non-zero byte. After the 21,000 intrinsic charge, theoretical calldata-only ceilings are **418,905 all-nonzero bytes** or **1,675,621 all-zero bytes**. Contract execution makes the usable EAS limit much lower.\n\nFor real PepsiCo Batch 6: 12 final EAS data payloads total **12,768 bytes**; complete `multiAttest` calldata is **16,036 bytes**; the conservative planning model is **12,606,726 gas**; a 20% buffer is about **15.13 million**, below the 16.78 million cap. The final encoded Base Sepolia call must still pass `eth_estimateGas`.\n\nAn explorer's large-looking transaction-receipt JSON is not separately billed. Fees reflect L2 execution plus the transaction data posted to L1. Sources: [Base transaction cap](https://docs.base.org/base-chain/network-information/troubleshooting-transactions), [Base fee model](https://docs.base.org/base-chain/network-information/network-fees), and [EIP-7623](https://eips.ethereum.org/EIPS/eip-7623)."
+      },
+      {
+        "id": "two_layers",
+        "type": "markdown",
+        "body": "## Two editable objects, serving different purposes\n\nThe full **Open Forecast Receipt JSON** is the comprehensive, portable evidence object. It is validated by JSON Schema, canonicalized under RFC 8785, and hashed. It can evolve through explicit versions and profiles.\n\nThe compact **EAS projection** embeds the highest-value verification facts and the full-receipt digest onchain. It is deliberately not identical to the JSON; repeating generic provenance fields onchain would increase permanent public cost without improving reconstruction of the numerical forecast.\n\nThe complete working files are `open_forecast_receipt_v0_1.schema.json`, `pepsi_batch6_ray_open_forecast_receipt_v0_1.json`, and `pepsi_batch6_ray_onchain_projection_v0_1.json`."
+      },
+      {
+        "id": "full_fields",
+        "type": "markdown",
+        "body": "## A. Full receipt field plan\n\n**Envelope:** `specVersion`, active `profiles`, receipt ID/status/creation/publication times, issuer ID/name.\n\n**Forecast semantics:** original forecast ID; run ID/number/revision; subject type/internal ID/name/identifiers; target name/kind/quantity/unit/transformation/observation definition; forecast, anchor, and horizon times; cadence; anchor decimal/scaled integer/scale/unit; prediction representation/value type/unit/ordered points; classification scheme/value; conditions.\n\n**Origin and reproducibility:** forecaster type/ID/name/role/mode; provider, organization, model, spec/version, release and knowledge-cutoff dates; task type; tool flags; input-context snapshot; prompt/configuration IDs and hash; output schema and pipeline version; human-review state.\n\n**Evidence and policy:** source system and publication/revision/digest/correction; adapter mapping; canonicalization, hash algorithm, digest scope and proofs; visibility, license, disclaimer, limitations; namespaced extensions.\n\nThis is intentionally broad enough for human, statistical, and AI forecasts. AI facts are optional profile data, not mandatory core fields."
+      },
+      {
+        "id": "pepsi_actual",
+        "type": "markdown",
+        "body": "## Actual PepsiCo Batch 6 / Ray Dalio receipt\n\nSubject is PepsiCo, Inc.; `PEP`; MIC `XNAS`; iPulse ID `equity_ea8243e7-75bd-549b-9ba6-48e03cf982c1`. Run is Batch 6, revision 2. The forecast was generated July 5, 2026 from a July 2, 2026 anchor of **$144.22**, predicts EOD close-price step-over-step percentage change, and ends July 2, 2031.\n\nForecaster is Ray Dalio / The Strategist / RESEARCHER using Google Gemini 3.1 Pro. Rating is `partially_sell`. The exact 20 step returns in basis points are:\n\n```text\n-400,-300,200,300,200,300,100,200,-200,200,\n300,200,100,200,300,100,0,200,100,200\n```\n\n`-400` means -4.00%, not -0.40%. The path compounds to +25.2289707% and an implied $180.6052 terminal price. The reviewed RFC-8785-scoped receipt digest is `ce5e747edf89a34e92710e4306bb9a89224714130b68c4be0b49aad7486e13c9`; canonical digest input size is 6,186 bytes. The source publication digest and correction history are retained in the full receipt."
+      },
+      {
+        "id": "onchain_fields",
+        "type": "markdown",
+        "body": "## B. Seventeen fields embedded in every EAS record\n\n1. `subjectRef`: `ticker:PEP@XNAS`\n2. `runNumber`: `6`\n3. `runRevision`: `2`\n4. `forecastId`: SHA-256 task-key bytes32\n5. `forecasterId`: SHA-256 stable advisor-ID bytes32\n6. `forecasterLabel`: readable persona, role, mode, and model\n7. `forecastCreatedAt`: original creation epoch\n8. `anchorAt`: anchor epoch\n9. `anchorValueMicros`: `144220000`\n10. `target`: `eod_close_price_step_over_step_percentage_change`\n11. `anchorUnit`: `USD`\n12. `classification`: `partially_sell`\n13. `retrospective`: `true`\n14. `cadenceMonths`: `3`\n15. `pointCount`: `20`\n16. `stepReturnBps`: all 20 comma-separated returns\n17. `receiptDigest`: full OFR SHA-256 bytes32\n\nEAS supplies schema UID, attestation UID, transaction hash, attester, block time, recipient, revocation state, expiration, reference UID, and raw data. We do not duplicate them. Annual cumulative returns, terminal return, implied price, timestamps after the anchor, and reconstructed prices are derived rather than stored. Ray's EAS `data` is exactly **1,056 bytes**."
+      },
+      {
+        "id": "all_advisors",
+        "type": "markdown",
+        "body": "## PepsiCo produces 12 independent proofs\n\nThe 12 Batch 6 advisor outcomes are: Ray Strategist RESEARCHER +25.23%; Niccolo Insider RESEARCHER -2.31%; Superintelligence Anthropologist THINKER -19.29%; Warren Buffett Value Seeker THINKER +70.06%; J.P. Morgan Titan THINKER +51.07%; Sherlock Holmes Whistleblower RESEARCHER -11.78%; Elon Musk Visionary RESEARCHER -25.46%; Elon Musk Visionary THINKER -38.14%; Warren Buffett Value Seeker RESEARCHER +54.03%; Ray Strategist THINKER +32.06%; Superintelligence Anthropologist RESEARCHER +49.98%; Michael Burry Vulture RESEARCHER -17.11%.\n\nThe mix contains buy, neutral, partially-sell, and sell-all views. Publishing the complete advisor set avoids favorable-result selection. Total is **12 UIDs, 240 original points, and 12,768 EAS data bytes**."
+      },
+      {
+        "id": "selection",
+        "type": "markdown",
+        "body": "## Phase 1 asset scope\n\nThe complete hackathon cohort is the five existing public showcases: PepsiCo, NVIDIA, Bitcoin, Alphabet Class C, and SPY. Use Batch 6 for the retrospective pilot and attest every validated individual advisor forecast for a selected asset. No random selection, seven-asset core, or 15-asset expansion is in scope.\n\nBuild PepsiCo as the complete first vertical slice, then load the other four fixture sets through the same schema and components without rewriting the product."
+      },
+      {
+        "id": "cost_chart",
+        "type": "chart",
+        "chartId": "cost_envelope_chart",
+        "layout": "full"
+      },
+      {
+        "id": "cost_interpretation",
+        "type": "markdown",
+        "body": "## Cost policy, not a fixed promise\n\nThe conservative model puts five assets at about **$0.71** at 0.006 gwei, **$1.18** at 0.010 gwei, and **$2.36** at 0.020 gwei, before exact L1 fee and before batching savings. The execution-only five-asset threshold is about 0.03595 gwei before L1, or 0.03269 gwei after a 10% buffer.\n\nReserve $4.25 for issuance, $0.50 for retry/fee/FX movement, and $0.25 for incremental worker, RPC, registry, and monitoring operations. Quote every final serialized asset transaction with `eth_estimateGas` plus `GasPriceOracle.getL1Fee`, convert at a buffered ETH/USD rate, and preflight the complete five-asset cohort. If it does not fit, wait; do not choose a more flattering subset."
+      },
+      {
+        "id": "hubverse",
+        "type": "markdown",
+        "body": "## What Hubverse contributes\n\nHubverse is an open modeling-hub ecosystem. Its valuable reusable idea is a normalized vocabulary for **what was predicted**. Task IDs identify the modeling task—commonly origin/reference date, target, horizon, subject/location, and conditions. `output_type` declares whether a value is a mean, median, quantile, CDF, PMF, or sample; `output_type_id` carries representation-specific meaning such as a quantile probability; `value` is the prediction.\n\nIf iPulse AI explicitly defines a deterministic advisor value as a predictive mean, a PepsiCo export row can identify model, reference date, subject FIGI and MIC `XNAS`, target, three-month horizon, `mean`, value `-0.04`, and valid date. Without that declaration, calling it a mean would be false: Hubverse has no generic `point` type, and a sample also has distributional meaning.\n\nDo not flatten or replace the production schema. Preserve the dependent `ordered_step_path`; use Hubverse-aligned exports only where semantics map cleanly. Future quantile, CDF, PMF, or sampled trajectories can map directly. See [Hubverse model output](https://docs.hubverse.io/en/latest/user-guide/model-output.html) and [joint sample/path semantics](https://docs.hubverse.io/en/latest/user-guide/sample-output-type.html)."
+      },
+      {
+        "id": "standard",
+        "type": "markdown",
+        "body": "## The standard should be broad, with profiles\n\n**OFR Core v0.1.0** applies to any forecast—human, statistical, or AI. **OFR Market v0.1.0** adds FIGI/instrument ID, MIC venue, currency, anchor, return/price semantics, cadence, observation and corporate-action policy. **OFR AI Provenance v0.1.0** optionally adds model, provider, version, cutoff, agent, input snapshot, prompt/configuration hashes, tools, schema, pipeline, and review. **OFR EAS Market Path v0.1.0** is the compact blockchain projection.\n\nReuse established pieces: [JSON Schema 2020-12](https://json-schema.org/draft/2020-12), [RFC 8785](https://www.ietf.org/rfc/rfc8785.html), [W3C PROV-O](https://www.w3.org/TR/prov-o/), optional [W3C Verifiable Credentials 2.0](https://www.w3.org/TR/vc-data-model-2.0/), Hubverse, [OpenFIGI](https://www.openfigi.com/api/documentation), [ISO 10383 MIC](https://www.iso20022.org/market-identifier-codes), CAIP, and [EAS schemas](https://docs.attest.org/docs/tutorials/create-a-schema).\n\nThe new contribution is their coherent assembly around forecast semantics, AI lineage, correction/disclosure, canonical integrity, and cost-aware public proof. Publish it as an **open draft and request for comments**, not an industry-standard claim."
+      },
+      {
+        "id": "standard_roadmap",
+        "type": "markdown",
+        "body": "## Standards adoption throughout iPulse AI\n\n**Now:** add a semantic registry; verify market identifiers; emit OFR JSON; create Hubverse-aligned exports only for forecasts whose output semantics map truthfully; publish schemas, examples, conformance tests, and verifier; keep Firestore stable and add only receipt/proof references.\n\n**Next:** standardize observed outcomes and evaluation definitions; add probabilistic forecast outputs; version leaderboard rules; publish correction history, model/data cards, limitations, authorship, and review; create separate derived consensus and leaderboard attestations referencing individual UIDs.\n\n**Later:** solicit public review, add a non-market OFR example, obtain independent implementations, and only then consider a neutral standards home.\n\nThis can create credible public evidence of expertise and trust, technical backlinks, citations, GitHub adoption, and speaking opportunities. It is not a direct Google badge: Google says E-E-A-T is not one specific ranking factor. The value comes from useful, original, source-backed and independently verifiable work—especially for financial content. See [Google's guidance](https://developers.google.com/search/docs/fundamentals/creating-helpful-content)."
+      },
+      {
+        "id": "lifecycle",
+        "type": "markdown",
+        "body": "## End-to-end production lifecycle\n\nA1 creates each advisor output; A1PARS validates and stores it; C2 creates the immutable asset-batch publication; D1/C5 produce evaluation and derived consensus; readiness and catalog sync mark the page live. Only then does the precommitted public-asset selection apply.\n\nThe asynchronous receipt worker maps one forecast at a time into OFR, validates JSON Schema, canonicalizes and hashes it, builds one asset-level `multiAttest`, performs exact gas/L1/currency preflight, submits, reads back every UID, decodes and compares every field, and writes one proof-registry record per forecast. Publication never waits for the chain. Historic backfills display original forecast time and later attestation time separately."
+      },
+      {
+        "id": "ui",
+        "type": "markdown",
+        "body": "## Forecast Ledger UX\n\nAdd a **Blockchain proofs** column. PepsiCo Batch 6 displays `12/12 verified`, opening an index of the 12 advisor receipts. Each advisor has a direct EAS UID/explorer link, decoded onchain fields, the full OFR JSON, digest comparison, and reconstructed path.\n\nThe asset-level transaction hash is visible as transport metadata, but it is not the forecast identity. States are `Not selected`, `Proof pending`, `12/12 verified`, `Partial retry`, and `Proof failed`."
+      },
+      {
+        "id": "hackathon_requirements",
+        "type": "markdown",
+        "body": "## AI Factory entry status and requirements\n\nThe logged-in lablab.ai flow returned **You already enrolled to this event**; no separate idea-acceptance pitch was found. Enrollment still requires a completed participant profile, creating or joining a team even if solo, and final submission.\n\nThe event requires a functional public app built primarily with native.builder; clear problem and target user; written native.builder usage; a video no longer than three minutes showing one complete workflow; project/application URL; and external API/dataset/tool list. Work primarily built outside native.builder, inaccessible to judges, or lacking a working demo is ineligible. Judging covers technology, presentation, business value, and originality. See the [official event page](https://lablab.ai/ai-hackathons/nativebuilder-build-without-limits)."
+      },
+      {
+        "id": "builder_boundary",
+        "type": "markdown",
+        "body": "## What native.builder builds—and what Codex builds\n\n**native.builder:** Product Architect plan; React/Vite app; manifest, asset, 12-receipt index, receipt detail, path reconstruction, decoded EAS, and tamper-test screens; Supabase/server functions if needed; public EAS/Base Sepolia reads; live preview and public `nativelyai.app` deployment; optional GitHub sync.\n\n**Codex:** brief and acceptance tests; OFR schemas and sanitized PepsiCo fixture; EAS projection; canonicalization/hash vectors; deterministic selection and cost logic; targeted snippets; security and QA; README, standards paper, demo script, submission copy, and later production integration.\n\nThis boundary is essential because the event requires the app to be primarily created in native.builder. Its official flow uses Product Architect, Builder agents, live preview, file access, GitHub sync, and publishing. See [native.builder getting started](https://docs-builder.nativelyai.com/introduction/getting-started)."
+      },
+      {
+        "id": "hackathon_plan",
+        "type": "markdown",
+        "body": "## Twelve-hour hackathon build\n\n**Hours 1–3:** Product Architect brief; PepsiCo batch, advisor list, receipt detail. **Hours 4–6:** deterministic validation, digest, path reconstruction, full-vs-onchain comparison. **Hours 7–9:** read and decode 12 pre-issued Base Sepolia UIDs; verify digest; optional server-side test issuance. **Hours 10–12:** tamper failure, responsive polish, deployment, README, short standards page, three-minute demo, submission.\n\nDemo: choose PepsiCo Batch 6 → inspect 12 advisors → open Ray Dalio → reconstruct 20 steps → verify EAS UID and digest → alter one local step → see verification fail. Keep production Firestore, mainnet keys, paid assets, and production writes out of the hackathon."
+      },
+      {
+        "id": "final_recommendation",
+        "type": "markdown",
+        "body": "## Final recommendation\n\nApprove: **one advisor forecast = one OFR JSON and one EAS UID; one selected asset = one native `multiAttest` transport containing all validated advisors; all 20 quarterly returns; exactly five existing public assets for Phase 1; Batch 6 labeled retrospective; $4.25 issuance plus $0.75 reserve; OFR Core + Market + optional AI profiles; native.builder owns the hackathon app.**\n\nThe immediate proof is one PepsiCo Batch 6 `multiAttest` on Base Sepolia. Measure exact gas, verify 12 returned UIDs, then load the remaining four public Batch 6 fixture sets through the same implementation."
+      },
+      {
+        "id": "caveats",
+        "type": "markdown",
+        "body": "## Evidence boundaries\n\nProduction Firestore was inspected read-only on August 5, 2026. Public-safe fixtures contain no credential. Current costs are planning estimates, not quotes. Base fees, L1 data fees, ETH/USD, payload shape, and advisor count vary. An EAS receipt proves attester, embedded bytes, chain time, and later mismatch; it does not prove forecast accuracy, source truth, model quality, or fair scoring. The OFR digest scope and canonicalization implementation must be locked before production."
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-08-05T17:45:00Z",
+    "status": "ready",
+    "datasets": {
+      "cost_envelope": [
+        { "ordinal": 1, "scenario": "5 @ 0.006", "asset_count": 5, "uid_count": 60, "transaction_count": 5, "gas_price_gwei": 0.006, "modeled_cost_usd": 0.7092209969361001, "budget_result": "Fits before exact L1 quote" },
+        { "ordinal": 2, "scenario": "5 @ 0.010", "asset_count": 5, "uid_count": 60, "transaction_count": 5, "gas_price_gwei": 0.01, "modeled_cost_usd": 1.1820349948935, "budget_result": "Fits before exact L1 quote" },
+        { "ordinal": 3, "scenario": "5 @ 0.020", "asset_count": 5, "uid_count": 60, "transaction_count": 5, "gas_price_gwei": 0.02, "modeled_cost_usd": 2.364069989787, "budget_result": "Fits before exact L1 quote" },
+        { "ordinal": 4, "scenario": "5 @ 0.055", "asset_count": 5, "uid_count": 60, "transaction_count": 5, "gas_price_gwei": 0.055, "modeled_cost_usd": 6.5011924719142495, "budget_result": "Does not fit; wait" }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "cost_model",
+      "label": "PepsiCo receipt byte and five-dollar cost model",
+      "query": {
+        "engine": "deterministic local model from production-safe PepsiCo fields and observed Base EAS transactions",
+        "language": "python",
+        "description": "Uses the final 17-field PepsiCo EAS payload sizes, a conservative direct-attestation gas fit, current Base fee mechanics, and the locked five-public-asset Phase 1 cohort.",
+        "executed_at": "2026-08-05T17:45:00Z",
+        "tables_used": ["base_cost_observations", "pepsi_batch6_receipt_sizes"],
+        "filters": { "network": "Base mainnet", "forecasts_per_asset": 12, "issuance_ceiling_usd": 4.25 },
+        "metric_definitions": {
+          "modeled_cost_usd": "Conservative L2 execution estimate before exact L1 fee and before multiAttest savings.",
+          "uid_count": "Number of independent EAS attestations and forecast proof links.",
+          "transaction_count": "One native EAS multiAttest transport transaction per selected asset."
+        },
+        "sql": "SELECT scenario, asset_count, uid_count, transaction_count, gas_price_gwei, modeled_cost_usd, budget_result FROM cost_envelope ORDER BY ordinal;"
+      }
+    }
+  ]
+}

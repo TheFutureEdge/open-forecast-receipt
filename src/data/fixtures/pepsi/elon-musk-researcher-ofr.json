@@ -1,0 +1,399 @@
+{
+  "$schema": "https://ipulseai.com/schemas/open-forecast-receipt/v0.1.0/schema.json",
+  "specVersion": "0.1.0",
+  "profiles": [
+    "ofr-core-v0.1.0",
+    "ofr-market-v0.1.0",
+    "ofr-ai-v0.1.0"
+  ],
+  "receiptPayload": {
+    "receipt": {
+      "receiptId": "https://ipulseai.com/receipts/sha256/a9d32a6f87008ecd4f9246f314af411028daff2c5a7726da5585518cbf03af4a",
+      "status": "example",
+      "issuanceMode": "retrospective",
+      "revisionNumber": 1,
+      "revisionType": "original",
+      "issuedAt": "2026-08-06T12:00:00Z",
+      "sealedAt": "2026-08-06T12:00:00Z"
+    },
+    "issuer": {
+      "id": "https://ipulseai.com",
+      "name": "iPulse AI"
+    },
+    "forecast": {
+      "forecastId": "predrqst_batch_task__xrefsubjtskconf_86705aad-6213-53d4-ab3c-7973dd41f61c__sb6__20260705144431",
+      "run": {
+        "runId": "equity_ea8243e7-75bd-549b-9ba6-48e03cf982c1__sb6__r2",
+        "runNumber": 6,
+        "revision": 2
+      },
+      "subject": {
+        "type": "FinancialInstrument",
+        "id": "equity_ea8243e7-75bd-549b-9ba6-48e03cf982c1",
+        "name": "PepsiCo, Inc.",
+        "identifiers": {
+          "ticker": "PEP",
+          "marketIdentifierCode": "XNAS",
+          "operatingMarketIdentifierCode": "XNAS",
+          "ipulseSymbol": "PEP.NASDAQ",
+          "isin": "US7134481081",
+          "subjectCategory": "equity",
+          "subjectCategoryDetailed": "common_stock"
+        }
+      },
+      "target": {
+        "name": "eod_close_price_step_over_step_percentage_change",
+        "kind": "numeric_time_series",
+        "quantity": "return",
+        "unit": "basis_point",
+        "transformation": "step_over_step_percentage_change",
+        "baseQuantity": "eod_close_price",
+        "baseUnit": "USD",
+        "observationDefinition": "The target observable is the end-of-day close price. Each prediction point is the percentage change from the preceding anchored or forecast point, and the price path is reconstructed by compounding the ordered changes."
+      },
+      "temporal": {
+        "forecastCreatedAt": "2026-07-05T14:48:47.049183Z",
+        "anchorAt": "2026-07-02T00:00:00Z",
+        "horizonEndAt": "2031-07-02T00:00:00.000000Z",
+        "evaluationEligibleAt": "2031-07-02T23:59:59Z",
+        "maturityRule": "Evaluate only after the final forecast horizon has closed and the corresponding end-of-day close observation is available under the stated adjustment policy.",
+        "cadence": {
+          "unit": "month",
+          "value": 3,
+          "count": 20
+        }
+      },
+      "anchor": {
+        "valueDecimal": "144.22",
+        "valueScaled": 144220000,
+        "scale": 6,
+        "unit": "USD",
+        "observedAt": "2026-07-02T00:00:00Z",
+        "source": "iPulse AI production market-data pipeline",
+        "timezone": "America/New_York",
+        "marketSession": "regular_close",
+        "adjustmentBasis": "source publication value"
+      },
+      "prediction": {
+        "representation": "ordered_regular_step_path",
+        "valueType": "step_over_step_percentage_change",
+        "unit": "basis_point",
+        "points": [
+          {
+            "step": 1,
+            "validAt": "2026-10-02T00:00:00Z",
+            "value": -300
+          },
+          {
+            "step": 2,
+            "validAt": "2027-01-02T00:00:00Z",
+            "value": -400
+          },
+          {
+            "step": 3,
+            "validAt": "2027-04-02T00:00:00Z",
+            "value": -200
+          },
+          {
+            "step": 4,
+            "validAt": "2027-07-02T00:00:00Z",
+            "value": -300
+          },
+          {
+            "step": 5,
+            "validAt": "2027-10-02T00:00:00Z",
+            "value": -200
+          },
+          {
+            "step": 6,
+            "validAt": "2028-01-02T00:00:00Z",
+            "value": -300
+          },
+          {
+            "step": 7,
+            "validAt": "2028-04-02T00:00:00Z",
+            "value": -200
+          },
+          {
+            "step": 8,
+            "validAt": "2028-07-02T00:00:00Z",
+            "value": -100
+          },
+          {
+            "step": 9,
+            "validAt": "2028-10-02T00:00:00Z",
+            "value": -200
+          },
+          {
+            "step": 10,
+            "validAt": "2029-01-02T00:00:00Z",
+            "value": -200
+          },
+          {
+            "step": 11,
+            "validAt": "2029-04-02T00:00:00Z",
+            "value": 0
+          },
+          {
+            "step": 12,
+            "validAt": "2029-07-02T00:00:00Z",
+            "value": -100
+          },
+          {
+            "step": 13,
+            "validAt": "2029-10-02T00:00:00Z",
+            "value": 100
+          },
+          {
+            "step": 14,
+            "validAt": "2030-01-02T00:00:00Z",
+            "value": -200
+          },
+          {
+            "step": 15,
+            "validAt": "2030-04-02T00:00:00Z",
+            "value": -100
+          },
+          {
+            "step": 16,
+            "validAt": "2030-07-02T00:00:00Z",
+            "value": -100
+          },
+          {
+            "step": 17,
+            "validAt": "2030-10-02T00:00:00Z",
+            "value": 100
+          },
+          {
+            "step": 18,
+            "validAt": "2031-01-02T00:00:00Z",
+            "value": -100
+          },
+          {
+            "step": 19,
+            "validAt": "2031-04-02T00:00:00Z",
+            "value": 0
+          },
+          {
+            "step": 20,
+            "validAt": "2031-07-02T00:00:00Z",
+            "value": -100
+          }
+        ]
+      },
+      "classification": {
+        "scheme": "ipulse-investment-rating-v1",
+        "value": "sell_all"
+      },
+      "forecaster": {
+        "type": "AIAdvisor",
+        "id": "aianalyst_419518cc-c9f2-54ea-bdba-59bbc90be2b6",
+        "name": "Elon Musk",
+        "role": "The Visionary",
+        "mode": "RESEARCHER",
+        "model": {
+          "provider": "Google",
+          "organization": "Google DeepMind Research Team",
+          "name": "Gemini 3.1 Pro",
+          "apiIdentifier": "gemini-3.1-pro-preview",
+          "specId": "aimodelspec_56ff6ad1-8bd7-54ae-ad74-14ed80c1721a",
+          "versionId": "aimodelversion_616fd1ac-ba85-575c-846d-6c913ba919b3",
+          "versionName": "20260201_preview_release",
+          "releaseDate": "2026-02-01T00:00:00Z"
+        }
+      },
+      "methodology": {
+        "taskType": "generate_investment_thesis_and_timeseries_eod_close_price_pct_change",
+        "humanReviewStatus": "not_recorded"
+      },
+      "conditions": []
+    },
+    "provenance": {
+      "sourceSystem": "iPulse AI",
+      "sourcePublication": {
+        "id": "equity_ea8243e7-75bd-549b-9ba6-48e03cf982c1__sb6__r2",
+        "revision": 2,
+        "digestSha256": "12079b07f8acf484153157e1346be65a99fd215ff24c113d8a90c80b2bd700d6",
+        "generatedAt": "2026-07-05T14:50:16.853192Z",
+        "publishedAt": "2026-07-29T23:38:28Z",
+        "correctionReason": "Corrected compact input-context lineage after excluding empty retained fundamental snapshot shells."
+      },
+      "sourceForecastDigest": "774a92931d45d9415e2da9550eee4efde6221d949d27099a53ab30a92331d273",
+      "mapping": {
+        "adapter": "ipulse-to-ofr-market-ai",
+        "version": "0.1.0",
+        "sourceSchema": "batch_prediction_publication_v1 / output schema 9",
+        "sourceTargetName": "eod_close_price_pct_change",
+        "sourceValueField": "predictions[*].timeseries_numerical[*].predicted_step_over_step_change_percent",
+        "sourceValueUnit": "percent",
+        "outputValueEncoding": "basis_points = source_percent * 100; one basis point is 0.01 percentage point",
+        "sourceForecastDigestScope": "SHA-256 over RFC 8785 canonical JSON for the logically unwrapped individual predictions[*] object, preserving array order",
+        "receiptIdDerivation": "SHA-256 over UTF-8 forecastId + LF + sourcePublication.id + LF + specVersion; rendered under https://ipulseai.com/receipts/sha256/"
+      },
+      "temporal": {
+        "baseModelKnowledge": {
+          "cutoffAt": "2025-01-31T23:59:59Z",
+          "precision": "day",
+          "status": "declared",
+          "source": {
+            "type": "producer_model_registry",
+            "recordId": "aimodelversion_616fd1ac-ba85-575c-846d-6c913ba919b3",
+            "metadataVersion": 2,
+            "declaredBy": "iPulse AI model registry"
+          }
+        },
+        "suppliedContext": {
+          "snapshotId": "predctx__equity_ea8243e7-75bd-549b-9ba6-48e03cf982c1__sb6__847eb553d14dd07bb1c0",
+          "digestSha256": "2933fe12b370e8b966f187a89c92f26f2d63022dd5d724aca8570c4dc7bf8182",
+          "effectiveAt": "2026-07-05T14:44:42.468361Z",
+          "recordedAt": "2026-07-29T23:34:35.149131Z",
+          "captureStatus": "reconstructed_backfill",
+          "components": [
+            {
+              "type": "fundamental_data",
+              "contentDigestSha256": "7385b854f0039273fd724c9f882671ef545677e23c4180816d88a55bda76f4ed",
+              "coverageStart": "2023-06-30",
+              "coverageEnd": "2026-03-31",
+              "providerUpdatedAt": "2026-06-22",
+              "lineageStatus": "reconstructed_backfill"
+            },
+            {
+              "type": "global_market_context_2025",
+              "contentDigestSha256": "f62119d75991259b69f15bbe18bfbcf7033bf0564c5a0692130027a2e19177b8",
+              "coverageStart": "2025-01-01",
+              "coverageEnd": "2025-12-31",
+              "knowledgeCutoff": "2025-12-31",
+              "providerUpdatedAt": "2026-04-03T00:00:00Z",
+              "lineageStatus": "reconstructed_backfill"
+            },
+            {
+              "type": "global_market_context_2026_ytd",
+              "contentDigestSha256": "36c215fdc418860ce8b2f9d371220b732360ed38987ebc5b38c11f6976c60ebf",
+              "coverageStart": "2026-01-01",
+              "coverageEnd": "2026-05-31",
+              "knowledgeCutoff": "2026-05-31",
+              "providerUpdatedAt": "2026-06-05T11:00:00Z",
+              "lineageStatus": "reconstructed_backfill"
+            }
+          ]
+        },
+        "marketState": {
+          "observedAt": "2026-07-02T00:00:00Z",
+          "source": "iPulse AI production market-data pipeline",
+          "timezone": "America/New_York",
+          "marketSession": "regular_close",
+          "tradingDate": "2026-07-02",
+          "currency": "USD",
+          "adjustmentBasis": "source publication value"
+        },
+        "generation": {
+          "requestSubmittedAt": "2026-07-05T14:44:42.474869Z",
+          "responseGeneratedAt": "2026-07-05T14:48:47.049183Z"
+        },
+        "acquiredEvidence": {
+          "webSearch": {
+            "configured": true,
+            "executionStatus": "unknown",
+            "evidenceManifestStatus": "not_captured"
+          }
+        },
+        "releasedAt": "2026-07-29T23:38:28Z",
+        "evaluationEligibleAt": "2031-07-02T23:59:59Z"
+      },
+      "generationConfiguration": {
+        "taskType": "generate_investment_thesis_and_timeseries_eod_close_price_pct_change",
+        "taskConfigId": "taskconfig_a6f9d583-b60a-58e5-a561-d097db37015b",
+        "promptAssemblyId": "taskconfig_a6f9d583-b60a-58e5-a561-d097db37015b_assembly",
+        "promptAssemblyVariantHash": "21dd89bcbb18200a3494a76a6ce2a40b33e1eba88ef9ba284e05b227f4669a92",
+        "tools": [
+          {
+            "name": "web_search",
+            "status": "configured"
+          }
+        ],
+        "analyticalFrameworks": [
+          {
+            "id": "elon_musk",
+            "version": "2.6"
+          }
+        ],
+        "outputSchemaId": "schema_1a177d95-37f3-5108-a32f-f5c841544f6b",
+        "outputSchemaVersion": 9,
+        "pipelineVersion": 6,
+        "humanReviewStatus": "not_recorded"
+      },
+      "evidence": [
+        {
+          "evidenceId": "sha256:f62119d75991259b69f15bbe18bfbcf7033bf0564c5a0692130027a2e19177b8",
+          "title": "2025 Full-Year Global Market and World-Events Context",
+          "source": "iPulse AI public audit archive",
+          "publisher": "iPulse AI",
+          "uri": "https://audit.ipulseai.com/predictions/configs/context/global/2025/2025_full_year__global_context__202604030000.md",
+          "publishedAt": "2026-04-03T00:00:00Z",
+          "suppliedAt": "2026-07-05T14:44:42.468361Z",
+          "acquisitionMode": "internal_dataset",
+          "contentDigestSha256": "f62119d75991259b69f15bbe18bfbcf7033bf0564c5a0692130027a2e19177b8",
+          "visibility": "public",
+          "supports": [
+            "global_market_context"
+          ]
+        },
+        {
+          "evidenceId": "sha256:36c215fdc418860ce8b2f9d371220b732360ed38987ebc5b38c11f6976c60ebf",
+          "title": "2026 Year-to-Date Global Market Context through 2026-05-31",
+          "source": "iPulse AI public audit archive",
+          "publisher": "iPulse AI",
+          "uri": "https://audit.ipulseai.com/predictions/configs/context/global/2026/2026_till_today__global_context__202606051100.md",
+          "publishedAt": "2026-06-05T11:00:00Z",
+          "suppliedAt": "2026-07-05T14:44:42.468361Z",
+          "acquisitionMode": "internal_dataset",
+          "contentDigestSha256": "36c215fdc418860ce8b2f9d371220b732360ed38987ebc5b38c11f6976c60ebf",
+          "visibility": "public",
+          "supports": [
+            "global_market_context"
+          ]
+        },
+        {
+          "evidenceId": "sha256:7385b854f0039273fd724c9f882671ef545677e23c4180816d88a55bda76f4ed",
+          "title": "PepsiCo, Inc. fundamental input-context selection",
+          "source": "iPulse AI fundamental-data pipeline",
+          "suppliedAt": "2026-07-05T14:44:42.468361Z",
+          "acquisitionMode": "internal_dataset",
+          "contentDigestSha256": "7385b854f0039273fd724c9f882671ef545677e23c4180816d88a55bda76f4ed",
+          "visibility": "hash_only",
+          "licenseOrAccessNote": "The public receipt exposes only compact lineage and the exact-content digest; licensed source values are not republished.",
+          "supports": [
+            "fundamental_context"
+          ]
+        }
+      ]
+    },
+    "disclosure": {
+      "visibility": "public",
+      "license": "MIT",
+      "disclaimer": "This is a forecast record, not investment advice and not proof of forecast accuracy.",
+      "limitations": [
+        "The receipt proves payload integrity and, after attestation, publication timing; it does not prove correctness.",
+        "This is a retrospective receipt created after the original forecast publication; a later blockchain timestamp must not be presented as the forecast creation time.",
+        "The input-context snapshot was reconstructed as a historical backfill and is labeled accordingly.",
+        "Web search was configured for this run, but execution and result-level grounding were not retained and therefore remain unknown.",
+        "Prediction values are integer basis points: -400 means -4.00 percent, not -0.40 percent.",
+        "Named forecasters are software advisor personas used by iPulse AI; the receipt does not claim endorsement by or affiliation with the named person."
+      ]
+    },
+    "extensions": {
+      "ipulse": {
+        "publicShowcaseAsset": true,
+        "consensusExcluded": true,
+        "individualForecastEntity": true
+      }
+    }
+  },
+  "proofEnvelope": {
+    "canonicalization": "RFC8785",
+    "hashAlgorithm": "SHA-256",
+    "digestScope": "receiptPayload",
+    "payloadDigestSha256": "416ec200c2ea98b544e82800213ae267c4bb96fa302c1c8f6866c7d72f2aa6ac",
+    "proofs": []
+  }
+}

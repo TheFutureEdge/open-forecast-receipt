@@ -1,0 +1,57 @@
+Design a polished, deployed, open-source-first web application called Open Forecast Receipt Explorer.
+
+Problem: historical forecasts are easy to edit, summarize selectively, or present without clear timing and provenance. A raw hash is difficult for ordinary users to inspect. The application must let investors, researchers, auditors, journalists, model evaluators, and forecasting-platform teams read and independently verify exactly what was forecast, by which forecaster, when, and whether the record has changed.
+
+Hackathon scope is locked to five existing public iPulse AI assets for Batch 6: PepsiCo, NVIDIA, Bitcoin, Alphabet Class C, and SPY. Do not add random assets, a 15-asset phase, consensus receipts, leaderboard receipts, portfolio features, trade actions, or production writes.
+
+Use the uploaded Open Forecast Receipt v0.1.0 JSON Schema, PepsiCo full OFR fixture, compact EAS projection, Phase 1 start brief, and cost model. Batch 6 is a retrospective pilot. The application must visibly distinguish forecastCreatedAt, sourcePublication.publishedAt, and the later EAS blockTimestamp. It must never imply that a retrospective chain timestamp proves the forecast was onchain at generation.
+
+Core identity rule: one individual advisor forecast equals one OFR JSON and one independent EAS attestation UID. Twelve UIDs may be transported in one asset-level EAS multiAttest transaction; the transaction hash is transport metadata, not the forecast identity. Consensus is excluded because it is a derived average.
+
+Build the reusable capability, not a fixed marketing page. Keep deterministic forecast logic in exportable TypeScript modules with tests:
+- JSON Schema validation;
+- RFC 8785 canonicalization and SHA-256 receipt digest;
+- source-to-OFR adapter interface, with the iPulse mapping as the first adapter;
+- basis-point conversion and display, where -400 always means -4.00%;
+- regular market-path reconstruction from anchorAt, cadenceMonths, anchorValueMicros, and stepReturnBps;
+- EAS encoding, decoding, receiptDigest comparison, UID verification, and direct explorer URL generation;
+- explicit failure reasons for malformed, incomplete, mismatched, revoked, unavailable, or retrospectively issued records.
+
+Build a complete PepsiCo vertical slice first, then make the same manifest/data contract accept the other four fixture sets without component rewrites. If those four fixture sets have not yet been uploaded, show honest fixture_pending states and keep the routes/data interfaces ready; do not fabricate data.
+
+Required user workflow:
+1. Open a five-asset Batch 6 manifest.
+2. Select PepsiCo and see 12 individual advisor receipts plus a 12/12 verification summary.
+3. Open the Ray Dalio / Strategist / RESEARCHER example.
+4. Read a human summary and the full OFR JSON.
+5. Compare the full receipt with the 17-field compact onchain projection.
+6. Reconstruct all 20 quarterly steps from the USD 144.22 anchor and show the implied terminal value near USD 180.6052.
+7. Read/decode the corresponding Base Sepolia EAS UID and compare receiptDigest.
+8. Show verification PASS and explain what it proves and does not prove.
+9. Change one step in a local, clearly labeled tamper sandbox and show verification FAIL without writing anything onchain.
+
+Required screens:
+- five-asset Batch 6 manifest;
+- asset page with advisor receipt cards and proof status;
+- stable receipt-detail route;
+- human summary, full JSON, compact projection, and protocol metadata tabs/panels;
+- path chart and transparent reconstruction calculation;
+- verification result and failure-reason panel;
+- local tamper sandbox;
+- OFR Core, Market, optional AI Provenance, and EAS Market Path standards page;
+- about, sources, licensing, limitations, and retrospective-attestation explanation.
+
+Design direction: serious financial research product, accessible and responsive, clear light/dark presentation, no crypto hype. Use iPulse AI correctly as the product name. Describe it as an Open Agentic Investment Research Platform only where product context is necessary. Use visible research/not-investment-advice language for asset-specific screens. Distinguish forecast integrity from forecast accuracy.
+
+Technical constraints:
+- generate and maintain the functional application primarily inside native.builder;
+- React with TypeScript; use the platform's supported build stack rather than forcing an incompatible toolchain;
+- deterministic verification must not depend on an AI model;
+- read public Base Sepolia/EAS data when available and include a decoded fallback fixture so the demo remains reliable;
+- no production Firestore connection, no production or mainnet signing key, no client secret, and no required wallet for judges;
+- any optional testnet issuance must run server-side, be disabled by default, and never block the read/verify workflow;
+- use incremental, testable Builder tasks to conserve credits;
+- synchronize the final source to a public MIT-compliant GitHub repository and publish a public native.builder URL only after approval.
+
+First return only a concise PRD, information architecture, data-flow diagram, component/file plan, TypeScript data contracts, failure states, test plan, credit-aware 12-hour implementation sequence, and a list of ambiguities or risks. Do not start broad feature expansion. Do not invent missing fixture values. After approval, the Builder agent should implement the PepsiCo happy path first.
+

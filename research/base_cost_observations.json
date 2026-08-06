@@ -1,0 +1,33 @@
+{
+  "observed_at_utc": "2026-08-05T15:29:44Z",
+  "eth_usd_spot_assumption": 1875.245,
+  "observations": [
+    {
+      "network": "Base mainnet",
+      "transaction_hash": "0x0844ed67ae12d67db69abe06404ef13b3cf12b1bccc19d61496b095462384e06",
+      "eas_data_bytes": 736,
+      "transaction_calldata_bytes": 1060,
+      "rpc_receipt_json_bytes_observed": 2772,
+      "receipt_log_count": 2,
+      "gas_limit": 790699,
+      "gas_used": 776045,
+      "effective_gas_price_gwei": 0.006,
+      "l1_fee_wei": 2100115419,
+      "transaction_cost_eth_including_l1_fee": 0.000004658370115419,
+      "transaction_cost_usd_including_l1_fee": 0.008735585267088904,
+      "explorer": "https://base.blockscout.com/tx/0x0844ed67ae12d67db69abe06404ef13b3cf12b1bccc19d61496b095462384e06"
+    },
+    {
+      "network": "Base mainnet",
+      "transaction_hash": "0x3a08e8ed937500ccddf9e12a3c904dcfe217ba160f3c1e40cc17c8636190c8db",
+      "eas_data_bytes": 256,
+      "gas_used": 374315,
+      "effective_gas_price_gwei": 0.055,
+      "l1_fee_wei": 914109763,
+      "transaction_cost_eth_including_l1_fee": 0.000020588239109763,
+      "transaction_cost_usd_including_l1_fee": 0.038607992449387514,
+      "explorer": "https://base.blockscout.com/tx/0x3a08e8ed937500ccddf9e12a3c904dcfe217ba160f3c1e40cc17c8636190c8db"
+    }
+  ],
+  "planning_note": "These are two recent observed transactions, not a quote. Totals include the receipt l1Fee field. The 2,772-byte RPC receipt JSON for the first transaction is a node/explorer response representation, not an additional onchain payload or separately billed data. Exact iPulse AI cost requires estimateGas against the registered schema plus GasPriceOracle.getL1Fee on the fully serialized transaction; Base fees vary with L2 execution, L1 data costs, and ETH/USD."
+}

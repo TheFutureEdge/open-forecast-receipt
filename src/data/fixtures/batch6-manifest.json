@@ -1,0 +1,62 @@
+{
+  "batchId": "batch-6",
+  "batchLabel": "Batch 6 — AI Factory Hackathon Demo",
+  "description": "Batch 6 of the Open Forecast Receipt system. Five public assets with 12 individual AI-advisor forecast receipts each.",
+  "assets": [
+    {
+      "name": "PepsiCo Inc",
+      "marketIdentifier": "PEP:XNAS",
+      "coverageStatus": "complete",
+      "chainStatus": "not_issued",
+      "advisorCount": 12,
+      "loadedCount": 12,
+      "displaySymbol": "PEP",
+      "slug": "pepsi",
+      "aliases": []
+    },
+    {
+      "name": "NVIDIA Corporation",
+      "marketIdentifier": "NVDA:XNAS",
+      "coverageStatus": "complete",
+      "chainStatus": "not_issued",
+      "advisorCount": 12,
+      "loadedCount": 12,
+      "displaySymbol": "NVDA",
+      "slug": "nvidia",
+      "aliases": []
+    },
+    {
+      "name": "Bitcoin",
+      "marketIdentifier": "ipulse:BTC-USD.CC",
+      "coverageStatus": "complete",
+      "chainStatus": "not_issued",
+      "advisorCount": 12,
+      "loadedCount": 12,
+      "displaySymbol": "BTC",
+      "slug": "bitcoin",
+      "aliases": []
+    },
+    {
+      "name": "Alphabet Class C",
+      "marketIdentifier": "GOOG:XNAS",
+      "coverageStatus": "complete",
+      "chainStatus": "not_issued",
+      "advisorCount": 12,
+      "loadedCount": 12,
+      "displaySymbol": "GOOG",
+      "slug": "alphabet",
+      "aliases": []
+    },
+    {
+      "name": "SPDR S&P 500 ETF Trust",
+      "marketIdentifier": "SPY:ARCX",
+      "coverageStatus": "complete",
+      "chainStatus": "not_issued",
+      "advisorCount": 12,
+      "loadedCount": 12,
+      "displaySymbol": "SPY",
+      "slug": "spy",
+      "aliases": []
+    }
+  ]
+}

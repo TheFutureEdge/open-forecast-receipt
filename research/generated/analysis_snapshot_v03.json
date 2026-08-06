@@ -1,0 +1,104 @@
+{
+  "generatedAt": "2026-08-05T18:30:00Z",
+  "status": "validated_phase_1_scope_lock",
+  "decision": {
+    "forecastEntity": "One individual advisor forecast",
+    "onchainIdentity": "One EAS attestation UID per individual advisor forecast",
+    "transport": "One native EAS multiAttest transaction per selected asset",
+    "defaultForecastsPerAsset": 12,
+    "fallback": "Split one asset deterministically into 6 + 6 only if eth_estimateGas plus 20 percent exceeds the Base transaction gas cap"
+  },
+  "batchPolicy": {
+    "historicPilot": 6,
+    "historicPilotMode": "retrospective",
+    "reason": "Batch 6 is recent and uses the current public publication shape; Batch 1 was generated on 2025-11-28 and would create an avoidable eight-month forecast-to-attestation gap.",
+    "futureMode": "contemporaneous",
+    "futureTiming": "Asynchronously after the immutable publication and public-live gate, normally within minutes or hours; never block forecast publication."
+  },
+  "pepsiBatch6": {
+    "asset": "PepsiCo, Inc.",
+    "ticker": "PEP",
+    "mic": "XNAS",
+    "runNumber": 6,
+    "revision": 2,
+    "forecastCount": 12,
+    "pointCount": 240,
+    "easSchemaFieldCount": 17,
+    "easDataBytes": 12768,
+    "multiAttestCalldataBytes": 16036,
+    "separateAttestCalldataBytesCombined": 16656,
+    "conservativePlanningGas": 12606726,
+    "planningGasWith20PercentBuffer": 15128072
+  },
+  "observedTransaction": {
+    "transactionHash": "0x0844ed67ae12d67db69abe06404ef13b3cf12b1bccc19d61496b095462384e06",
+    "easDataBytes": 736,
+    "transactionCalldataBytes": 1060,
+    "rpcReceiptJsonBytes": 2772,
+    "receiptLogs": 2,
+    "gasUsed": 776045,
+    "costUsdAtAnalysisPrice": 0.008735585267088904,
+    "interpretation": "RPC receipt JSON is a response representation, not additional onchain payload or separately billed data."
+  },
+  "rayExample": {
+    "advisor": "Ray Dalio",
+    "role": "The Strategist",
+    "mode": "RESEARCHER",
+    "model": "Gemini 3.1 Pro",
+    "anchorUsd": 144.22,
+    "target": "eod_close_price_step_over_step_percentage_change",
+    "classification": "partially_sell",
+    "stepReturnBps": [-400, -300, 200, 300, 200, 300, 100, 200, -200, 200, 300, 200, 100, 200, 300, 100, 0, 200, 100, 200],
+    "unitExample": "-400 basis points means -4.00 percent",
+    "terminalReturnPercent": 25.228970718567002,
+    "terminalImpliedPriceUsd": 180.60522157031733,
+    "fullReceiptCanonicalBytes": 6186,
+    "easDataBytes": 1056,
+    "sourceForecastDigestSha256": "9501ce2d798e7f9449088688774ceb4d2535c9bb8cbf656baa3a8f8ae5b82dc2",
+    "receiptDigestSha256": "ce5e747edf89a34e92710e4306bb9a89224714130b68c4be0b49aad7486e13c9"
+  },
+  "baseCapacity": {
+    "perTransactionGasCap": 16777216,
+    "eip7623TheoreticalAllNonzeroCalldataBytes": 418905,
+    "eip7623TheoreticalAllZeroCalldataBytes": 1675621,
+    "warning": "These are calldata-only mathematical ceilings, not usable EAS capacities. Exact encoded calls require eth_estimateGas."
+  },
+  "rollout": {
+    "scope": "Hackathon Phase 1 only",
+    "assets": ["PepsiCo", "NVIDIA", "Bitcoin", "Alphabet Class C", "SPY"],
+    "assetCount": 5,
+    "uidCount": 60,
+    "assetTransactionCount": 5,
+    "randomAssets": 0,
+    "futureExpansion": "Out of scope"
+  },
+  "budget": {
+    "hardBatchUsd": 5.0,
+    "issuanceCeilingUsd": 4.25,
+    "chainRetryFeeFxReserveUsd": 0.5,
+    "offchainOperationsReserveUsd": 0.25,
+    "fiveAssetsAt0_006GweiBeforeL1Usd": 0.7092209969361001,
+    "fiveAssetsAt0_010GweiBeforeL1Usd": 1.1820349948935,
+    "fiveAssetsAt0_020GweiBeforeL1Usd": 2.364069989787,
+    "fiveAssetExecutionOnlyBufferedThresholdGweiBeforeL1": 0.03268631115261078
+  },
+  "standard": {
+    "workingName": "Open Forecast Receipt",
+    "schemaId": "https://ipulseai.com/schemas/open-forecast-receipt/v0.1.0/schema.json",
+    "humanSpecPath": "https://ipulseai.com/research/open-forecast-receipt/",
+    "verifierPath": "https://ipulseai.com/tools/open-forecast-receipt/",
+    "profiles": ["OFR Core v0.1.0", "OFR Market v0.1.0", "OFR AI Provenance v0.1.0", "OFR EAS Market Path v0.1.0"],
+    "reuses": ["JSON Schema 2020-12", "RFC 8785", "W3C PROV", "W3C Verifiable Credentials 2.0 optional envelope", "Hubverse", "OpenFIGI", "ISO 10383 MIC", "ISO 4217", "CAIP", "EAS"]
+  },
+  "validation": {
+    "receiptJsonSchema": "PASS: AJV draft 2020-12",
+    "receiptDigest": "PASS",
+    "sourceForecastDigest": "PASS against logically unwrapped production prediction object",
+    "receiptIdDerivation": "PASS",
+    "basisPointMapping": "PASS against production percent values",
+    "abiEncoding": "PASS with ethers v6: 12 payloads and complete multiAttest calldata",
+    "notebook": "PASS: 17 cells, 8 executed code cells, 0 errors",
+    "artifactManifest": "PASS",
+    "portableReportStructure": "PASS: balanced main, section, and div tags"
+  }
+}

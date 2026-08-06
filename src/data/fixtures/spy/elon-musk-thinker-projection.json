@@ -1,0 +1,79 @@
+{
+  "projectionVersion": "ofr-market-ai-path-eas-v0.1.0",
+  "state": "planned_unissued_example",
+  "chain": {
+    "productionTarget": {
+      "name": "Base",
+      "caip2": "eip155:8453"
+    },
+    "hackathonTarget": {
+      "name": "Base Sepolia",
+      "caip2": "eip155:84532"
+    }
+  },
+  "eas": {
+    "contract": "0x4200000000000000000000000000000000000021",
+    "schema": "string subjectRef,uint32 runNumber,uint16 runRevision,bytes32 forecastId,bytes32 forecasterId,string forecasterLabel,uint64 forecastCreatedAt,uint64 anchorAt,uint64 anchorValueMicros,string target,string anchorUnit,string classification,bool retrospective,uint8 cadenceMonths,uint8 pointCount,string stepReturnBps,bytes32 receiptDigest",
+    "revocable": false,
+    "recipient": "0x0000000000000000000000000000000000000000",
+    "refUID": "0x0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "encodedFields": {
+    "subjectRef": "ticker:SPY@ARCX",
+    "runNumber": 6,
+    "runRevision": 1,
+    "forecastId": "0x4743f214d81855e83ef12780b4d5da1ffe22a08e350b7564c426bff9463d9fe8",
+    "forecasterId": "0xbbbe84294801346c0ecc91d2e202ee8c3e4d5dc0322daf54fd4fbe18fb01e0fb",
+    "forecasterLabel": "Elon Musk / The Visionary / THINKER / Gemini 3.1 Pro",
+    "forecastCreatedAt": 1783262915,
+    "anchorAt": 1782950400,
+    "anchorValueMicros": 744780000,
+    "target": "eod_close_price_step_over_step_percentage_change",
+    "anchorUnit": "USD",
+    "classification": "strong_buy",
+    "retrospective": true,
+    "cadenceMonths": 3,
+    "pointCount": 20,
+    "stepReturnBps": "-200,300,500,400,-100,700,500,600,-300,600,800,400,0,500,500,400,300,-200,400,300",
+    "receiptDigest": "0x61840b07c7bdb9c7246e705541f99f51c38348e89f9d96c0ce4bbaf4efd0cf01"
+  },
+  "protocolSuppliedAfterIssuance": {
+    "schemaUID": null,
+    "attestationUID": null,
+    "transactionHash": null,
+    "attester": null,
+    "blockTimestamp": null
+  },
+  "encodingSemantics": {
+    "subjectRef": "A compact scheme-prefixed market identifier; the full identifier bundle remains in receiptPayload bound by receiptDigest.",
+    "forecastId": "SHA-256 of the exact UTF-8 source forecast ID.",
+    "forecasterId": "SHA-256 of the exact UTF-8 stable source forecaster ID.",
+    "timestamps": "Unsigned Unix seconds in UTC.",
+    "anchorValueMicros": "Anchor observation multiplied by 1,000,000; 744780000 means USD 744.78.",
+    "target": "The canonical predicted quantity; anchorUnit applies only to the underlying price anchor.",
+    "classification": "Value from the ipulse-investment-rating-v1 scheme fixed by this projection version.",
+    "retrospective": "True when the receipt is created for a forecast that was already published before the receipt workflow existed.",
+    "stepReturnBps": "Comma-separated signed base-10 integers in forecast-step order; basis_points = source_percent * 100, so -400 means -4.00 percent.",
+    "schedule": "Step n is anchorAt plus n times cadenceMonths; pointCount limits the path. This projection supports regular monthly cadence only.",
+    "receiptDigest": "SHA-256 over the RFC 8785 canonical receiptPayload only. The proofEnvelope can gain attestation metadata without changing the sealed forecast payload."
+  },
+  "calculatedSizes": {
+    "easDataBytes": 1056,
+    "forecastPoints": 20,
+    "note": "ABI-encoded EAS data only; transaction envelope and execution gas are excluded."
+  },
+  "derivationsNotStoredOnchain": {
+    "validTo": "2031-07-02T00:00:00.000000Z",
+    "annualCumulativeReturnBps": [
+      1023,
+      2996,
+      5008,
+      7209,
+      8607
+    ],
+    "terminalReturnPercent": 86.07180542525452,
+    "terminalImpliedPrice": 1385.8255924462105,
+    "anchorUnit": "USD",
+    "explanation": "These values are deterministically reconstructed from anchorAt, cadenceMonths, anchorValueMicros, and stepReturnBps."
+  }
+}

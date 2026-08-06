@@ -1,0 +1,17 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+node_modules/
+.next/
+dist/
+build/
+coverage/
+*.log
+
+# Generated Native handoff archives are local transport artifacts. Native
+# Builder should synchronize from the public GitHub repository.
+native-builder/*.zip
+native-builder/*.sha256
+native-builder/NATIVE_SYNC_PROMPT_V02.md
+native-builder/native_builder_upload_bundle_v01/

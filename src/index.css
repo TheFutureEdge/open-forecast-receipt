@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Dark mode via class strategy */
+html.dark {
+  color-scheme: dark;
+}
+
+/* Base styles */
+body {
+  @apply antialiased;
+}
+
+/* Theme toggle icon fallback */
+html.dark .theme-icon-light { display: none; }
+html:not(.dark) .theme-icon-dark { display: none; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.8 0 0);
+  border-radius: 3px;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: oklch(0.3 0 0);
+}
+
+/* Focus styles for accessibility */
+:focus-visible {
+  outline: 2px solid oklch(0.5 0.2 240);
+  outline-offset: 2px;
+}
+
+/* Transition for theme changes */
+* {
+  transition-property: background-color, border-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
+
+/* Number input hide spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}

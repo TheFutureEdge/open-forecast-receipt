@@ -1,0 +1,87 @@
+{
+  "observed_at_utc": "2026-08-05T17:45:00Z",
+  "scope": "AI Factory hackathon Phase 1 only: five existing public assets",
+  "hard_batch_budget_usd": 5.0,
+  "issuance_cap_usd": 4.25,
+  "retry_and_variance_reserve_usd": 0.75,
+  "reserve_breakdown_usd": {
+    "chain_retry_fee_and_fx_variance": 0.5,
+    "incremental_worker_rpc_registry_and_monitoring": 0.25
+  },
+  "eth_usd_assumption": 1875.245,
+  "base_minimum_base_fee_gwei_at_observation": 0.005,
+  "receipt_model": {
+    "entity_rule": "One advisor forecast is one EAS attestation and one UID",
+    "transport_rule": "One native EAS multiAttest transaction per selected asset carries all validated advisor attestations for that asset",
+    "pepsi_batch6_forecast_count": 12,
+    "pepsi_batch6_forecast_points": 240,
+    "pepsi_batch6_eas_data_bytes": 12768,
+    "pepsi_batch6_multi_attest_calldata_bytes": 16036,
+    "pepsi_batch6_separate_attest_calldata_bytes_combined": 16656,
+    "calldata_bytes_saved_by_multi_attest": 620,
+    "calldata_percent_saved_by_multi_attest": 3.7223823246878,
+    "conservative_separate_attestation_gas_sum_per_asset": 12606726,
+    "conservative_planning_gas_with_20_percent_buffer": 15128072,
+    "gas_estimate_method": "For planning only: each final 17-field Pepsi payload size is extrapolated through a linear fit to two observed Base EAS direct attestations. The sum deliberately excludes multiAttest savings and the exact serialized L1 fee.",
+    "multi_attest_savings_included_in_cost_sensitivity": false,
+    "operational_benefit": "Reduces 12 signatures, broadcasts and confirmations to one per asset while preserving 12 independent UIDs. Exact gas saving must be measured with eth_estimateGas on the encoded call."
+  },
+  "rollout": {
+    "phase_1": {
+      "batch": 6,
+      "issuance_mode": "retrospective",
+      "assets": [
+        "PepsiCo, Inc. (PEP.NASDAQ)",
+        "NVIDIA Corporation (NVDA.NASDAQ)",
+        "Bitcoin (BTC.CC)",
+        "Alphabet Inc. Class C (GOOG.NASDAQ)",
+        "SPDR S&P 500 ETF Trust (SPY.NYSEARCA)"
+      ],
+      "fixed_public_assets": 5,
+      "random_public_assets": 0,
+      "total_assets": 5,
+      "uids": 60,
+      "asset_level_transactions": 5,
+      "single_receipt_transactions_if_not_batched": 60,
+      "selection_rule": "All five named assets are already public; no random selection is used in Phase 1."
+    }
+  },
+  "phase_1_sensitivity_before_exact_l1_fee_and_before_multi_attest_savings": [
+    {
+      "gas_price_gwei": 0.005,
+      "five_assets_usd": 0.59101749744675
+    },
+    {
+      "gas_price_gwei": 0.006,
+      "five_assets_usd": 0.7092209969361001
+    },
+    {
+      "gas_price_gwei": 0.01,
+      "five_assets_usd": 1.1820349948935
+    },
+    {
+      "gas_price_gwei": 0.02,
+      "five_assets_usd": 2.364069989787
+    },
+    {
+      "gas_price_gwei": 0.055,
+      "five_assets_usd": 6.5011924719142495
+    }
+  ],
+  "phase_1_fee_gate": {
+    "execution_only_break_even_gas_price_gwei_before_l1": 0.03595494226787186,
+    "execution_only_gas_price_gwei_with_10_percent_buffer_before_l1": 0.03268631115261078,
+    "rule": "Use the five exact serialized multiAttest transactions. Sum buffered eth_estimateGas execution costs plus GasPriceOracle.getL1Fee and convert at a buffered ETH/USD rate. If all five exceed 4.25 USD, wait for a cheaper window; do not omit an asset based on its forecast."
+  },
+  "selection_policy": {
+    "fixed_core": "Exactly the five existing public showcase assets in Phase 1",
+    "random_rotation": "Out of scope for the hackathon",
+    "publication_rule": "Use Batch 6 as the labeled retrospective pilot, then issue future selected public batches after the public-live gate",
+    "asset_atomicity": "If an asset is selected, attest every validated individual advisor forecast; never select advisors or assets based on current forecast direction or performance"
+  },
+  "transaction_policy": {
+    "default": "Twelve independent forecast attestations in one asset-level EAS multiAttest transaction",
+    "fallback": "If eth_estimateGas plus a 20 percent gas-limit buffer exceeds Base's 16,777,216 per-transaction cap, split that asset deterministically into two calls, normally 6 plus 6",
+    "never": "Never combine multiple assets into one transaction and never represent 12 forecasts by one batch hash"
+  }
+}

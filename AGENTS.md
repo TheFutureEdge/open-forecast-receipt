@@ -10,7 +10,8 @@ This project is the engineering and open-source home for the Open Forecast Recei
 - Treat old Native upload bundles and ZIP synchronization archives as local
   historical transport artifacts. They are ignored and are never canonical.
 - Treat the schema and examples in the repository root as canonical. Native
-  Builder must pull reviewed source from GitHub rather than from stale bundles.
+  Builder receives a fresh, reviewed Code-folder upload generated from this
+  repository; stale downloads and Native-side copies are never canonical.
 
 ## Safety and scope
 
@@ -26,5 +27,5 @@ This project is the engineering and open-source home for the Open Forecast Recei
 - Keep reusable verification logic deterministic and free of AI-model dependencies.
 - Keep the OFR Core general; put market and AI-specific fields in versioned profiles or adapters.
 - Verify JSON Schema, digests, EAS encoding/decoding, path reconstruction, tamper failure, and fee/gas preflight before calling a release ready.
-- Treat the downloaded Native Builder application as the hackathon implementation origin. Local work may audit, test, and prepare corrections, but every material application change must be synchronized back into the Native project, rechecked by Native QA, and reflected in the final Native-hosted application so the submission remains primarily built with Native Builder.
+- Treat the downloaded Native Builder application as the hackathon implementation origin. Local work may audit, test, and prepare corrections, but every material application change must be uploaded back into the same Native project, rechecked by Native QA, and reflected in the final Native-hosted application. Do not grant the Native GitHub App organization-wide repository access merely to transport code; use the reviewed upload-folder workflow in `docs/NATIVE_BUILDER_PROVENANCE_AND_SYNC.md`.
 - Do not commit, push, publish, deploy, register an EAS schema, or issue attestations without the user's explicit approval for that action.

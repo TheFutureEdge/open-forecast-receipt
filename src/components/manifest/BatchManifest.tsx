@@ -18,7 +18,7 @@ export function BatchManifestComponent({ manifest }: BatchManifestProps) {
       </div>
       <div className="space-y-2">
         {manifest.assets.map((asset) => (
-          <AssetRow key={asset.slug} asset={asset} />
+          <AssetRow key={asset.slug} asset={asset} batchId={manifest.batchId} />
         ))}
       </div>
     </div>

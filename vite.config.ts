@@ -16,8 +16,15 @@ const svgImportPlugin = () => ({
 });
 
 /// <reference types="vitest" />
+function normalizeViteBase(value: string | undefined): string {
+  const trimmed = String(value || '').trim();
+  if (!trimmed || trimmed === '/') return '/';
+  return `/${trimmed.replace(/^\/+|\/+$/g, '')}/`;
+}
+
 // https://vite.dev/config/
 export default defineConfig(() => ({
+  base: normalizeViteBase(process.env.VITE_BASE_PATH),
   plugins: [
     react(),
     tailwindcss(),
@@ -37,5 +44,15 @@ export default defineConfig(() => ({
   server: {
     allowedHosts: true as const,
     hmr: false,
+    watch: {
+      ignored: ['**/native-builder/upload-ready/**'],
+    },
+  },
+  test: {
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/native-builder/upload-ready/**',
+    ],
   },
 }))

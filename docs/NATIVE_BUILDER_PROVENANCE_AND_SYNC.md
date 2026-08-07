@@ -34,12 +34,12 @@ Official event page:
 2. Local work may inspect, test, validate data, prepare exact patches, and
    identify security or correctness defects.
 3. Record material local changes in `docs/NATIVE_SYNC_CHANGELOG.md`.
-4. Pull every material application change from the canonical public GitHub
-   repository into the same Native project.
+4. Generate the whitelisted Code payload with `npm run native:prepare-upload`
+   and upload it into the same Native project's Code panel at project root.
 5. Run the Native Builder and QA flow after synchronization.
-6. Commit Native-origin changes to an explicit integration branch or download
-   the resulting export and compare the material files and tests with this
-   repository. Do not overwrite `main` without review.
+6. Download the resulting final Native export and compare the material files
+   and tests with this repository. Do not overwrite local source without
+   review.
 7. Use the Native-hosted public application and Native project URL in the
    hackathon submission.
 
@@ -52,7 +52,24 @@ application and need not be exposed as Native-generated UI code.
 - Canonical repository:
   `https://github.com/TheFutureEdge/open-forecast-receipt`
 - Native project: `9b5dc37e-f409-4f5e-9206-b20d752313a5`
-- Prompt: `native-builder/NATIVE_GITHUB_SYNC_PROMPT_V03.md`
+- Upload generator: `npm run native:prepare-upload`
+- Upload target: `native-builder/upload-ready/` (generated, ignored, disposable)
+- Builder prompt: `native-builder/NATIVE_UPLOAD_AMX_FINISH_PROMPT.md`
+- QA prompt: `native-builder/NATIVE_UPLOAD_QA_PROMPT.md`
+
+Native's documented file workflow supports uploading a file or folder into the
+Code panel while preserving folder structure. Its documented GitHub flow is
+push-oriented, and its troubleshooting guidance says selected-repository GitHub
+App installations should work. The live project nevertheless rejected the
+correctly scoped one-repository installation and demanded `All repositories`.
+That access expansion is not proportionate to this hackathon, so the GitHub App
+is not part of the approved workflow.
+
+Uninstalling or revoking the GitHub App does not delete this Native project or
+the canonical GitHub repository. It only removes Native's access. The final
+application remains Native-origin, returns to the same Native project for its
+Builder and QA finishing passes, and uses the Native-hosted application/project
+URLs for hackathon submission.
 
 The GitHub repository contains the audited application source, canonical
 schema, canonical PepsiCo example, all 60 Phase 1 receipt/projection fixtures,

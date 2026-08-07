@@ -10,7 +10,8 @@ const ROOT = resolve(import.meta.dirname, "..");
 const SCHEMA_URI = "https://ipulseai.com/schemas/open-forecast-receipt/v0.1.0/schema.json";
 const SPEC_VERSION = "0.1.0";
 const DEFAULT_ISSUED_AT = "2026-08-06T12:00:00Z";
-const EAS_SCHEMA = "string subjectRef,uint32 runNumber,uint16 runRevision,bytes32 forecastId,bytes32 forecasterId,string forecasterLabel,uint64 forecastCreatedAt,uint64 anchorAt,uint64 anchorValueMicros,string target,string anchorUnit,string classification,bool retrospective,uint8 cadenceMonths,uint8 pointCount,string stepReturnBps,bytes32 receiptDigest";
+const EAS_CONFIG = JSON.parse(await readFile(resolve(ROOT, "src/data/eas-base-sepolia.json"), "utf8"));
+const EAS_SCHEMA = EAS_CONFIG.schema;
 const EAS_PARAMETERS = parseAbiParameters(EAS_SCHEMA);
 
 const SOURCES = [
@@ -477,11 +478,11 @@ function buildProjection(document, derived) {
       hackathonTarget: { name: "Base Sepolia", caip2: "eip155:84532" },
     },
     eas: {
-      contract: "0x4200000000000000000000000000000000000021",
+      contract: EAS_CONFIG.contracts.eas,
       schema: EAS_SCHEMA,
-      revocable: false,
-      recipient: "0x0000000000000000000000000000000000000000",
-      refUID: "0x0000000000000000000000000000000000000000000000000000000000000000",
+      revocable: EAS_CONFIG.revocable,
+      recipient: EAS_CONFIG.recipient,
+      refUID: EAS_CONFIG.refUid,
     },
     encodedFields,
     protocolSuppliedAfterIssuance: {

@@ -62,11 +62,12 @@ export function useTamperSandbox(
         return;
       }
 
-      const steps = state.tamperedDoc.forecast.prediction.points.map((p) => p.value);
+      const steps = state.tamperedDoc.receiptPayload.forecast.prediction.points.map((p) => p.value);
       steps[index] = value;
 
       const newDoc = structuredClone(state.tamperedDoc);
-      newDoc.forecast.prediction.points = newDoc.forecast.prediction.points.map((p, i) => ({
+      newDoc.receiptPayload.forecast.prediction.points =
+        newDoc.receiptPayload.forecast.prediction.points.map((p, i) => ({
         ...p,
         value: steps[i] ?? p.value,
       }));

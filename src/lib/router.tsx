@@ -5,13 +5,37 @@ import {
   type ReactNode,
 } from "react";
 
+export function normalizeBasePath(value: string): string {
+  const trimmed = String(value || "").trim();
+  if (!trimmed || trimmed === "/") return "";
+  return `/${trimmed.replace(/^\/+|\/+$/g, "")}`;
+}
+
+const APP_BASE_PATH = normalizeBasePath(import.meta.env.BASE_URL);
+
+export function addBasePath(pathname: string, basePath = APP_BASE_PATH): string {
+  const normalizedPath = pathname.startsWith("/") ? pathname : `/${pathname}`;
+  const normalizedBase = normalizeBasePath(basePath);
+  return `${normalizedBase}${normalizedPath}` || "/";
+}
+
+export function stripBasePath(pathname: string, basePath = APP_BASE_PATH): string {
+  const normalizedBase = normalizeBasePath(basePath);
+  if (!normalizedBase) return pathname || "/";
+  if (pathname === normalizedBase || pathname === `${normalizedBase}/`) return "/";
+  if (pathname.startsWith(`${normalizedBase}/`)) {
+    return pathname.slice(normalizedBase.length) || "/";
+  }
+  return pathname || "/";
+}
+
 function subscribeToLocation(onStoreChange: () => void): () => void {
   window.addEventListener("popstate", onStoreChange);
   return () => window.removeEventListener("popstate", onStoreChange);
 }
 
 function getPathname(): string {
-  return window.location.pathname;
+  return stripBasePath(window.location.pathname);
 }
 
 export function useLocation(): { pathname: string } {
@@ -24,10 +48,11 @@ export function useLocation(): { pathname: string } {
 }
 
 export function navigate(to: string, options?: { replace?: boolean }): void {
+  const browserPath = addBasePath(to);
   if (options?.replace) {
-    window.history.replaceState(null, "", to);
+    window.history.replaceState(null, "", browserPath);
   } else {
-    window.history.pushState(null, "", to);
+    window.history.pushState(null, "", browserPath);
   }
   window.dispatchEvent(new PopStateEvent("popstate"));
   window.scrollTo({ top: 0, behavior: "auto" });
@@ -57,7 +82,7 @@ export function Link({ to, children, onClick, ...props }: LinkProps) {
   }
 
   return (
-    <a href={to} onClick={handleClick} {...props}>
+    <a href={addBasePath(to)} onClick={handleClick} {...props}>
       {children}
     </a>
   );

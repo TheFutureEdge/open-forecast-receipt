@@ -69,7 +69,7 @@ Investors, researchers, forecasting platforms, model evaluators, journalists, au
 
 ### Solution
 
-Open Forecast Receipt separates a complete standards-based JSON receipt from a compact onchain projection. The application displays 12 real, sanitized PepsiCo advisor forecasts; reconstructs every 20-step path; decodes each independent Base Sepolia attestation; verifies the full-receipt digest; and proves that a one-step edit fails verification.
+Open Forecast Receipt separates a complete standards-based JSON receipt from a compact onchain projection. The application displays 60 real, sanitized individual advisor forecasts across five public assets; reconstructs every 20-step path; decodes each independent Base Sepolia attestation when present; verifies the full-receipt digest; and proves that a one-step edit fails verification. The initial retrospective onchain showcase declares six receipts across all five assets without using forecast outcomes.
 
 ### Business value
 
@@ -81,7 +81,7 @@ The project combines established forecast semantics, provenance, canonical JSON 
 
 ### How native.builder was used
 
-native.builder's Product Architect scopes the product and application architecture. Its Builder agents create and iterate the React application, receipt explorer, verification workflow, responsive UX, integrations, and public deployment. Files and source are inspected inside native.builder and optionally synchronized to GitHub. Supporting schemas, fixtures, and test vectors are uploaded as project inputs, but the functional application is generated and developed primarily in native.builder.
+native.builder's Product Architect scopes the product and application architecture. Its Builder agents create and iterate the React application, receipt explorer, verification workflow, responsive UX, integrations, and public deployment. The functional application originated in the Native project; reviewed local corrections return to the same project through Native's Code-folder upload and are rechecked by Builder and QA. The Native GitHub App is intentionally not granted organization-wide repository access.
 
 ### External tools and data
 
@@ -108,7 +108,8 @@ Implement the approved Open Forecast Receipt Explorer PRD now. Build the complet
 
 - Home or manifest opens without authentication and shows the five named public assets.
 - PepsiCo Batch 6 shows exactly 12 individual advisor forecasts.
-- Each advisor card has a stable receipt route and UID/proof route.
+- Each asset shows an individual receipt ledger with a stable receipt route and Blockchain proof column.
+- Exactly six role-based showcase receipts are declared across all five assets; a shared `multiAttest` transport still yields one UID per receipt.
 - Ray receipt shows anchor 144.22 USD, 20 returns, three-month cadence, `partially_sell`, and terminal reconstructed value near 180.6052 USD.
 - Full PepsiCo/Ray receipt digest equals `ce5e747edf89a34e92710e4306bb9a89224714130b68c4be0b49aad7486e13c9`.
 - Onchain projection shows 17 explicit fields and EAS protocol metadata separately.
@@ -133,7 +134,7 @@ Native.builder capabilities used here:
 - live preview and feedback iteration;
 - file uploads for fixtures and schemas;
 - Supabase/server functions if the project needs server-side caching or issuance;
-- optional GitHub sync and source download;
+- Code file/folder upload and source download;
 - public `nativelyai.app` deployment.
 
 Official documentation: [getting started](https://docs-builder.nativelyai.com/introduction/getting-started), [integrations](https://docs-builder.nativelyai.com/features/integrations), [Supabase](https://docs-builder.nativelyai.com/features/supabase), [GitHub Sync](https://docs-builder.nativelyai.com/features/github-sync), [files/download](https://docs-builder.nativelyai.com/features/files-and-download), [publishing](https://docs-builder.nativelyai.com/features/publish), and [BYOK providers](https://docs-builder.nativelyai.com/features/byok-providers).
@@ -173,7 +174,7 @@ Official documentation: [getting started](https://docs-builder.nativelyai.com/in
 1. **0:00–0:20 — problem:** historical forecasts are hard to verify; a hash alone is not understandable.
 2. **0:20–0:45 — manifest:** PepsiCo Batch 6 has 12 advisor forecasts and 12 independent UIDs carried in one asset transaction.
 3. **0:45–1:25 — receipt:** open Ray Dalio; show subject, model provenance, anchor, classification, and all 20 returns.
-4. **1:25–1:55 — proof:** decode the EAS UID, compare the 13 onchain fields, reconstruct the path, and show digest PASS.
+4. **1:25–1:55 — proof:** decode the EAS UID, compare the 17 onchain fields, reconstruct the path, and show digest PASS.
 5. **1:55–2:20 — tamper:** edit one local return and show FAIL.
 6. **2:20–2:40 — standard:** show OFR Core, Market, and optional AI profiles plus established-standard mappings.
 7. **2:40–3:00 — value:** explain production insertion after public publication and the five-dollar five-public-asset policy.

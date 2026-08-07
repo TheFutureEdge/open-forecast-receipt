@@ -31,7 +31,7 @@ export function NavBar() {
             to="/manifest/batch-6"
             className="font-semibold text-gray-900 dark:text-gray-100 cursor-pointer"
           >
-            OFR Explorer
+            Open Forecast Receipt
           </Link>
           <div className="hidden sm:flex items-center gap-4">
             <Link to="/manifest/batch-6" className={linkClass("/manifest")}>
@@ -44,7 +44,7 @@ export function NavBar() {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400 dark:text-gray-500 hidden sm:inline">
-            AI Factory — Native.builder Hackathon
+            AI Factory — builder.nativelyai.com
           </span>
           <button
             onClick={toggleTheme}

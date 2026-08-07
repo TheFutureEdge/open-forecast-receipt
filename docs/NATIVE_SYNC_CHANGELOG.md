@@ -5,6 +5,21 @@ uploaded to Native Builder before final submission.
 
 ## Pending synchronization
 
+### Safe transport and Phase 1 showcase
+
+- Replace the failed GitHub App pull attempt with Native's supported Code-folder
+  upload. Do not grant Native access to all Future Edge repositories.
+- Declare six outcome-independent showcase receipts across all five public
+  assets while retaining all 60 public receipt fixtures.
+- Replace advisor cards with an individual receipt ledger containing a real
+  `Blockchain proof` column, direct EAS/transaction links only for real UIDs,
+  and honest selected/unselected/unissued states.
+- Centralize official Base Sepolia EAS/SchemaRegistry addresses and the
+  deterministic schema UID. Reject attestations made under another schema.
+- Add read-only preflight plus guarded schema-registration, multi-attestation,
+  verification, and metadata-synchronization scripts. No key or write action is
+  included in the Native upload.
+
 ### Package and application shell
 
 - Rename the generated package from `my-app` to `open-forecast-receipt` and set
@@ -13,6 +28,10 @@ uploaded to Native Builder before final submission.
   application-specific router in `src/lib/router.tsx`.
 - Load the network verifier and individual JSON fixtures lazily so the initial
   application bundle remains practical with 60 receipts.
+- Add a canonical batch-and-stable-asset manifest route and support both
+  Native's root hosting and the optional iPulse AI tools subpath. This keeps the
+  Forecast History ledger URL stable and prevents the proposed public link from
+  resolving to a missing route.
 
 ### Standard and data contract
 
@@ -71,14 +90,13 @@ uploaded to Native Builder before final submission.
 
 ## Native completion checklist
 
-1. Connect Native project `9b5dc37e-f409-4f5e-9206-b20d752313a5` to
-   `TheFutureEdge/open-forecast-receipt` and pull every item above from its
-   reviewed `main` branch.
+1. Run `npm run native:prepare-upload`, upload the generated folder into Native
+   project `9b5dc37e-f409-4f5e-9206-b20d752313a5`, and paste the dedicated AMx
+   finishing prompt. Keep the GitHub App disconnected.
 2. Keep the 60 fixture files and the canonical schema byte-identical to this
    repository.
 3. Run Native Builder and Native QA after synchronization.
 4. Confirm the five-asset manifest, all receipt routes, the tamper demonstration,
    and the no-attestation state in the Native-hosted preview.
-5. Send Native-origin changes to a reviewable integration branch, or download
-   one final Native export and compare it with this repository, before
+5. Download one final Native export and compare it with this repository before
    deployment and hackathon submission.

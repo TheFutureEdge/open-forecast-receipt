@@ -1,0 +1,20 @@
+{
+  "network": {
+    "name": "Base Sepolia",
+    "chainId": 84532,
+    "caip2": "eip155:84532",
+    "rpcUrl": "https://sepolia.base.org",
+    "blockExplorerUrl": "https://sepolia-explorer.base.org",
+    "easExplorerUrl": "https://base-sepolia.easscan.org"
+  },
+  "contracts": {
+    "schemaRegistry": "0x4200000000000000000000000000000000000020",
+    "eas": "0x4200000000000000000000000000000000000021"
+  },
+  "schema": "string subjectRef,uint32 runNumber,uint16 runRevision,bytes32 forecastId,bytes32 forecasterId,string forecasterLabel,uint64 forecastCreatedAt,uint64 anchorAt,uint64 anchorValueMicros,string target,string anchorUnit,string classification,bool retrospective,uint8 cadenceMonths,uint8 pointCount,string stepReturnBps,bytes32 receiptDigest",
+  "schemaUid": "0xfef3868c279700c5312e68d8f5be4cd4a755a5125c3d2153f1970b626e35cc14",
+  "resolver": "0x0000000000000000000000000000000000000000",
+  "revocable": false,
+  "recipient": "0x0000000000000000000000000000000000000000",
+  "refUid": "0x0000000000000000000000000000000000000000000000000000000000000000"
+}

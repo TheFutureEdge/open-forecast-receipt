@@ -117,6 +117,10 @@ function LoadedReceiptDetail({ document, projection }: { document: OfrDocument; 
         <VerificationPanel
           result={result}
           attestationUID={projection.protocolSuppliedAfterIssuance.attestationUID}
+          transactionHash={projection.protocolSuppliedAfterIssuance.transactionHash}
+          schemaUID={projection.protocolSuppliedAfterIssuance.schemaUID}
+          attester={projection.protocolSuppliedAfterIssuance.attester}
+          blockTimestamp={projection.protocolSuppliedAfterIssuance.blockTimestamp}
         />
       ) : null}
 

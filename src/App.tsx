@@ -17,9 +17,19 @@ function resolveRoute(pathname: string): ReactNode {
     return <ManifestPage batchId={decodeURIComponent(manifestMatch[1])} />;
   }
 
+  const canonicalAssetMatch = pathname.match(/^\/manifest\/([^/]+)\/assets\/([^/]+)\/?$/);
+  if (canonicalAssetMatch) {
+    return (
+      <AssetPage
+        batchId={decodeURIComponent(canonicalAssetMatch[1])}
+        routeSlug={decodeURIComponent(canonicalAssetMatch[2])}
+      />
+    );
+  }
+
   const assetMatch = pathname.match(/^\/assets\/([^/]+)\/?$/);
   if (assetMatch) {
-    return <AssetPage routeSlug={decodeURIComponent(assetMatch[1])} />;
+    return <AssetPage batchId="batch-6" routeSlug={decodeURIComponent(assetMatch[1])} />;
   }
 
   const receiptMatch = pathname.match(/^\/receipts\/([0-9a-fA-F]{64})\/?$/);

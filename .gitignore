@@ -9,9 +9,16 @@ build/
 coverage/
 *.log
 
-# Generated Native handoff archives are local transport artifacts. Native
-# Builder should synchronize from the public GitHub repository.
+# Generated Native handoff artifacts are disposable local transport only.
 native-builder/*.zip
+native-builder/*.zip.b64
 native-builder/*.sha256
-native-builder/NATIVE_SYNC_PROMPT_V02.md
-native-builder/native_builder_upload_bundle_v01/
+native-builder/ofr_restore_b64_part_*.txt
+native-builder/upload-ready/
+
+# Firebase and hackathon media build outputs are local/generated artifacts.
+.firebase/
+submission/*
+!submission/AI_FACTORY_SUBMISSION_READY.md
+!submission/VEO3_PROMOTIONAL_VIDEO_PROMPT.txt
+!submission/open-forecast-receipt-ai-factory-deck.pdf

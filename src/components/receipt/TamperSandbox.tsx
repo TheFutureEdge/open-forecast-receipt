@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import type { OfrDocument } from "../../types/ofr";
 import type { VerificationResult } from "../../types/verification";
 import { verifyDocument } from "../../lib/verify/pipeline";
+import { bpsToPercent, percentToBps } from "../../lib/convert/basisPoints";
 
 interface TamperSandboxProps {
   document: OfrDocument;
@@ -36,9 +37,9 @@ export function TamperSandbox({ document }: TamperSandboxProps) {
     runVerification(steps);
   }, []); // Run initial verification on mount
 
-  const handleChange = useCallback((index: number, value: number) => {
+  const handleChange = useCallback((index: number, percentValue: number) => {
     const newSteps = [...steps];
-    newSteps[index] = value;
+    newSteps[index] = percentToBps(percentValue);
     setSteps(newSteps);
     runVerification(newSteps);
   }, [steps, runVerification]);
@@ -65,7 +66,7 @@ export function TamperSandbox({ document }: TamperSandboxProps) {
 
       <div className="p-4 space-y-4">
         <div className="text-xs text-gray-500 dark:text-gray-400">
-          Edit any step return value below and watch the integrity check change. This is a local simulation — nothing is written onchain.
+          Edit any step return percentage below and watch the integrity check change. This is a local simulation — nothing is written onchain.
         </div>
 
         {/* Status indicator */}
@@ -97,20 +98,25 @@ export function TamperSandbox({ document }: TamperSandboxProps) {
               </label>
               <input
                 type="number"
-                value={value}
-                onChange={(e) => handleChange(i, parseInt(e.target.value, 10) || 0)}
+                value={Number((value / 100).toFixed(2))}
+                step="0.01"
+                aria-label={`Step ${i + 1} return in percent`}
+                onChange={(e) => handleChange(i, Number.parseFloat(e.target.value) || 0)}
                 className={`w-full text-center text-xs px-1 py-1.5 rounded border ${
                   value !== document.receiptPayload.forecast.prediction.points[i].value
                     ? "border-orange-400 dark:border-orange-600 bg-orange-50 dark:bg-orange-950/30"
                     : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
                 } text-gray-900 dark:text-gray-100`}
               />
+              <span className="mt-0.5 text-[9px] text-gray-400 dark:text-gray-600">
+                {bpsToPercent(value)}
+              </span>
             </div>
           ))}
         </div>
 
         <div className="text-[10px] text-gray-400 dark:text-gray-600 text-center">
-          Modified values highlighted in orange. Click Reset to restore original.
+          Values are percentages. Modified values are highlighted in orange. Click Reset to restore the original.
         </div>
       </div>
     </div>

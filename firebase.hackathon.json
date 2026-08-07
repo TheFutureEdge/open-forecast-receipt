@@ -1,0 +1,17 @@
+{
+  "hosting": {
+    "site": "open-forecast-receipt",
+    "public": "dist",
+    "ignore": [
+      "firebase.hackathon.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

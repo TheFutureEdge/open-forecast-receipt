@@ -1,4 +1,4 @@
-import type { CoverageStatus } from "./verification";
+import type { ChainStatus, CoverageStatus } from "./verification";
 
 export interface BatchManifestAsset {
   slug: string;
@@ -7,9 +7,11 @@ export interface BatchManifestAsset {
   name: string;
   marketIdentifier: string;
   coverageStatus: CoverageStatus;
-  chainStatus: "not_issued";
+  chainStatus: ChainStatus;
   advisorCount: number;
   loadedCount: number;
+  showcaseSelectionCount?: number;
+  proofCount?: number;
 }
 
 export interface BatchManifest {

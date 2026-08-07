@@ -8,7 +8,14 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "fixtures:phase1": "node scripts/generate-phase1-fixtures.mjs"
+    "fixtures:phase1": "node scripts/generate-phase1-fixtures.mjs",
+    "eas:preflight": "node --env-file-if-exists=.env.local scripts/eas-showcase.mjs preflight",
+    "eas:schema:register": "node --env-file-if-exists=.env.local scripts/eas-showcase.mjs register",
+    "eas:showcase:issue": "node --env-file-if-exists=.env.local scripts/eas-showcase.mjs issue",
+    "eas:showcase:verify": "node --env-file-if-exists=.env.local scripts/eas-showcase.mjs verify",
+    "eas:showcase:sync": "node --env-file-if-exists=.env.local scripts/eas-showcase.mjs sync",
+    "native:prepare-upload": "node scripts/prepare-native-upload.mjs",
+    "native:check-upload": "node scripts/prepare-native-upload.mjs --check"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",

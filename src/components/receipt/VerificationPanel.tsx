@@ -1,12 +1,24 @@
 import type { VerificationResult } from "../../types/verification";
+import { getBaseTransactionUrl, getEasAttestationUrl } from "../../lib/eas/constants";
 import { StatusBadge } from "../common/StatusBadge";
 
 interface VerificationPanelProps {
   result: VerificationResult;
   attestationUID?: string | null;
+  transactionHash?: string | null;
+  schemaUID?: string | null;
+  attester?: string | null;
+  blockTimestamp?: number | null;
 }
 
-export function VerificationPanel({ result, attestationUID }: VerificationPanelProps) {
+export function VerificationPanel({
+  result,
+  attestationUID,
+  transactionHash,
+  schemaUID,
+  attester,
+  blockTimestamp,
+}: VerificationPanelProps) {
   const showReadFromChain = Boolean(attestationUID);
 
   return (
@@ -56,20 +68,39 @@ export function VerificationPanel({ result, attestationUID }: VerificationPanelP
           </div>
         )}
 
-        {/* Read from chain button */}
+        {/* Direct public proof links */}
         {showReadFromChain ? (
-          <button
-            className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors cursor-pointer active:scale-95"
-          >
-            Read from Chain
-          </button>
+          <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/30">
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={getEasAttestationUrl(attestationUID!)}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                View EAS attestation ↗
+              </a>
+              {transactionHash && (
+                <a
+                  href={getBaseTransactionUrl(transactionHash)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-semibold text-blue-700 hover:border-blue-500 dark:border-blue-800 dark:bg-gray-950 dark:text-blue-300"
+                >
+                  View transaction ↗
+                </a>
+              )}
+            </div>
+            <dl className="grid gap-2 text-xs sm:grid-cols-2">
+              {schemaUID && <div><dt className="text-gray-500 dark:text-gray-400">Schema UID</dt><dd className="truncate font-mono text-gray-800 dark:text-gray-200" title={schemaUID}>{schemaUID}</dd></div>}
+              {attester && <div><dt className="text-gray-500 dark:text-gray-400">Attester</dt><dd className="truncate font-mono text-gray-800 dark:text-gray-200" title={attester}>{attester}</dd></div>}
+              {blockTimestamp && <div><dt className="text-gray-500 dark:text-gray-400">Onchain time</dt><dd className="text-gray-800 dark:text-gray-200">{new Date(blockTimestamp * 1_000).toISOString()}</dd></div>}
+            </dl>
+          </div>
         ) : (
-          <button
-            disabled
-            className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-600 text-sm cursor-not-allowed"
-          >
-            Read from Chain (unavailable)
-          </button>
+          <div className="rounded-lg bg-gray-100 px-4 py-2 text-sm text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+            Public proof link will appear after issuance.
+          </div>
         )}
 
         {/* Retrospective */}

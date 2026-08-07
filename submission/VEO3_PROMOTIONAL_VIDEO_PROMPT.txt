@@ -1,0 +1,83 @@
+OPEN FORECAST RECEIPT - VEO 3 / VEO 3.1 PROMOTIONAL VIDEO PACKAGE
+
+DELIVERABLE
+Create a 68-75 second, 16:9, 1080p promotional demo video for the AI Factory native.builder hackathon. Generate the cinematic shots below as separate 8-second Veo clips, then assemble them with REAL screen recordings of the deployed application. Do not ask Veo to recreate the app interface, render logos, or spell long text. Composite all exact titles, URLs, captions, and product screens in the editor.
+
+MODEL AND SETTINGS
+- Prefer Veo 3.1 if available; Veo 3 is acceptable.
+- Aspect ratio: 16:9.
+- Clip length: 8 seconds per generated shot.
+- Frame rate: cinematic 24 fps.
+- Generate 2 variants per shot; keep the most coherent one.
+- Use the same seed or visual references where the interface supports them.
+- Native audio: ambient sound design only. Record the exact voiceover separately.
+
+GLOBAL VISUAL DIRECTION - APPEND TO EVERY VEO SHOT PROMPT
+Premium editorial technology film, restrained and credible, dark navy and graphite environment with precise electric-blue accents, subtle warm white highlights, crisp realistic materials, cinematic depth of field, physically plausible lighting, slow controlled camera movement, high detail, modern financial-research atmosphere, no people, no faces, no company logos, no crypto coins, no dollar signs, no hype imagery, no readable text, no watermarks, no fake user interface, no stock ticker wall, no neon cyberpunk overload. Leave clean negative space where specified for titles added in post. Audio: restrained low electronic pulse, soft paper and glass textures, no dialogue, no singing.
+
+SHOT 1 - THE MEMORY PROBLEM (0:00-0:08)
+An elegant archive room in near darkness. Individual forecast documents made of translucent paper and glass hover in ordered rows, each carrying abstract charts and timestamps with no readable text. As the camera slowly dollies forward, several historical pages subtly rewrite themselves: chart lines shift, dates blur, and prior versions fade away, creating a quiet sense of lost provenance. One untouched page remains sharply illuminated in electric blue at the center. Controlled cinematic lighting, precise and unsettling rather than dystopian. Leave the upper-left quadrant clean for a title in post.
+
+POST TEXT: "AI investment research has a memory problem."
+
+SHOT 2 - ONE FORECAST, ONE RECEIPT (0:14-0:22)
+Macro cinematic view of one stream of abstract forecast data - ordered quarterly points, model provenance symbols, evidence markers, and time boundaries - converging into one clean, self-contained transparent receipt artifact. The receipt seals independently while many other receipts form behind it, each visibly separate rather than grouped into a single object. A precise blue edge light travels around the first receipt. Slow orbiting camera, credible scientific visualization, no readable text.
+
+SHOT 3 - TIME BOUNDARIES STAY DISTINCT (0:22-0:30)
+A single horizontal timeline floats in a dark research space. Separate luminous markers appear one by one for model knowledge cutoff, supplied context cutoff, evidence retrieval, forecast generation, public release, and later evaluation maturity. The markers remain visibly distinct and never collapse into one timestamp. The camera tracks smoothly along the timeline as layered transparent evidence cards connect to the correct moments. No readable labels; use different geometric marker forms and subtle blue-white color coding.
+
+SHOT 4 - SEAL AND TAMPER (0:38-0:46)
+Extreme close-up of a precise ordered sequence of quarterly forecast values flowing through a transparent canonicalization mechanism into a 32-byte cryptographic seal represented as a crystalline blue fingerprint. One small value is deliberately changed. The entire downstream seal instantly transforms into a different red fingerprint, while the original blue seal remains beside it for comparison. The transformation must be deterministic and technical, not magical. No readable text, no lock icon.
+
+SHOT 5 - OPTIONAL PUBLIC TIMESTAMP (0:54-1:02)
+One individual receipt digest travels as a narrow beam from the sealed receipt into a clean public distributed ledger made of understated glass nodes. The ledger accepts that one receipt as its own entity and emits one unique proof marker and timestamp pulse. Other receipts arrive as separate entities, even if transported together. The network feels neutral and infrastructural, not speculative. No coins, no chain logos, no token prices, no readable text. Leave the lower-right area clean for a proof-limitation caption added in post.
+
+POST TEXT: "Proves timestamped integrity - not truth or accuracy."
+
+SHOT 6 - AN OPEN STANDARD (1:02-1:10)
+Pull back from a single sealed market-forecast receipt to reveal a calm library of compatible receipts from different forecasting systems, all sharing a consistent modular structure while preserving their own provenance. Thin blue lines connect schema modules, verifier tools, and independent proof envelopes. The camera rises into a clean top-down composition suggesting interoperability and public inspection. Editorial, credible, spacious, no readable text.
+
+SHOT 7 - END CARD BACKGROUND (1:10-1:18; trim final cut to <=75 seconds)
+Minimal dark navy field with a refined translucent receipt standing upright in the center-right, its blue cryptographic edge glowing softly. A faint grid of verified historical versions recedes into the background. Slow push-in, quiet confidence, generous clean negative space on the left for the exact product name and calls to action added in post. No readable text or logos generated inside the shot. Audio resolves with a soft, confident tonal chime.
+
+REAL APP RECORDINGS TO INSERT
+1. 0:08-0:14 - Open https://open-forecast-receipt.web.app/manifest/batch-6 and show all five public assets.
+2. 0:30-0:38 - Open PepsiCo, show 12 individual receipt rows, then open the Ray Dalio RESEARCHER receipt.
+3. 0:46-0:54 - Scroll through the receipt's information boundary and 20-step path, then show Integrity Passed.
+4. 0:54-1:02 as picture-in-picture over Shot 5 if desired - In Tamper Sandbox change one step return and show Integrity FAIL; reset to PASS.
+5. 1:02-1:10 as a short cutaway over Shot 6 - Show Standards & About and the proof limitation.
+
+EXACT VOICEOVER - RECORD SEPARATELY
+"AI investment research has a memory problem. Forecasts are easy to publish, edit, and summarize - but hard to verify later. Open Forecast Receipt turns each individual forecast into a portable record of what was predicted, when, by which model, and with which information boundary. The sealed payload is canonicalized and hashed. Change one quarterly return, and integrity verification fails. A compact, optional Base Sepolia attestation can bind the receipt digest to a public timestamp - proving integrity and publication timing, not truth or accuracy. Our Batch 6 demonstration exposes five public assets, sixty individual AI-advisor receipts, and twenty quarterly steps per forecast. Open PepsiCo, inspect one receipt, verify its digest, then edit a value in the tamper sandbox and watch the proof break. Open Forecast Receipt is an experimental open standard for accountable forecasting. Try the verifier. Review the schema. Help us evolve it."
+
+EXACT ON-SCREEN TEXT - ADD IN POST, DO NOT GENERATE IN VEO
+- AI investment research has a memory problem.
+- One forecast. One receipt. One independently verifiable record.
+- 5 public assets | 60 individual receipts | 20 quarterly steps each
+- Integrity: PASS
+- Change one value -> Integrity: FAIL
+- Optional Base Sepolia proof
+- Proves timestamped integrity - not truth or accuracy.
+- Open Forecast Receipt
+- Make forecasts accountable by design.
+- open-forecast-receipt.web.app
+- github.com/TheFutureEdge/open-forecast-receipt
+- Built with native.builder for the lablab.ai AI Factory Hackathon
+
+EDIT AND AUDIO PLAN
+- Use hard, clean cuts between generated abstractions and real UI; avoid flashy transitions.
+- Add subtle 105-115 BPM electronic underscore at -22 to -18 LUFS under narration.
+- Keep narration clear around -14 LUFS integrated; duck music by 5-7 dB during speech.
+- Use restrained interface click sounds only on actual user actions.
+- Add burned-in English captions from the exact voiceover.
+- Do not show any receipt as onchain-verified while the live app reports 0 verified attestations.
+- Keep total runtime below 75 seconds, comfortably inside the hackathon's 3-minute limit.
+- Export MP4, H.264, 1920x1080, 15-25 Mbps, AAC 48 kHz, web optimized.
+
+FINAL QA
+- The application URL opens without authentication.
+- The video shows at least one complete workflow: manifest -> PepsiCo -> receipt -> integrity PASS -> one-value tamper -> FAIL.
+- All product screens are real captures, never Veo hallucinations.
+- Every exact word, logo, URL, and status is composited in post.
+- The proof limitation is spoken and visible.
+- No investment-performance or forecast-accuracy claim is made.

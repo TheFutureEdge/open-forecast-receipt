@@ -55,7 +55,7 @@ function assertJsonSafe(value: unknown, seen?: Set<unknown>): void {
  * forecast payload.
  */
 export function extractReceiptPayload(
-  document: Record<string, unknown>
+  document: { receiptPayload?: unknown }
 ): Record<string, unknown> {
   if (!document.receiptPayload || typeof document.receiptPayload !== "object") {
     throw new Error("extractReceiptPayload: receiptPayload is missing or invalid");

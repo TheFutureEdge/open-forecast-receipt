@@ -1,0 +1,40 @@
+{
+  "cohortId": "ipulse-batch6-cross-asset-showcase-v1",
+  "declaredAt": "2026-08-07T00:00:00Z",
+  "batchId": "batch-6",
+  "issuanceMode": "retrospective",
+  "network": "eip155:84532",
+  "selectionPolicy": "Select the Ray Dalio researcher-mode receipt for each of the five public assets, plus the PepsiCo Ray Dalio thinker-mode companion. The rule uses asset, persona, and mode only; it does not use forecast direction, rating, magnitude, accuracy, or observed performance.",
+  "receipts": [
+    {
+      "assetSlug": "alphabet",
+      "mode": "RESEARCHER",
+      "receiptDigest": "24206a0229f9669c70b70a63549010ad48a0fa53602cc357a9ab19739c06d494"
+    },
+    {
+      "assetSlug": "bitcoin",
+      "mode": "RESEARCHER",
+      "receiptDigest": "aa3971606f12763bc3c89bf9765a9b85b60e46e47d2308d18d4d95934644dd88"
+    },
+    {
+      "assetSlug": "nvidia",
+      "mode": "RESEARCHER",
+      "receiptDigest": "cf82d744a6acb36b49f2a3fd6362151d9d81e2e0c73f80885c8327d25d57c4ff"
+    },
+    {
+      "assetSlug": "pepsi",
+      "mode": "RESEARCHER",
+      "receiptDigest": "85e82d474841f0497fb7f6fcb0a7fec7ce808de9779ff69eff32a6b6560ea4a5"
+    },
+    {
+      "assetSlug": "pepsi",
+      "mode": "THINKER",
+      "receiptDigest": "a9a02ae78878dab7866eaec9c940969e99f12fb43aa8dbe3af2ba72e16bc7422"
+    },
+    {
+      "assetSlug": "spy",
+      "mode": "RESEARCHER",
+      "receiptDigest": "ab039eeaf00f9f950fee893f9ecb162f9a9fb6f61a46ef2f19f94b7386e955fb"
+    }
+  ]
+}

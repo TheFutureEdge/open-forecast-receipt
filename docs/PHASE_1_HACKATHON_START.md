@@ -1,7 +1,7 @@
 # AI Factory Phase 1 start brief
 
 Date: 2026-08-05  
-Status: scope locked and ready for native.builder Product Architect  
+Status: implementation stabilized; Native AMx/QA upload pending
 Product: iPulse AI  
 Hackathon project: Open Forecast Receipt Explorer
 
@@ -12,12 +12,20 @@ Phase 1 is the complete hackathon scope:
 - exactly five existing public assets: PepsiCo, NVIDIA, Bitcoin, Alphabet Class C, and SPY;
 - Batch 6 is the inaugural historic pilot for all five assets;
 - one individual advisor forecast becomes one Open Forecast Receipt JSON and one EAS attestation UID;
-- the 12 UIDs for one asset travel in one native EAS `multiAttest` transaction;
+- the six declared showcase records travel in one native EAS `multiAttest`
+  transaction and still receive six independent UIDs;
 - all 20 original quarterly step changes are retained;
 - Base Sepolia is used for the hackathon; no production key, Firestore write, or Base mainnet write is part of the demo;
 - no random assets, seven-asset expansion, 15-asset expansion, consensus receipt, or leaderboard receipt is in Phase 1.
 
 The open-source product is not merely an iPulse AI page. It is a reusable receipt toolkit: JSON Schema, examples, deterministic validation/canonicalization/hashing, market-path reconstruction, EAS encoding/decoding, proof verification, and a public explorer. The iPulse adapter is the first reference implementation.
+
+The first Base Sepolia issuance is a six-receipt retrospective showcase, not an
+attempt to anchor all 60 fixtures at once. It selects the same researcher-mode
+advisor persona across all five public assets plus the PepsiCo thinker-mode
+companion. The selection contract excludes forecast direction, rating,
+magnitude, accuracy, and observed performance. The six receipts may share one
+`multiAttest` transaction while retaining six independent EAS UIDs.
 
 ## Why Batch 6, not Batch 1
 
@@ -137,8 +145,9 @@ advisor forecasts generated
   -> deterministic five-asset eligibility check
   -> one forecast at a time: iPulse adapter -> OFR JSON Schema validation
   -> RFC 8785 canonicalization -> SHA-256 digest
-  -> one asset at a time: encode 12 EAS records -> exact cost/gas preflight
-  -> submit one multiAttest -> receive 12 UIDs
+  -> apply the declared outcome-independent selection policy
+  -> encode the selected EAS records -> exact cost/gas preflight
+  -> submit one multiAttest -> receive one UID per selected forecast
   -> read back/decode/compare every UID
   -> write one proof-registry record per forecast
   -> Forecast History adds Blockchain proofs status and direct receipt links
@@ -152,24 +161,30 @@ Native.builder must build the functional hackathon application: application stru
 
 Codex supplies and reviews the open standard, schema, sanitized fixtures, deterministic algorithms, digest vectors, EAS contract, tests, security and data review, demo/submission copy, and the later iPulse production adapter/outbox/proof-registry/UI integration. Native.builder can generate most of the app; Codex should not secretly replace it with an externally built application.
 
-## Exact start sequence
+## Native.builder continuation sequence
 
-Start now, using the attached upload bundle.
+The Product Architect, Builder, and initial QA stages are complete in Native
+project `9b5dc37e-f409-4f5e-9206-b20d752313a5`. The original architect prompt is
+retained for provenance; do not start another project or paste it again.
 
-1. In the native.builder account carrying the promotional Builder plan, create a new project.
-2. Keep the default Product Architect stage selected.
-3. Upload the `native-builder/native_builder_upload_bundle_v01` folder into the project's Docs area, or upload its six files together. The ZIP is a transport copy; use the extracted files so Product Architect can inspect them directly.
-4. Paste `native-builder/native_builder_product_architect_prompt.txt` exactly.
-5. Let Product Architect return the PRD, architecture, file plan, and credit-aware build sequence. Do not ask it to build unrelated features.
-6. Bring that Product Architect output back to Codex for a fast scope/technical review before the first large Builder run; this protects the limited credit pool.
-7. Switch to Builder and implement the PepsiCo vertical slice first. Then load the other four Batch 6 fixture sets without changing the core schema.
+1. Run `npm run native:prepare-upload` in the canonical repository.
+2. In the same Native project, open the Code volume at its root and upload the
+   generated `native-builder/upload-ready` folder contents. Keep GitHub
+   disconnected.
+3. Paste `native-builder/NATIVE_UPLOAD_AMX_FINISH_PROMPT.md` as a new message.
+4. Use AMx for that bounded reconciliation pass, then switch to QA and paste
+   `native-builder/NATIVE_UPLOAD_QA_PROMPT.md`.
+5. Download the final Native source export and compare it with the canonical
+   repository before publishing the Native preview or submitting the hackathon.
 
-The user needs to initiate the project under the logged-in native.builder account. Codex has already written the prompt; no new product wording is required from the user. If the logged-in Native session is made available and the user explicitly asks Codex to operate it, Codex can assist with the UI, but final public publishing and hackathon submission still require explicit approval.
+Final public publishing and hackathon submission still require explicit
+approval.
 
 ## Phase 1 acceptance gate
 
 - five public assets appear in the manifest;
-- PepsiCo is the complete first vertical slice with 12 forecasts and 12 UID routes;
+- PepsiCo exposes 12 individual receipt routes and two declared showcase proof
+  slots; the complete cross-asset pilot produces six independent UIDs;
 - each untouched fixture passes JSON Schema and digest verification;
 - `-400` is rendered as `-4.00%` everywhere;
 - the 20-step path reconstructs to approximately USD 180.6052 for the Ray example;

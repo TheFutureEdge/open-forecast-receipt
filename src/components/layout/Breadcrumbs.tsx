@@ -7,7 +7,7 @@ interface BreadcrumbSegment {
 
 const labelMap: Record<string, string> = {
   manifest: "Manifest",
-  "batch-6": "Batch 6",
+  "batch-6": "Hackathon Demo",
   assets: "Assets",
   pepsi: "PepsiCo",
   nvidia: "NVIDIA",
@@ -20,6 +20,15 @@ const labelMap: Record<string, string> = {
 
 function getLabel(segment: string): string {
   return labelMap[segment] ?? segment;
+}
+
+function isNavigableBreadcrumb(path: string): boolean {
+  return (
+    path === "/standards"
+    || /^\/manifest\/[^/]+$/.test(path)
+    || /^\/manifest\/[^/]+\/assets\/[^/]+$/.test(path)
+    || /^\/receipts\/[0-9a-fA-F]{64}$/.test(path)
+  );
 }
 
 export function Breadcrumbs() {
@@ -35,7 +44,7 @@ export function Breadcrumbs() {
     current += `/${seg}`;
     crumbs.push({
       label: getLabel(seg),
-      path: current,
+      path: isNavigableBreadcrumb(current) ? current : undefined,
     });
   }
 

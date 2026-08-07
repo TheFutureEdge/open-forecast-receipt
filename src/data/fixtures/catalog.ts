@@ -1,5 +1,23 @@
 import catalogData from "./batch6-catalog.json";
+import showcaseSelectionData from "./batch6-showcase-selection.json";
 import type { CompactEasProjection, OfrDocument, OfrFixture } from "../../types/ofr";
+import type { ChainStatus } from "../../types/verification";
+
+export interface ShowcaseSelectionEntry {
+  assetSlug: string;
+  mode: string;
+  receiptDigest: string;
+}
+
+export interface ShowcaseSelection {
+  cohortId: string;
+  declaredAt: string;
+  batchId: string;
+  issuanceMode: "retrospective" | "contemporaneous";
+  network: string;
+  selectionPolicy: string;
+  receipts: ShowcaseSelectionEntry[];
+}
 
 export interface FixtureCatalogEntry {
   assetSlug: string;
@@ -11,7 +29,12 @@ export interface FixtureCatalogEntry {
   documentPath: string;
   projectionPath: string;
   dataStatus: "loaded";
-  chainStatus: "not_issued";
+  chainStatus: ChainStatus;
+  schemaUID?: string;
+  attestationUID?: string;
+  transactionHash?: string;
+  attester?: string;
+  blockTimestamp?: number;
 }
 
 interface FixtureCatalog {
@@ -22,10 +45,33 @@ interface FixtureCatalog {
 }
 
 const catalog = catalogData as FixtureCatalog;
+const showcaseSelection = showcaseSelectionData as ShowcaseSelection;
+const showcaseDigestSet = new Set(
+  showcaseSelection.receipts.map((entry) => entry.receiptDigest),
+);
 const documentLoaders = import.meta.glob("./*/*-ofr.json", { import: "default" });
 const projectionLoaders = import.meta.glob("./*/*-projection.json", { import: "default" });
 
 export const fixtureCatalog = catalog;
+export const phase1ShowcaseSelection = showcaseSelection;
+
+export function isShowcaseReceipt(receiptDigest: string): boolean {
+  return showcaseDigestSet.has(receiptDigest);
+}
+
+export function getShowcaseCounts(assetSlug?: string): { selected: number; verified: number } {
+  const selectedDigests = new Set(
+    showcaseSelection.receipts
+      .filter((entry) => !assetSlug || entry.assetSlug === assetSlug)
+      .map((entry) => entry.receiptDigest),
+  );
+  return {
+    selected: selectedDigests.size,
+    verified: catalog.entries.filter(
+      (entry) => selectedDigests.has(entry.receiptDigest) && entry.chainStatus === "verified",
+    ).length,
+  };
+}
 
 export function getAssetFixtureEntries(assetSlug: string): FixtureCatalogEntry[] {
   return catalog.entries.filter((entry) => entry.assetSlug === assetSlug);

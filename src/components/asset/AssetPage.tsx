@@ -3,21 +3,32 @@ import { StatusBadge } from "../common/StatusBadge";
 import { AdvisorCardList } from "./AdvisorCardList";
 import type { BatchManifest } from "../../types/manifest";
 import manifestData from "../../data/fixtures/batch6-manifest.json";
-import { getAssetFixtureEntries } from "../../data/fixtures/catalog";
+import { getAssetFixtureEntries, getShowcaseCounts } from "../../data/fixtures/catalog";
 
 const manifest = manifestData as BatchManifest;
 
-export function AssetPage({ routeSlug }: { routeSlug: string }) {
+export function AssetPage({ batchId, routeSlug }: { batchId: string; routeSlug: string }) {
+  if (batchId !== manifest.batchId) {
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Batch not found</h2>
+        <Link to={`/manifest/${manifest.batchId}`} className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
+          Open the available manifest
+        </Link>
+      </div>
+    );
+  }
   const asset = manifest.assets.find(
     (candidate) => candidate.slug === routeSlug || candidate.aliases?.includes(routeSlug)
   );
   const fixtures = asset ? getAssetFixtureEntries(asset.slug) : [];
+  const showcaseCounts = asset ? getShowcaseCounts(asset.slug) : { selected: 0, verified: 0 };
 
   if (!asset) {
     return (
       <div className="text-center py-20">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Asset not found</h2>
-        <Link to="/manifest/batch-6" className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
+        <Link to={`/manifest/${manifest.batchId}`} className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
           Back to Manifest
         </Link>
       </div>
@@ -41,7 +52,11 @@ export function AssetPage({ routeSlug }: { routeSlug: string }) {
             value={asset.coverageStatus}
             label={asset.coverageStatus === "partial" ? `Partial (${asset.loadedCount}/${asset.advisorCount})` : undefined}
           />
-          <StatusBadge type="chainStatus" value={asset.chainStatus} />
+          <StatusBadge
+            type="chainStatus"
+            value={showcaseCounts.verified > 0 ? "verified" : asset.chainStatus}
+            label={`${showcaseCounts.verified}/${showcaseCounts.selected} showcase proofs`}
+          />
         </div>
       </div>
 
@@ -65,6 +80,14 @@ export function AssetPage({ routeSlug }: { routeSlug: string }) {
         <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900">
           <p className="text-sm text-emerald-700 dark:text-emerald-400">
             All {asset.advisorCount} individual advisor forecast receipts are loaded for this asset.
+          </p>
+        </div>
+      )}
+
+      {showcaseCounts.selected > 0 && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            Phase 1 selected {showcaseCounts.selected} individual receipt{showcaseCounts.selected === 1 ? "" : "s"} for independent Base Sepolia proofs; {showcaseCounts.verified} currently verify onchain. Selection is role-based and does not use forecast direction, rating, or observed performance.
           </p>
         </div>
       )}

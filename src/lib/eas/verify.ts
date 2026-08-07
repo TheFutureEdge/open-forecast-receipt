@@ -63,7 +63,7 @@ export function verifyAttestationRecord(
     return { status: "unavailable", failureReason: "attestation_uid_mismatch" };
   }
 
-  if (EAS_SCHEMA_UID && normalizeHex(attestation.schema) !== normalizeHex(EAS_SCHEMA_UID)) {
+  if (normalizeHex(attestation.schema) !== normalizeHex(EAS_SCHEMA_UID)) {
     return { status: "unavailable", failureReason: "schema_uid_mismatch" };
   }
 

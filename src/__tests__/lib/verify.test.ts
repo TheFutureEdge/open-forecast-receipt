@@ -5,7 +5,13 @@ import { validateSchema } from "../../lib/schema/validate";
 import rayOfr from "../../data/fixtures/pepsi/ray-ofr.json";
 import rayProjection from "../../data/fixtures/pepsi/ray-projection.json";
 import batchManifest from "../../data/fixtures/batch6-manifest.json";
-import { fixtureCatalog, loadFixture } from "../../data/fixtures/catalog";
+import easConfig from "../../data/eas-base-sepolia.json";
+import {
+  fixtureCatalog,
+  loadFixture,
+  phase1ShowcaseSelection,
+} from "../../data/fixtures/catalog";
+import { encodePacked, keccak256 } from "viem";
 
 describe("canonicalize + hash — Ray payload digest regression", () => {
   it("computes the canonical receiptPayload digest", async () => {
@@ -19,7 +25,7 @@ describe("canonicalize + hash — Ray payload digest regression", () => {
   });
 
   it("does not change when proof metadata changes", async () => {
-    const modifiedEnvelope = structuredClone(rayOfr);
+    const modifiedEnvelope = structuredClone(rayOfr) as unknown as import("../../types/ofr").OfrDocument;
     modifiedEnvelope.proofEnvelope.proofs.push({
       type: "eas_attestation",
       status: "planned",
@@ -145,9 +151,15 @@ describe("path reconstruction — canonical PepsiCo/Ray fixture", () => {
     expect(rayProjection.eas.revocable).toBe(false);
   });
 
-  it("regression: no real attestation UID exists", () => {
-    expect(rayProjection.protocolSuppliedAfterIssuance.attestationUID).toBeNull();
-    expect(rayProjection.protocolSuppliedAfterIssuance.schemaUID).toBeNull();
+  it("keeps projection state and protocol-supplied proof fields coherent", () => {
+    const protocol = rayProjection.protocolSuppliedAfterIssuance;
+    if (rayProjection.state === "planned_unissued_example") {
+      expect(protocol.attestationUID).toBeNull();
+      expect(protocol.schemaUID).toBeNull();
+    } else {
+      expect(protocol.attestationUID).toMatch(/^0x[0-9a-f]{64}$/);
+      expect(protocol.schemaUID).toBe(easConfig.schemaUid);
+    }
   });
 });
 
@@ -170,6 +182,24 @@ describe("Phase 1 fixture catalog", () => {
     }
   });
 
+  it("declares a six-receipt, cross-asset showcase without outcome-based selection", () => {
+    const selected = phase1ShowcaseSelection.receipts;
+    expect(selected).toHaveLength(6);
+    expect(new Set(selected.map((entry) => entry.receiptDigest)).size).toBe(6);
+    expect(new Set(selected.map((entry) => entry.assetSlug))).toEqual(
+      new Set(["alphabet", "bitcoin", "nvidia", "pepsi", "spy"]),
+    );
+    expect(selected.filter((entry) => entry.assetSlug === "pepsi")).toHaveLength(2);
+    expect(phase1ShowcaseSelection.selectionPolicy).toContain("does not use forecast direction");
+    for (const selectedEntry of selected) {
+      const catalogEntry = fixtureCatalog.entries.find(
+        (entry) => entry.receiptDigest === selectedEntry.receiptDigest,
+      );
+      expect(catalogEntry?.assetSlug).toBe(selectedEntry.assetSlug);
+      expect(catalogEntry?.mode).toBe(selectedEntry.mode);
+    }
+  });
+
   it("validates and recomputes every generated payload digest", async () => {
     for (const entry of fixtureCatalog.entries) {
       const fixture = await loadFixture(entry);
@@ -179,7 +209,12 @@ describe("Phase 1 fixture catalog", () => {
       const digest = await sha256(canonicalizeJson(extractReceiptPayload(fixture.document!)));
       expect(digest).toBe(entry.receiptDigest);
       expect(fixture.projection!.encodedFields.receiptDigest).toBe(`0x${entry.receiptDigest}`);
-      expect(fixture.projection!.protocolSuppliedAfterIssuance.attestationUID).toBeNull();
+      const protocol = fixture.projection!.protocolSuppliedAfterIssuance;
+      if (fixture.projection!.state === "planned_unissued_example") {
+        expect(protocol.attestationUID).toBeNull();
+      } else {
+        expect(protocol.attestationUID).toMatch(/^0x[0-9a-f]{64}$/);
+      }
     }
   });
 });
@@ -230,11 +265,12 @@ describe("eas verify", () => {
   it("verifies a decoded EAS record against the sealed payload digest", async () => {
     const { encodeAttestationData } = await import("../../lib/eas/encode");
     const { verifyAttestationRecord } = await import("../../lib/eas/verify");
+    const { EAS_SCHEMA_UID } = await import("../../lib/eas/constants");
     const uid = `0x${"11".repeat(32)}` as const;
     const result = verifyAttestationRecord(
       {
         uid,
-        schema: `0x${"22".repeat(32)}`,
+        schema: EAS_SCHEMA_UID,
         time: 1785945600n,
         expirationTime: 0n,
         revocationTime: 0n,
@@ -252,6 +288,30 @@ describe("eas verify", () => {
     expect(result.attestedDigest).toBe(rayOfr.proofEnvelope.payloadDigestSha256);
     expect(result.blockTimestamp).toBe(1785945600);
   });
+
+  it("rejects an attestation from a different schema", async () => {
+    const { encodeAttestationData } = await import("../../lib/eas/encode");
+    const { verifyAttestationRecord } = await import("../../lib/eas/verify");
+    const uid = `0x${"11".repeat(32)}` as const;
+    const result = verifyAttestationRecord(
+      {
+        uid,
+        schema: `0x${"22".repeat(32)}`,
+        time: 1785945600n,
+        expirationTime: 0n,
+        revocationTime: 0n,
+        refUID: `0x${"00".repeat(32)}`,
+        recipient: `0x${"00".repeat(20)}`,
+        attester: `0x${"33".repeat(20)}`,
+        revocable: false,
+        data: encodeAttestationData(rayProjection.encodedFields),
+      },
+      uid,
+      rayOfr.proofEnvelope.payloadDigestSha256,
+    );
+    expect(result.status).toBe("unavailable");
+    expect(result.failureReason).toBe("schema_uid_mismatch");
+  });
 });
 
 describe("EAS constants regression", () => {
@@ -259,5 +319,15 @@ describe("EAS constants regression", () => {
     const { EAS_SCHEMA } = await import("../../lib/eas/constants");
     expect(EAS_SCHEMA).toContain("bytes32 receiptDigest");
     expect(EAS_SCHEMA).not.toContain("string receiptDigest");
+  });
+
+  it("derives the configured Base Sepolia schema UID exactly", () => {
+    const computed = keccak256(encodePacked(
+      ["string", "address", "bool"],
+      [easConfig.schema, easConfig.resolver as `0x${string}`, easConfig.revocable],
+    ));
+    expect(computed).toBe(easConfig.schemaUid);
+    expect(easConfig.contracts.eas).toBe("0x4200000000000000000000000000000000000021");
+    expect(easConfig.contracts.schemaRegistry).toBe("0x4200000000000000000000000000000000000020");
   });
 });

@@ -12,7 +12,25 @@ function toSafeNumber(value: bigint | number, name: string): number {
 
 /** Decode Solidity ABI bytes for the complete 17-field OFR EAS projection. */
 export function decodeAttestationData(data: Hex): DecodedAttestation {
-  const fields = decodeAbiParameters(EAS_SCHEMA_PARAMETERS, data);
+  const fields = decodeAbiParameters(EAS_SCHEMA_PARAMETERS, data) as unknown as readonly [
+    string,
+    number | bigint,
+    number | bigint,
+    Hex,
+    Hex,
+    string,
+    number | bigint,
+    number | bigint,
+    number | bigint,
+    string,
+    string,
+    string,
+    boolean,
+    number | bigint,
+    number | bigint,
+    string,
+    Hex,
+  ];
   return {
     subjectRef: fields[0],
     runNumber: toSafeNumber(fields[1], "runNumber"),

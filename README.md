@@ -9,15 +9,23 @@ Open Forecast Receipt (OFR) is an open standard and verification toolkit for por
 The AI Factory hackathon pilot is deliberately limited to five already-public Batch 6 assets: PepsiCo, NVIDIA, Bitcoin, Alphabet Class C, and SPY.
 
 The local reference application currently contains all 60 sanitized receipts:
-12 individual advisor forecasts for each of the five assets. Each receipt and
+12 individual forecaster receipts for each of the five assets. These forecasters
+are the AI advisor personas used inside iPulse AI. Each receipt and
 projection is loaded on demand so the full fixture set does not inflate the
 initial application bundle.
 
-- One individual advisor forecast is one OFR JSON document.
-- One individual advisor forecast is one EAS attestation UID.
+- One individual forecast is one OFR JSON document.
+- One individual forecast is one EAS attestation UID.
 - The 12 receipts for one asset may travel in one EAS `multiAttest` transaction without becoming one batch entity.
 - Batch 6 is a clearly labeled retrospective pilot on Base Sepolia.
 - Future eligible receipts are intended to be issued asynchronously after iPulse AI's immutable public publication gate.
+
+The initial declared onchain showcase contains six receipts: one
+researcher-mode receipt for the same advisor persona across all five public
+assets, plus the PepsiCo thinker-mode companion. The rule is based only on
+asset, persona, and mode--not forecast direction, rating, magnitude, accuracy,
+or observed performance. One `multiAttest` transaction will still create six
+independent EAS UIDs.
 
 No EAS schema or forecast attestation has been issued from this directory yet. The examples remain planned, unissued test vectors until a Base Sepolia round-trip succeeds.
 
@@ -29,14 +37,17 @@ No EAS schema or forecast attestation has been issued from this directory yet. T
 - `public/` - static application assets.
 - `docs/` - current design, hackathon scope, and submission material.
 - `native-builder/` - the original Product Architect prompt, Native project
-  provenance, and the current GitHub synchronization prompt.
-- `scripts/` - deterministic fixture generation from compact, curated source exports.
+  provenance, and the reviewed upload/AMx/QA handoff prompts.
+- `scripts/` - deterministic fixture generation, Base Sepolia preflight and
+  issuance tooling, and the disposable Native upload-folder builder.
 - `research/` - reproducible cost, capacity, provenance, SQL, notebook, and generated-report evidence.
 
 The original Product Architect prompt and provenance record document how the
-Native project began. Old upload bundles and generated ZIP handoffs remain local
-and untracked. Native Builder should synchronize from the public GitHub
-repository, which is the current source of truth.
+Native project began. The public GitHub repository is the source of truth. The
+Native GitHub integration is intentionally not used because its live sync flow
+requires organization-wide repository access. A whitelisted, disposable Code
+folder is generated with `npm run native:prepare-upload`, uploaded to the same
+Native project, and then rechecked by Native Builder and QA.
 
 ## Canonical starting points
 
@@ -45,8 +56,12 @@ repository, which is the current source of truth.
 - Full receipt example: `examples/ipulse/pepsi_batch6_ray_open_forecast_receipt_v0_1.json`
 - Compact EAS example: `examples/ipulse/pepsi_batch6_ray_onchain_projection_v0_1.json`
 - Native prompt: `native-builder/native_builder_product_architect_prompt.txt`
-- Native GitHub synchronization prompt: `native-builder/NATIVE_GITHUB_SYNC_PROMPT_V03.md`
 - Subject identity and ticker changes: `docs/SUBJECT_IDENTITY_AND_TICKER_CHANGES.md`
+- Product purpose and exact iPulse integration: `docs/PURPOSE_AND_IPULSE_INTEGRATION.md`
+- Open Forecast Registry product direction: `docs/OPEN_FORECAST_REGISTRY_PRODUCT_DIRECTION.md`
+- Open Forecast Receipt v0.2 requirements: `docs/OPEN_FORECAST_RECEIPT_V0_2_REQUIREMENTS.md`
+- Six-receipt Base Sepolia runbook: `docs/BASE_SEPOLIA_SHOWCASE_RUNBOOK.md`
+- Native AMx finishing prompt: `native-builder/NATIVE_UPLOAD_AMX_FINISH_PROMPT.md`
 
 ## Local verification
 
@@ -54,6 +69,7 @@ repository, which is the current source of truth.
 npm test
 npm run build
 npm audit
+npm run eas:preflight
 ```
 
 `npm run fixtures:phase1` is intentionally a controlled maintainer operation: it
@@ -72,6 +88,6 @@ The project includes an MIT license. Publication, GitHub synchronization, blockc
 The application source in `src/` originated from Native Builder project
 `9b5dc37e-f409-4f5e-9206-b20d752313a5`. Local changes are used for review,
 deterministic testing, fixture preparation, and corrective patches. Material
-application changes must be synchronized back to Native Builder and pass its QA
-flow before the final Native-hosted submission. See
+application changes must be uploaded back to Native Builder and pass its QA flow
+before the final Native-hosted submission. See
 `docs/NATIVE_BUILDER_PROVENANCE_AND_SYNC.md`.

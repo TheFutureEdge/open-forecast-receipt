@@ -8,9 +8,11 @@ Open Forecast Receipt (OFR) is an open standard and verification toolkit for por
 
 The project now operates as a Firestore-backed, openly browsable Library of five already-public iPulse AI Batch 6 assets: PepsiCo, NVIDIA, Bitcoin, Alphabet Class C, and SPY. Outside public-submission requests are reviewed manually through `support@ipulseai.com`; there are no customer accounts, payments, private storage, or automated public uploads.
 
-The dedicated staging environment is `oflapp-staging`; the production boundary
-is `oflapp-prod`. Neither environment is shared with an iPulse/PAPP Firebase
-project.
+The dedicated staging environment is live at
+[`https://oflapp-staging.web.app`](https://oflapp-staging.web.app) on project
+`oflapp-staging` with Firestore Standard in `us-central1`. The intended
+production boundary is `oflapp-prod`. Neither environment is shared with an
+iPulse/PAPP Firebase project.
 
 Local UI development reads the real staging Firestore with the anonymous,
 read-only Firebase Web SDK. Put the public Firebase Web configuration in
@@ -79,6 +81,7 @@ Native project, and then rechecked by Native Builder and QA.
 - Open Forecast Receipt v0.2 requirements: `docs/OPEN_FORECAST_RECEIPT_V0_2_REQUIREMENTS.md`
 - Active low-cost showcase architecture: `docs/IPULSE_SHOWCASE_ARCHITECTURE_V0_1.md`
 - Complete Firestore Library architecture: `docs/OPEN_FORECAST_LIBRARY_ARCHITECTURE_V0_1.md`
+- Controlled internal publication bundle: `docs/OFL_PUBLICATION_BUNDLE_V0_1.md`
 - Six-receipt Base Sepolia runbook: `docs/BASE_SEPOLIA_SHOWCASE_RUNBOOK.md`
 - Native AMx finishing prompt: `native-builder/NATIVE_UPLOAD_AMX_FINISH_PROMPT.md`
 

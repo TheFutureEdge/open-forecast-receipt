@@ -94,6 +94,11 @@ Create dedicated projects before any cloud Firestore import:
 | staging | `oflapp-staging` | OFLAPP-STAGING | Base Sepolia |
 | production | `oflapp-prod` | OFLAPP-PROD | Base mainnet only after separate approval |
 
+Staging was provisioned on 2026-08-12 with Firestore Standard in
+`us-central1`, delete protection enabled, and the default free-tier database.
+Its public Hosting origin is `https://oflapp-staging.web.app`. Production has
+no database, data, Hosting release, wallet, or deployment.
+
 Never reuse `ipulse-401013`, `pulse-staging-e1394`, or
 `pulseapp-firebase-dev`. The Library also gets separate service accounts, KMS
 keys, budgets, rules, Hosting sites, and wallet addresses per environment.
@@ -307,25 +312,31 @@ SDK identity.
 
 ## 12. What is complete and what still requires approval
 
-Complete locally:
+Complete in staging:
 
 - Firestore runtime repository;
 - 145-record controlled Batch 6 seed (including 60 receipts and 6 proof jobs);
 - anonymous public-read/client-deny-write rules;
 - direct receipt links and Library browsing;
 - read-only public client and controlled cloud import workflow;
+- deployed Firestore rules and indexes;
+- 145 imported records: 5 subjects, 60 forecasts, 60 receipts, and 6 private
+  proof jobs;
+- public Hosting deployment at `https://oflapp-staging.web.app`;
+- live anonymous-access smoke checks proving public record reads, direct
+  receipt reads, denied receipt scans, denied private reads, and denied browser
+  writes;
 - deterministic EAS encoding, preflight, testnet issuance, and chain verifier.
 
 Not performed:
 
 - production project/database activation and deployment;
-- any cloud Firestore import or deployment;
 - Cloud KMS key creation or IAM grants;
 - EAS schema registration or receipt issuance;
 - Base mainnet activation;
 - iPulse AI ledger code changes.
 
 Those are separate external-state steps and require exact staging/production
-approval. The next safe milestone is to provision staging, deploy Firestore
-rules, import the 60 receipts, then issue the six selected proofs on Base
-Sepolia and sync their individual UIDs.
+approval. The next safe milestone is to exercise the generic publication bundle
+with the next iPulse batch, then issue the six already selected staging proofs
+on Base Sepolia and sync their individual UIDs.

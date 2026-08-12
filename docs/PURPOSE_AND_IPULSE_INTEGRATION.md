@@ -66,6 +66,21 @@ Retries must be idempotent by receipt digest. A material correction creates a
 new receipt and new attestation and references the earlier receipt; it never
 overwrites the historical payload or proof.
 
+## Current internal submission command
+
+The first operational publisher is `scripts/publish-library-bundle.mjs`,
+documented in `OFL_PUBLICATION_BUNDLE_V0_1.md`. It is dry-run by default and
+requires an exact project confirmation plus `--apply` before connecting to
+Firestore. It validates, reseals, size-checks, and creates or byte-verifies
+every public index and receipt record. Selected entries create private proof
+jobs.
+
+For initial iPulse operation, the batch-publication workflow exports a sanitized
+bundle and invokes this command after the immutable public-publication gate.
+When unattended automation is justified, the same publisher module can run as
+a Cloud Run Job with Workload Identity. That is a packaging change, not a new
+public API, and it adds no always-on instance.
+
 ## iPulse AI data contract
 
 Do not make the public Forecast History page query Base, EASScan, a large batch

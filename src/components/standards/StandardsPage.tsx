@@ -1,14 +1,38 @@
+import { useEffect, useState } from "react";
 import config from "../../data/eas-base-sepolia.json";
-import { fixtureCatalog, phase1ShowcaseSelection } from "../../data/fixtures/catalog";
+import { getLibraryManifest } from "../../lib/library/repository";
 
 export function StandardsPage() {
-  const verifiedCount = fixtureCatalog.entries.filter((entry) => entry.chainStatus === "verified").length;
-  const selectedCount = phase1ShowcaseSelection.receipts.length;
+  const [proofCounts, setProofCounts] = useState({ selected: 0, verified: 0 });
+
+  useEffect(() => {
+    getLibraryManifest("batch-6")
+      .then((manifest) => {
+        if (manifest) {
+          setProofCounts({
+            selected: manifest.selectedProofCount,
+            verified: manifest.verifiedProofCount,
+          });
+        }
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const selectedCount = proofCounts.selected;
+  const verifiedCount = proofCounts.verified;
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-        Standards &amp; About
+        How Open Forecast Receipt works
       </h1>
+
+      <section className="rounded-2xl border border-blue-200 bg-blue-50 p-5 dark:border-blue-900 dark:bg-blue-950/30">
+        <h2 className="text-base font-semibold text-blue-950 dark:text-blue-100">Public submissions are reviewed manually</h2>
+        <p className="mt-2 text-sm leading-6 text-blue-800 dark:text-blue-300">
+          The current platform is focused on selected iPulse AI showcase assets. There are no public accounts, payment plans, or automated uploads. To propose a public forecast receipt, email{" "}
+          <a className="font-semibold underline" href="mailto:support@ipulseai.com?subject=Public%20forecast%20submission">support@ipulseai.com</a>.
+        </p>
+      </section>
 
       {/* What is an OFR */}
       <section>
@@ -112,10 +136,10 @@ export function StandardsPage() {
       <section>
         <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">Data Sources</h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-          All forecast data shown is loaded from local JSON fixture files. No real-time market-data calls and no
-          blockchain RPC requests are made on initial load. A Base Sepolia RPC read occurs only when a fixture has
-          a non-null attestation UID. The PepsiCo/Ray Dalio fixture is a reviewed
-          canonical example; all 60 Phase 1 fixtures are static Batch 6 snapshots.
+          The public Library reads published collections, subjects, forecast indexes, receipts, and proof metadata
+          from Cloud Firestore. The original reviewed Batch 6 JSON examples remain only as immutable test vectors
+          and as the one-time source for the controlled Firestore import; the running application does not use them
+          as its database. A Base Sepolia RPC read occurs only when a receipt has a non-null attestation UID.
         </p>
       </section>
 
@@ -130,16 +154,16 @@ export function StandardsPage() {
           <li>This is an example retrospective receipt. The blockchain timestamp (when issued) must not be presented as the forecast creation time.</li>
           <li>The Batch 6 context snapshot is a reconstructed backfill and is labeled accordingly.</li>
           <li>Researcher web search was configured, but result-level grounding was not retained; actual execution and retrieved evidence remain unknown.</li>
-          <li>No real-time data — all fixtures are static snapshots.</li>
-          <li>No wallet, auth, or backend — entirely client-side.</li>
+          <li>No real-time market data — the Library preserves published forecast snapshots.</li>
+          <li>Public browsing is anonymous and read-only. Publishing and blockchain issuance are restricted server-side operator workflows.</li>
           <li>This is experimental educational content. Not investment advice.</li>
         </ul>
       </section>
 
-      {/* Event */}
+      {/* Origin */}
       <section className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900">
         <p className="text-sm text-blue-700 dark:text-blue-400">
-          Built for the <strong>AI Factory Hackathon</strong> with <strong>builder.nativelyai.com</strong>.
+          The first reference implementation began during the <strong>AI Factory Hackathon</strong> with <strong>builder.nativelyai.com</strong>. It is now maintained by Future Edge Group as the public iPulse AI forecast showcase and open-source verification toolkit.
         </p>
       </section>
     </div>

@@ -1,7 +1,14 @@
 # Open Forecast Library product direction
 
-Date: 2026-08-08
-Status: product direction; not yet an implementation commitment
+Date: 2026-08-12
+Status: active public-Library direction; multi-tenant features deferred
+
+The active low-cost, Future Edge-operated Firestore Library is specified in
+[`IPULSE_SHOWCASE_ARCHITECTURE_V0_1.md`](./IPULSE_SHOWCASE_ARCHITECTURE_V0_1.md).
+Its complete data, security, blockchain, and cost design is in
+[`OPEN_FORECAST_LIBRARY_ARCHITECTURE_V0_1.md`](./OPEN_FORECAST_LIBRARY_ARCHITECTURE_V0_1.md).
+Customer accounts, private storage, payments, and self-service submissions
+remain deferred.
 
 ## Naming decision
 
@@ -11,7 +18,7 @@ Use **forecast** consistently across the ecosystem:
 - **Open Forecast Toolkit**: reusable validation, canonicalization, hashing,
   proof encoding, and verification code;
 - **Open Forecast Explorer**: the current read-only demonstration interface;
-- **Open Forecast Library**: the future public discovery and submission product;
+- **Open Forecast Library**: the public discovery and curated publication product;
 - **Forecaster**: the human, AI model, algorithm, ensemble, hybrid system, or
   organization that issues a forecast.
 
@@ -39,17 +46,17 @@ customer-facing product name. This keeps the public abbreviations distinct:
 - **Toolkit** implements the standard as pure libraries and command-line tools.
   It can accept a caller-provided blockchain signer, but never stores a wallet
   key or customer balance.
-- **Explorer** lets anyone inspect sample receipts, reconstruct numeric paths,
-  verify a digest or attestation, and demonstrate tamper detection. The current
-  hackathon app is this layer.
-- **Library** will own accounts, submissions, search, moderation, payments,
-  proof jobs, a managed relayer wallet, retries, receipts, and public indexes.
+- **Explorer** lets anyone inspect receipts, reconstruct numeric paths, verify a
+  digest or attestation, and demonstrate tamper detection. It is the read-only
+  user interface over the Library.
+- **Library** owns the Firestore public catalog, proof jobs, receipts, and public
+  indexes. Accounts, payments, and self-service submissions are later options.
 - **iPulse AI adapter** converts selected iPulse AI market forecasts into Open
   Forecast Receipts and submits them to the Library or directly to the Toolkit.
 
-The current repository contains a proof-issuance CLI for an operator-controlled,
-testnet-only wallet. It does not yet contain a customer wallet, payment system,
-or production Library backend.
+The current repository contains a Firestore-backed public Library and a
+proof-issuance CLI for an operator-controlled, testnet-only wallet. It does not
+contain customer wallets or a payment system.
 
 ## General entity model
 

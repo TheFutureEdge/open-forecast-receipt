@@ -1,57 +1,62 @@
 import { useState, useEffect } from "react";
+import { EnvelopeSimple, Moon, Sun } from "@phosphor-icons/react";
 import { Link, useLocation } from "../../lib/router";
 
 export function NavBar() {
   const location = useLocation();
   const [dark, setDark] = useState(() => {
-    if (typeof window !== "undefined") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches;
-    }
-    return false;
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("ofr-explorer-theme-v2") === "dark";
   });
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
+    window.localStorage.setItem("ofr-explorer-theme-v2", dark ? "dark" : "light");
   }, [dark]);
 
   const toggleTheme = () => setDark((d) => !d);
 
   const linkClass = (path: string) =>
-    `text-sm font-medium transition-colors cursor-pointer ${
-      location.pathname.startsWith(path)
-        ? "text-blue-600 dark:text-blue-400"
-        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+    `border-b-2 px-1 py-[18px] text-sm font-medium transition-colors ${
+      (path === "/" ? location.pathname === "/" : location.pathname.startsWith(path))
+      || (path === "/showcase" && location.pathname.startsWith("/manifest"))
+        ? "border-blue-600 text-blue-700 dark:border-blue-400 dark:text-blue-300"
+        : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
     }`;
 
   return (
-    <nav className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-6">
+    <nav className="h-14 border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-900/95">
+      <div className="mx-auto flex h-full max-w-[1500px] items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="flex h-full items-center gap-6">
           <Link
-            to="/manifest/batch-6"
-            className="font-semibold text-gray-900 dark:text-gray-100 cursor-pointer"
+            to="/"
+            className="font-bold tracking-tight text-slate-900 dark:text-white"
           >
-            Open Forecast Receipt
+            Open Forecast Library
           </Link>
-          <div className="hidden sm:flex items-center gap-4">
-            <Link to="/manifest/batch-6" className={linkClass("/manifest")}>
-              Manifest
+          <div className="hidden h-full items-center gap-5 sm:flex">
+            <Link to="/" className={linkClass("/")}>Home</Link>
+            <Link to="/showcase" className={linkClass("/showcase")}>
+              iPulse AI Showcase
             </Link>
             <Link to="/standards" className={linkClass("/standards")}>
-              Standards
+              How it works
             </Link>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400 dark:text-gray-500 hidden sm:inline">
-            AI Factory — builder.nativelyai.com
-          </span>
+        <div className="flex items-center gap-3">
+          <a
+            href="mailto:support@ipulseai.com?subject=Public%20forecast%20submission"
+            className="hidden items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-300 sm:inline-flex"
+          >
+            <EnvelopeSimple size={14} weight="bold" /> Submit a public forecast
+          </a>
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer active:scale-95"
+            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 active:scale-95 dark:hover:bg-slate-800 dark:hover:text-white"
             aria-label="Toggle theme"
           >
-            {dark ? "☀️" : "🌙"}
+            {dark ? <Sun size={18} weight="bold" /> : <Moon size={18} weight="bold" />}
           </button>
         </div>
       </div>

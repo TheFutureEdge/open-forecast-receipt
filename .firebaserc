@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "oflapp-staging",
+    "staging": "oflapp-staging",
+    "production": "oflapp-prod"
+  }
+}

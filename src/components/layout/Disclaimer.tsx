@@ -1,8 +1,11 @@
+import { Warning } from "@phosphor-icons/react";
+
 export function Disclaimer() {
   return (
-    <div className="bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-900">
-      <div className="max-w-6xl mx-auto px-4 py-2 text-xs text-amber-700 dark:text-amber-400 text-center">
-        ⚠ Not investment advice. Open Forecast Receipts are experimental educational content. No real financial decisions should be based on this data.
+    <div className="border-b border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30">
+      <div className="mx-auto flex max-w-[1500px] items-center justify-center gap-1.5 px-4 py-1.5 text-center text-[11px] font-medium text-amber-800 dark:text-amber-300">
+        <Warning size={14} weight="fill" aria-hidden="true" />
+        <span>Experimental educational content—not investment advice. Blockchain proof confirms integrity and timing, not accuracy.</span>
       </div>
     </div>
   );

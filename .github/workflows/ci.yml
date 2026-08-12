@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
   pull_request:
 
 permissions:
@@ -32,6 +32,9 @@ jobs:
 
       - name: Run deterministic tests
         run: npm test
+
+      - name: Check TypeScript
+        run: npx tsc --noEmit
 
       - name: Build production application
         run: npm run build

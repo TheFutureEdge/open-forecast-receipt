@@ -73,11 +73,83 @@ The sealed payload must include:
 - stable forecaster ID;
 - type enum: `human`, `ai_model`, `algorithm`, `ensemble`, `hybrid`, or
   `organization`;
-- display name and issuer-scoped identity source;
+- display name, free-text description, and issuer-scoped identity source;
+- non-human display names must identify their nature clearly (for example,
+  `Ray Dalio AI` or `Demand Forecast Model`), rather than looking like an
+  unqualified human identity;
+- optional structured `architectureAuthors` list with up to 10 people,
+  organizations, AI systems, or other credited parties and their contribution;
 - version and methodology reference;
 - optional members and weights for ensembles;
 - type-specific metadata in versioned profiles, not mandatory AI-only core
   fields.
+
+Fields such as the iPulse AI persona archetype (`The Strategist`) and operating
+mode (`THINKER`) are source-specific description text. They are not universal
+core enums. A profile may preserve their source values, while generalized
+interfaces render them through `forecaster.description`.
+
+### Review
+
+Review is attached to the specific forecast, not permanently to the forecaster.
+
+- explicit status: `not_reviewed`, `reviewed`, `partially_reviewed`, or
+  `unknown`;
+- structured `reviewers` array with at most 10 entries;
+- each reviewer records type, stable ID when available, name, organization,
+  review type, review time, outcome, and optional public notes;
+- reviewer type is open to `human`, `ai_model`, `algorithm`, `hybrid`, or
+  `organization` so the receipt can distinguish human oversight from automated
+  review;
+- no-review and unknown-review are different states; a missing name must never
+  be presented as human review.
+
+Draft generalized shape:
+
+```json
+{
+  "forecaster": {
+    "type": "ai_model",
+    "id": "issuer-stable-forecaster-id",
+    "name": "Ray Dalio AI",
+    "description": "Strategic macro persona operating in THINKER mode",
+    "architectureAuthors": [
+      {
+        "type": "organization",
+        "id": "ipulse-ai",
+        "name": "iPulse AI",
+        "contribution": "persona and forecasting architecture"
+      }
+    ],
+    "model": {
+      "provider": "Google",
+      "name": "Gemini 3.1 Pro",
+      "apiIdentifier": "gemini-3.1-pro-preview",
+      "versionId": "issuer-model-version-id"
+    }
+  },
+  "review": {
+    "status": "unknown",
+    "reviewers": []
+  }
+}
+```
+
+When reviewers exist, each item uses this shape and the array has `maxItems:
+10`:
+
+```json
+{
+  "type": "human",
+  "id": "issuer-stable-reviewer-id",
+  "name": "Reviewer name",
+  "organization": "Organization name",
+  "reviewType": "financial_reasonableness_review",
+  "reviewedAt": "2026-08-12T12:00:00Z",
+  "outcome": "approved_with_notes",
+  "notes": "Public, non-sensitive review note"
+}
+```
 
 ### Forecast output
 
@@ -100,11 +172,14 @@ For market percentage returns:
   means `-4.00%`, but the field name and schema must explicitly say `Bps`;
 - explorer and registry interfaces must convert basis points before display.
 
-## Temporal map
+## Temporal map and knowledge boundaries
 
 Do not collapse distinct times. Support, when applicable:
 
-- model knowledge cutoff and cutoff precision;
+- forecaster knowledge boundary, including model knowledge cutoff and cutoff
+  precision for an AI model or a declared/unknown boundary for a human;
+- input-context knowledge boundary, recorded independently for the whole input
+  snapshot and, where necessary, per supplied component;
 - model adaptation or fine-tuning cutoff;
 - evidence publication time;
 - evidence retrieval time;

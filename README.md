@@ -4,15 +4,31 @@
 
 Open Forecast Receipt (OFR) is an open standard and verification toolkit for portable, tamper-evident forecast records. The first reference profile covers individual AI-generated market forecasts from iPulse AI and a compact Ethereum Attestation Service projection for Base.
 
-## Current phase
+## Current phase: Firestore-backed iPulse AI public Library
 
-The AI Factory hackathon pilot is deliberately limited to five already-public Batch 6 assets: PepsiCo, NVIDIA, Bitcoin, Alphabet Class C, and SPY.
+The project now operates as a Firestore-backed, openly browsable Library of five already-public iPulse AI Batch 6 assets: PepsiCo, NVIDIA, Bitcoin, Alphabet Class C, and SPY. Outside public-submission requests are reviewed manually through `support@ipulseai.com`; there are no customer accounts, payments, private storage, or automated public uploads.
 
-The local reference application currently contains all 60 sanitized receipts:
+The dedicated staging environment is `oflapp-staging`; the production boundary
+is `oflapp-prod`. Neither environment is shared with an iPulse/PAPP Firebase
+project.
+
+Local UI development reads the real staging Firestore with the anonymous,
+read-only Firebase Web SDK. Put the public Firebase Web configuration in
+`.env.staging.local`, then run:
+
+```bash
+npm run dev -- --host 127.0.0.1
+```
+
+Open `http://127.0.0.1:5173/showcase` or the fast integrity test at
+`http://127.0.0.1:5173/test`.
+
+The staging Firestore Library contains all 60 sanitized receipts after the
+controlled initial import:
 12 individual forecaster receipts for each of the five assets. These forecasters
-are the AI advisor personas used inside iPulse AI. Each receipt and
-projection is loaded on demand so the full fixture set does not inflate the
-initial application bundle.
+are the AI advisor personas used inside iPulse AI. The running UI reads each
+receipt and projection on demand from Firestore. The JSON files in
+`src/data/fixtures/` are test/import inputs, not runtime storage.
 
 - One individual forecast is one OFR JSON document.
 - One individual forecast is one EAS attestation UID.
@@ -33,13 +49,14 @@ No EAS schema or forecast attestation has been issued from this directory yet. T
 
 - `schema/` - canonical versioned OFR JSON Schema.
 - `examples/ipulse/` - canonical public-safe iPulse AI receipt and compact onchain projection examples.
-- `src/` - Native Builder-origin React application, deterministic verifier, explorer, and test fixtures.
+- `src/` - Native Builder-origin React application, deterministic verifier, Firestore Library client, explorer, and test fixtures.
 - `public/` - static application assets.
 - `docs/` - current design, hackathon scope, and submission material.
 - `native-builder/` - the original Product Architect prompt, Native project
   provenance, and the reviewed upload/AMx/QA handoff prompts.
-- `scripts/` - deterministic fixture generation, Base Sepolia preflight and
-  issuance tooling, and the disposable Native upload-folder builder.
+- `scripts/` - deterministic fixture generation, controlled Firestore import,
+  Base Sepolia preflight and issuance tooling, and the disposable Native
+  upload-folder builder.
 - `research/` - reproducible cost, capacity, provenance, SQL, notebook, and generated-report evidence.
 
 The original Product Architect prompt and provenance record document how the
@@ -60,6 +77,8 @@ Native project, and then rechecked by Native Builder and QA.
 - Product purpose and exact iPulse integration: `docs/PURPOSE_AND_IPULSE_INTEGRATION.md`
 - Open Forecast Registry product direction: `docs/OPEN_FORECAST_REGISTRY_PRODUCT_DIRECTION.md`
 - Open Forecast Receipt v0.2 requirements: `docs/OPEN_FORECAST_RECEIPT_V0_2_REQUIREMENTS.md`
+- Active low-cost showcase architecture: `docs/IPULSE_SHOWCASE_ARCHITECTURE_V0_1.md`
+- Complete Firestore Library architecture: `docs/OPEN_FORECAST_LIBRARY_ARCHITECTURE_V0_1.md`
 - Six-receipt Base Sepolia runbook: `docs/BASE_SEPOLIA_SHOWCASE_RUNBOOK.md`
 - Native AMx finishing prompt: `native-builder/NATIVE_UPLOAD_AMX_FINISH_PROMPT.md`
 
@@ -68,7 +87,7 @@ Native project, and then rechecked by Native Builder and QA.
 ```bash
 npm test
 npm run build
-npm audit
+npm audit --omit=dev
 npm run eas:preflight
 ```
 

@@ -21,6 +21,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
+import { estimateContractTotalFee } from "viem/op-stack";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -182,6 +183,27 @@ function getPrivateKey() {
   if (!value) return null;
   assert(/^0x[0-9a-fA-F]{64}$/.test(value), "OFR_BASE_SEPOLIA_PRIVATE_KEY must be a 0x-prefixed 32-byte key");
   return value;
+}
+
+function getFeeCeilingWei(required = false) {
+  const value = String(process.env.OFR_MAX_TOTAL_FEE_WEI || "").trim();
+  if (!value) {
+    assert(!required, "Set OFR_MAX_TOTAL_FEE_WEI before an approved write.");
+    return null;
+  }
+  assert(/^\d+$/.test(value), "OFR_MAX_TOTAL_FEE_WEI must be a positive integer in wei");
+  const ceiling = BigInt(value);
+  assert(ceiling > 0n, "OFR_MAX_TOTAL_FEE_WEI must be greater than zero");
+  return ceiling;
+}
+
+function assertFeeWithinCeiling(estimatedTotalFeeWei) {
+  const ceiling = getFeeCeilingWei(true);
+  assert(
+    estimatedTotalFeeWei <= ceiling,
+    `Estimated total Base fee ${estimatedTotalFeeWei} wei exceeds OFR_MAX_TOTAL_FEE_WEI=${ceiling}`,
+  );
+  return ceiling;
 }
 
 function getPublicExplorerBaseUrl() {
@@ -356,16 +378,36 @@ async function preflight() {
       args: [context.config.schema, context.config.resolver, context.config.revocable],
       account: estimationAddress,
     });
-  let attestGas = null;
-  if (chainState.schemaRegistered) {
-    attestGas = await context.publicClient.estimateContractGas({
-      address: context.config.contracts.eas,
-      abi: EAS_ABI,
-      functionName: "multiAttest",
-      args: [context.multiRequests],
+  const registerTotalFee = chainState.schemaRegistered
+    ? null
+    : await estimateContractTotalFee(context.publicClient, {
+      address: context.config.contracts.schemaRegistry,
+      abi: SCHEMA_REGISTRY_ABI,
+      functionName: "register",
+      args: [context.config.schema, context.config.resolver, context.config.revocable],
       account: estimationAddress,
-      value: 0n,
     });
+  let attestGas = null;
+  let attestTotalFee = null;
+  if (chainState.schemaRegistered) {
+    [attestGas, attestTotalFee] = await Promise.all([
+      context.publicClient.estimateContractGas({
+        address: context.config.contracts.eas,
+        abi: EAS_ABI,
+        functionName: "multiAttest",
+        args: [context.multiRequests],
+        account: estimationAddress,
+        value: 0n,
+      }),
+      estimateContractTotalFee(context.publicClient, {
+        address: context.config.contracts.eas,
+        abi: EAS_ABI,
+        functionName: "multiAttest",
+        args: [context.multiRequests],
+        account: estimationAddress,
+        value: 0n,
+      }),
+    ]);
   }
   const balance = account
     ? await context.publicClient.getBalance({ address: account.address })
@@ -380,6 +422,8 @@ async function preflight() {
       registered: chainState.schemaRegistered,
       revocable: context.config.revocable,
       estimatedRegistrationGas: registerGas?.toString() || null,
+      estimatedRegistrationTotalFeeWei: registerTotalFee?.toString() || null,
+      estimatedRegistrationTotalFeeEth: registerTotalFee === null ? null : formatEther(registerTotalFee),
     },
     cohort: {
       id: context.selection.cohortId,
@@ -388,6 +432,9 @@ async function preflight() {
       encodedDataBytes: context.rows.reduce((total, row) => total + row.dataBytes, 0),
       multiAttestCalldataBytes: context.calldataBytes,
       estimatedMultiAttestGas: attestGas?.toString() || null,
+      estimatedTotalFeeWei: attestTotalFee?.toString() || null,
+      estimatedTotalFeeEth: attestTotalFee === null ? null : formatEther(attestTotalFee),
+      configuredFeeCeilingWei: getFeeCeilingWei(false)?.toString() || null,
       receipts: context.rows.map((row) => ({
         assetSlug: row.assetSlug,
         forecasterLabel: row.forecasterLabel,
@@ -418,6 +465,14 @@ async function registerSchema(submit) {
   }
   const account = privateKeyToAccount(privateKey);
   const walletClient = createWalletClient({ account, chain: baseSepolia, transport: http(context.rpcUrl) });
+  const estimatedTotalFee = await estimateContractTotalFee(context.publicClient, {
+    address: context.config.contracts.schemaRegistry,
+    abi: SCHEMA_REGISTRY_ABI,
+    functionName: "register",
+    args: [context.config.schema, context.config.resolver, context.config.revocable],
+    account,
+  });
+  assertFeeWithinCeiling(estimatedTotalFee);
   const simulation = await context.publicClient.simulateContract({
     address: context.config.contracts.schemaRegistry,
     abi: SCHEMA_REGISTRY_ABI,
@@ -504,6 +559,15 @@ async function issueShowcase(submit) {
   assert(chainState.schemaRegistered, `Schema ${context.config.schemaUid} is not registered yet`);
   const account = privateKeyToAccount(privateKey);
   const walletClient = createWalletClient({ account, chain: baseSepolia, transport: http(context.rpcUrl) });
+  const estimatedTotalFee = await estimateContractTotalFee(context.publicClient, {
+    address: context.config.contracts.eas,
+    abi: EAS_ABI,
+    functionName: "multiAttest",
+    args: [context.multiRequests],
+    account,
+    value: 0n,
+  });
+  assertFeeWithinCeiling(estimatedTotalFee);
   const simulation = await context.publicClient.simulateContract({
     address: context.config.contracts.eas,
     abi: EAS_ABI,

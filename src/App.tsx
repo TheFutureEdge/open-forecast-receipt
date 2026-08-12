@@ -1,14 +1,28 @@
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { AppShell } from "./components/layout/AppShell";
 import { ManifestPage } from "./components/manifest/ManifestPage";
 import { AssetPage } from "./components/asset/AssetPage";
 import { ReceiptDetail } from "./components/receipt/ReceiptDetail";
+import { IntegrityDemoPage } from "./components/receipt/IntegrityDemoPage";
 import { StandardsPage } from "./components/standards/StandardsPage";
 import { NotFoundPage } from "./components/common/NotFoundPage";
-import { navigate, useLocation } from "./lib/router";
+import { useLocation } from "./lib/router";
+import { LandingPage } from "./components/landing/LandingPage";
 
 function resolveRoute(pathname: string): ReactNode {
-  if (pathname === "/" || pathname === "/manifest/batch-6") {
+  if (
+    pathname === "/showcase"
+    || pathname === "/showcase/"
+    || pathname === "/manifest/batch-6"
+  ) {
+    return <ManifestPage batchId="batch-6" />;
+  }
+
+  if (pathname === "/") {
+    return <LandingPage />;
+  }
+
+  if (pathname === "/receipts" || pathname === "/receipts/") {
     return <ManifestPage batchId="batch-6" />;
   }
 
@@ -27,6 +41,11 @@ function resolveRoute(pathname: string): ReactNode {
     );
   }
 
+  const showcaseAssetMatch = pathname.match(/^\/showcase\/([^/]+)\/?$/);
+  if (showcaseAssetMatch) {
+    return <AssetPage batchId="batch-6" routeSlug={decodeURIComponent(showcaseAssetMatch[1])} />;
+  }
+
   const assetMatch = pathname.match(/^\/assets\/([^/]+)\/?$/);
   if (assetMatch) {
     return <AssetPage batchId="batch-6" routeSlug={decodeURIComponent(assetMatch[1])} />;
@@ -41,19 +60,17 @@ function resolveRoute(pathname: string): ReactNode {
     return <StandardsPage />;
   }
 
+  if (pathname === "/test" || pathname === "/test/") {
+    return <IntegrityDemoPage />;
+  }
+
   return <NotFoundPage />;
 }
 
 export default function App() {
   const { pathname } = useLocation();
 
-  useEffect(() => {
-    if (pathname === "/") {
-      navigate("/manifest/batch-6", { replace: true });
-    }
-  }, [pathname]);
-
   return (
-    <AppShell>{resolveRoute(pathname)}</AppShell>
+    <AppShell landing={pathname === "/"}>{resolveRoute(pathname)}</AppShell>
   );
 }

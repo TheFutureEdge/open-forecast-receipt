@@ -1,7 +1,7 @@
 {
   "batchId": "batch-6",
-  "batchLabel": "AI Factory Hackathon Demo",
-  "description": "Five public assets with 12 individual AI-forecaster receipts each, preserved from one iPulse AI publication batch.",
+  "batchLabel": "iPulse AI Public Forecast Showcase",
+  "description": "Five public assets with 12 individual AI-forecaster receipts each, preserved from one iPulse AI forecast run.",
   "assets": [
     {
       "name": "PepsiCo Inc",

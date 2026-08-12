@@ -6,8 +6,9 @@ interface BreadcrumbSegment {
 }
 
 const labelMap: Record<string, string> = {
-  manifest: "Manifest",
-  "batch-6": "Hackathon Demo",
+  showcase: "iPulse AI Showcase",
+  manifest: "Showcase",
+  "batch-6": "Public Forecasts",
   assets: "Assets",
   pepsi: "PepsiCo",
   nvidia: "NVIDIA",
@@ -16,6 +17,7 @@ const labelMap: Record<string, string> = {
   spy: "SPY",
   receipts: "Receipt",
   standards: "Standards",
+  test: "Integrity Test",
 };
 
 function getLabel(segment: string): string {
@@ -25,6 +27,9 @@ function getLabel(segment: string): string {
 function isNavigableBreadcrumb(path: string): boolean {
   return (
     path === "/standards"
+    || path === "/test"
+    || path === "/showcase"
+    || /^\/showcase\/[^/]+$/.test(path)
     || /^\/manifest\/[^/]+$/.test(path)
     || /^\/manifest\/[^/]+\/assets\/[^/]+$/.test(path)
     || /^\/receipts\/[0-9a-fA-F]{64}$/.test(path)
@@ -37,7 +42,7 @@ export function Breadcrumbs() {
   if (location.pathname === "/") return null;
 
   const segments = location.pathname.split("/").filter(Boolean);
-  const crumbs: BreadcrumbSegment[] = [{ label: "Home", path: "/manifest/batch-6" }];
+  const crumbs: BreadcrumbSegment[] = [{ label: "Home", path: "/showcase" }];
 
   let current = "";
   for (const seg of segments) {
@@ -49,17 +54,17 @@ export function Breadcrumbs() {
   }
 
   return (
-    <nav className="max-w-6xl mx-auto px-4 py-3" aria-label="Breadcrumb">
-      <ol className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+    <nav className="py-2.5" aria-label="Breadcrumb">
+      <ol className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
         {crumbs.map((crumb, i) => (
           <li key={`${crumb.path ?? i}-${crumb.label}`} className="flex items-center gap-1.5">
-            {i > 0 && <span className="text-gray-300 dark:text-gray-600">/</span>}
+            {i > 0 && <span className="text-slate-300 dark:text-slate-700">/</span>}
             {crumb.path && i < crumbs.length - 1 ? (
-              <Link to={crumb.path} className="hover:text-gray-700 dark:hover:text-gray-200 transition-colors cursor-pointer">
+              <Link to={crumb.path} className="transition-colors hover:text-slate-700 dark:hover:text-slate-200">
                 {crumb.label}
               </Link>
             ) : (
-              <span className="text-gray-900 dark:text-gray-100 font-medium">{crumb.label}</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-200">{crumb.label}</span>
             )}
           </li>
         ))}

@@ -1,124 +1,110 @@
 import { useState, useCallback, useEffect } from "react";
+import { ArrowCounterClockwise, CheckCircle, Fingerprint, XCircle } from "@phosphor-icons/react";
 import type { OfrDocument } from "../../types/ofr";
 import type { VerificationResult } from "../../types/verification";
 import { verifyDocument } from "../../lib/verify/pipeline";
-import { bpsToPercent, percentToBps } from "../../lib/convert/basisPoints";
+import { percentToBps } from "../../lib/convert/basisPoints";
 
 interface TamperSandboxProps {
   document: OfrDocument;
 }
 
 export function TamperSandbox({ document }: TamperSandboxProps) {
-  const getOriginalSteps = useCallback(() => {
-    return document.receiptPayload.forecast.prediction.points.map((p) => p.value);
-  }, [document]);
-
+  const getOriginalSteps = useCallback(
+    () => document.receiptPayload.forecast.prediction.points.map((point) => point.value),
+    [document],
+  );
   const [steps, setSteps] = useState<number[]>(() => getOriginalSteps());
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [loading, setLoading] = useState(false);
 
   const runVerification = useCallback(async (tamperedSteps: number[]) => {
     setLoading(true);
-    const tamperedDoc = structuredClone(document);
-    tamperedDoc.receiptPayload.forecast.prediction.points = tamperedDoc.receiptPayload.forecast.prediction.points.map((p, i) => ({
-      ...p,
-      value: tamperedSteps[i] ?? p.value,
+    const tamperedDocument = structuredClone(document);
+    tamperedDocument.receiptPayload.forecast.prediction.points = tamperedDocument.receiptPayload.forecast.prediction.points.map((point, index) => ({
+      ...point,
+      value: tamperedSteps[index] ?? point.value,
     }));
     try {
-      const res = await verifyDocument(tamperedDoc);
-      setResult(res);
-    } catch {
-      // ignore
+      setResult(await verifyDocument(tamperedDocument));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [document]);
 
   useEffect(() => {
-    runVerification(steps);
-  }, []); // Run initial verification on mount
+    const original = getOriginalSteps();
+    setSteps(original);
+    void runVerification(original);
+  }, [getOriginalSteps, runVerification]);
 
   const handleChange = useCallback((index: number, percentValue: number) => {
-    const newSteps = [...steps];
-    newSteps[index] = percentToBps(percentValue);
-    setSteps(newSteps);
-    runVerification(newSteps);
+    const next = [...steps];
+    next[index] = percentToBps(percentValue);
+    setSteps(next);
+    void runVerification(next);
   }, [steps, runVerification]);
 
   const handleReset = useCallback(() => {
-    const original = document.receiptPayload.forecast.prediction.points.map((p) => p.value);
+    const original = getOriginalSteps();
     setSteps(original);
-    runVerification(original);
-  }, [document, runVerification]);
+    void runVerification(original);
+  }, [getOriginalSteps, runVerification]);
+
+  const passed = result?.integrityStatus === "pass";
 
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-          Tamper Sandbox
-        </h3>
-        <button
-          onClick={handleReset}
-          className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer active:scale-95"
-        >
-          Reset
+    <section id="tamper-test" className="scroll-mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+        <div className="flex items-center gap-2">
+          <Fingerprint size={18} weight="duotone" className="text-blue-600" aria-hidden="true" />
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Try the integrity test</h3>
+            <p className="text-[10px] text-slate-500">Change one return and watch verification react</p>
+          </div>
+        </div>
+        <button onClick={handleReset} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:text-slate-300">
+          <ArrowCounterClockwise size={14} weight="bold" /> Reset
         </button>
       </div>
 
-      <div className="p-4 space-y-4">
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          Edit any step return percentage below and watch the integrity check change. This is a local simulation — nothing is written onchain.
-        </div>
-
-        {/* Status indicator */}
+      <div className="p-4">
         {result && (
-          <div className={`p-3 rounded-lg text-sm font-medium ${
-            result.integrityStatus === "pass"
-              ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900"
-              : "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900"
-          }`}>
-            Integrity: {result.integrityStatus === "pass" ? "PASS ✓" : "FAIL ✗"}
-            {result.computedDigest && (
-              <span className="block text-xs font-mono mt-1 opacity-75">
-                {result.computedDigest}
-              </span>
-            )}
+          <div className={`mb-4 flex items-center gap-3 rounded-xl border px-4 py-3 ${passed ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30" : "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30"}`}>
+            {passed ? <CheckCircle size={24} weight="fill" className="text-emerald-600" /> : <XCircle size={24} weight="fill" className="text-red-600" />}
+            <div className="min-w-0">
+              <div className={`text-xs font-bold ${passed ? "text-emerald-800 dark:text-emerald-200" : "text-red-800 dark:text-red-200"}`}>Integrity: {passed ? "PASS" : "FAIL"}</div>
+              <p className={`mt-0.5 text-[11px] ${passed ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}`}>
+                {passed ? "The values below still match the sealed receipt." : "A changed value creates a different digest immediately."}
+              </p>
+            </div>
+            {loading && <span className="ml-auto text-[10px] text-slate-400">Checking…</span>}
           </div>
         )}
 
-        {loading && (
-          <div className="text-xs text-gray-400 dark:text-gray-600">Recomputing...</div>
-        )}
-
-        {/* Step inputs */}
-        <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
-          {steps.map((value, i) => (
-            <div key={i} className="flex flex-col items-center">
-              <label className="text-[10px] text-gray-400 dark:text-gray-600 mb-0.5">
-                {i + 1}
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 xl:grid-cols-10">
+          {steps.map((value, index) => {
+            const changed = value !== document.receiptPayload.forecast.prediction.points[index].value;
+            return (
+              <label key={index} className={`rounded-lg border p-2 text-center ${changed ? "border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/30" : "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800"}`}>
+                <span className="mb-1 block text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-400">Step {index + 1}</span>
+                <span className="flex items-center justify-center gap-0.5">
+                  <input
+                    type="number"
+                    value={Number((value / 100).toFixed(2))}
+                    step="0.01"
+                    aria-label={`Step ${index + 1} return in percent`}
+                    onChange={(event) => handleChange(index, Number.parseFloat(event.target.value) || 0)}
+                    className="w-full min-w-0 bg-transparent text-right text-xs font-bold text-slate-800 outline-none dark:text-slate-100"
+                  />
+                  <span className="text-[10px] font-semibold text-slate-400">%</span>
+                </span>
               </label>
-              <input
-                type="number"
-                value={Number((value / 100).toFixed(2))}
-                step="0.01"
-                aria-label={`Step ${i + 1} return in percent`}
-                onChange={(e) => handleChange(i, Number.parseFloat(e.target.value) || 0)}
-                className={`w-full text-center text-xs px-1 py-1.5 rounded border ${
-                  value !== document.receiptPayload.forecast.prediction.points[i].value
-                    ? "border-orange-400 dark:border-orange-600 bg-orange-50 dark:bg-orange-950/30"
-                    : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
-                } text-gray-900 dark:text-gray-100`}
-              />
-              <span className="mt-0.5 text-[9px] text-gray-400 dark:text-gray-600">
-                {bpsToPercent(value)}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
-
-        <div className="text-[10px] text-gray-400 dark:text-gray-600 text-center">
-          Values are percentages. Modified values are highlighted in orange. Click Reset to restore the original.
-        </div>
+        <p className="mt-3 text-center text-[10px] leading-4 text-slate-400">This demonstration runs entirely in your browser and never writes a modified value to the blockchain.</p>
       </div>
-    </div>
+    </section>
   );
 }

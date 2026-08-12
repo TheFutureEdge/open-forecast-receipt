@@ -9,6 +9,35 @@ export interface OfrModel {
   releaseDate?: string;
 }
 
+/**
+ * A person, organization, AI system, or other party credited with building or
+ * reviewing a forecaster. These generalized fields are the v0.2 direction;
+ * v0.1 receipts remain valid and are normalized by the presentation adapter.
+ */
+export interface OfrPartyReference {
+  type: string;
+  id?: string;
+  name: string;
+  organization?: string;
+  description?: string;
+}
+
+export interface OfrForecasterContributor extends OfrPartyReference {
+  contribution: string;
+}
+
+export interface OfrForecastReviewer extends OfrPartyReference {
+  reviewType: string;
+  reviewedAt?: string;
+  outcome?: string;
+  notes?: string;
+}
+
+export interface OfrForecastReview {
+  status: "not_reviewed" | "reviewed" | "partially_reviewed" | "unknown";
+  reviewers: OfrForecastReviewer[];
+}
+
 export interface OfrForecast {
   forecastId: string;
   run: {
@@ -78,10 +107,13 @@ export interface OfrForecast {
     type: string;
     id: string;
     name: string;
+    description?: string;
+    architectureAuthors?: OfrForecasterContributor[];
     role?: string;
     mode?: string;
     model?: OfrModel;
   };
+  review?: OfrForecastReview;
   methodology?: Record<string, unknown>;
   conditions?: string[];
 }

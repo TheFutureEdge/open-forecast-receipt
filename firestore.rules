@@ -1,0 +1,50 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Public Library records live in dedicated public namespaces. The browser
+    // can read them anonymously, but no web or mobile client can create,
+    // update, or delete them. Controlled publishers use the Admin SDK and IAM.
+    match /public_collections/{documentId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /public_collection_subjects/{documentId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /public_subjects/{documentId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /public_forecasters/{documentId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /public_forecasts/{documentId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /public_receipts/{documentId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+    }
+
+    match /public_proofs/{documentId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Jobs, publisher runs, signer state, and any future non-public data are
+    // inaccessible to clients. Server access is controlled by Google Cloud IAM.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

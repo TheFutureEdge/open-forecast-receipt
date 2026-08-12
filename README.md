@@ -10,9 +10,10 @@ The project now operates as a Firestore-backed, openly browsable Library of five
 
 The dedicated staging environment is live at
 [`https://oflapp-staging.web.app`](https://oflapp-staging.web.app) on project
-`oflapp-staging` with Firestore Standard in `us-central1`. The intended
-production boundary is `oflapp-prod`. Neither environment is shared with an
-iPulse/PAPP Firebase project.
+`oflapp-staging` with Firestore Standard in `us-central1`. The production GCP
+boundary `oflapp-prod` exists as an empty, unbilled project: Firebase, Firestore,
+data, and deployment are not enabled there. Neither environment is shared with
+an iPulse/PAPP Firebase project.
 
 Local UI development reads the real staging Firestore with the anonymous,
 read-only Firebase Web SDK. Put the public Firebase Web configuration in

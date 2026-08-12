@@ -96,8 +96,11 @@ Create dedicated projects before any cloud Firestore import:
 
 Staging was provisioned on 2026-08-12 with Firestore Standard in
 `us-central1`, delete protection enabled, and the default free-tier database.
-Its public Hosting origin is `https://oflapp-staging.web.app`. Production has
-no database, data, Hosting release, wallet, or deployment.
+Its public Hosting origin is `https://oflapp-staging.web.app`. The
+`oflapp-prod` GCP project exists only as an empty, unbilled boundary. Firebase,
+Firestore, data, Hosting, wallet infrastructure, and deployment are not enabled
+there. When production activation is separately approved, its database location
+will also be `us-central1`.
 
 Never reuse `ipulse-401013`, `pulse-staging-e1394`, or
 `pulseapp-firebase-dev`. The Library also gets separate service accounts, KMS
@@ -330,7 +333,7 @@ Complete in staging:
 
 Not performed:
 
-- production project/database activation and deployment;
+- production billing, Firebase/Firestore activation, database, and deployment;
 - Cloud KMS key creation or IAM grants;
 - EAS schema registration or receipt issuance;
 - Base mainnet activation;

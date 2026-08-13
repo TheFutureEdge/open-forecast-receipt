@@ -127,8 +127,8 @@ export function EntityCatalogPage({ view }: { view: "forecastable" | "organizati
   return (
     <div className="space-y-5">
       <section className="overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 px-6 py-8 shadow-sm dark:border-blue-950 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/40 sm:px-9">
-        <div className="flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
+        <div className="flex flex-col gap-7 xl:flex-row xl:items-end xl:justify-between">
+          <div className="min-w-0 max-w-3xl xl:flex-1">
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-blue-700 dark:border-blue-900 dark:bg-blue-950/60 dark:text-blue-300">
               <Database size={15} weight="fill" /> Semantic entity catalog
             </div>
@@ -141,7 +141,7 @@ export function EntityCatalogPage({ view }: { view: "forecastable" | "organizati
                 : "Browse companies, funds, publishers, and other organizations separately from their market listings. One organization may relate to several forecastable instruments."}
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4 xl:w-[28rem] xl:shrink-0">
             <CatalogMetric value={entities.length} label={view === "forecastable" ? "Forecastable" : "Organizations"} />
             <CatalogMetric value={entities.filter((entity) => (entity.relatedEntities || []).length > 0).length} label={view === "forecastable" ? "Linked to owner" : "With listings"} />
             <CatalogMetric value={entities.filter((entity) => Boolean(entity.logo?.url)).length} label="With logos" />
@@ -226,9 +226,9 @@ export function EntityCatalogPage({ view }: { view: "forecastable" | "organizati
 
 function CatalogMetric({ value, label }: { value: number; label: string }) {
   return (
-    <div className="min-w-24 rounded-xl border border-white/80 bg-white/90 px-3 py-3 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900/90">
-      <div className="text-xl font-bold text-slate-950 dark:text-white">{value}</div>
-      <div className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">{label}</div>
+    <div className="min-w-0 rounded-xl border border-white/80 bg-white/90 px-2 py-3 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900/90 sm:px-3">
+      <div className="tabular-nums text-xl font-bold text-slate-950 dark:text-white">{value}</div>
+      <div className="mt-0.5 text-[9px] font-bold uppercase leading-3 tracking-[0.08em] text-slate-400">{label}</div>
     </div>
   );
 }

@@ -20,7 +20,7 @@ const labelMap: Record<string, string> = {
   alphabet: "Alphabet",
   spy: "SPY",
   receipts: "Receipt",
-  standards: "Standards",
+  standards: "How it works",
   test: "Integrity Test",
 };
 

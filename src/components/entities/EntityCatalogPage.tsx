@@ -1,17 +1,15 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
-  Bank,
   Buildings,
   ChartLineUp,
   Coins,
   CurrencyDollar,
   Database,
   GitBranch,
-  GlobeHemisphereWest,
   MagnifyingGlass,
-  TrendUp,
 } from "@phosphor-icons/react";
+import { KnowledgeGraphExamples } from "../knowledge/KnowledgeGraphArchitecture";
 import { listPublicForecastableEntities, listPublicOrganizations } from "../../lib/library/repository";
 import type { PublicEntityRecord } from "../../lib/library/types";
 import { Link } from "../../lib/router";
@@ -249,7 +247,7 @@ function ForecastableEntityExplainer() {
           </div>
           <h2 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl">Context is connected. Forecasts stay precise.</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-            A forecastable entity is the exact, stable subject a forecast is about. It can be a listed security, benchmark rate, economic measure, market index, commodity, or another governed subject—not merely a loose company or country name.
+            A forecast starts with an exact, stable entity and then defines what will be measured about it. A listed security, organization, country, or other governed thing can be the subject; price return, GDP growth, or a policy rate is the target.
           </p>
         </div>
         <div className="rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-xs leading-5 text-slate-200 backdrop-blur">
@@ -258,120 +256,7 @@ function ForecastableEntityExplainer() {
         </div>
       </div>
 
-      <div className="grid gap-px bg-slate-200 dark:bg-slate-800 xl:grid-cols-2">
-        <RelationshipExample
-          eyebrow="Live catalog example"
-          icon={<Buildings size={20} weight="duotone" />}
-          parentLabel="Parent organization"
-          parentName="Alibaba Group Holding Ltd"
-          parentHref="/entities/entity-5d88041e-30a3-5218-af25-9e66758f71c9"
-          description="One company, two separately identifiable market instruments. A forecast for BABA is not silently treated as a forecast for 9988."
-          children={[
-            {
-              name: "Alibaba ordinary shares",
-              code: "9988 · Hong Kong",
-              detail: "A distinct listed security",
-              href: "/entities/alibaba-9988-hong-kong",
-              Icon: TrendUp,
-            },
-            {
-              name: "Alibaba ADR",
-              code: "BABA · New York",
-              detail: "A distinct listed security",
-              href: "/entities/alibaba-baba",
-              Icon: TrendUp,
-            },
-          ]}
-        />
-        <RelationshipExample
-          eyebrow="Illustrative expansion"
-          icon={<GlobeHemisphereWest size={20} weight="duotone" />}
-          parentLabel="Context entity"
-          parentName="United States"
-          description="A country provides context, while each measurable economic subject receives its own identity, target definition, cadence, and forecast history."
-          children={[
-            {
-              name: "Real GDP growth",
-              code: "Quarterly · annualized %",
-              detail: "Economic measure",
-              Icon: ChartLineUp,
-            },
-            {
-              name: "Federal funds target rate",
-              code: "Policy rate · %",
-              detail: "Benchmark rate",
-              Icon: Bank,
-            },
-          ]}
-        />
-      </div>
+      <KnowledgeGraphExamples />
     </section>
-  );
-}
-
-interface RelationshipChild {
-  name: string;
-  code: string;
-  detail: string;
-  href?: string;
-  Icon: typeof TrendUp;
-}
-
-function RelationshipExample({
-  eyebrow,
-  icon,
-  parentLabel,
-  parentName,
-  parentHref,
-  description,
-  children,
-}: {
-  eyebrow: string;
-  icon: ReactNode;
-  parentLabel: string;
-  parentName: string;
-  parentHref?: string;
-  description: string;
-  children: RelationshipChild[];
-}) {
-  const parentContent = (
-    <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3.5 text-left dark:border-blue-900 dark:bg-blue-950/30">
-      <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-white text-blue-700 shadow-sm dark:bg-slate-900 dark:text-blue-300">{icon}</div>
-      <div className="min-w-0">
-        <div className="text-[9px] font-bold uppercase tracking-[0.12em] text-blue-500">{parentLabel}</div>
-        <div className="mt-0.5 truncate text-sm font-bold text-slate-950 dark:text-white">{parentName}</div>
-      </div>
-      {parentHref && <ArrowRight className="ml-auto shrink-0 text-blue-400" size={15} />}
-    </div>
-  );
-
-  return (
-    <article className="bg-white p-6 dark:bg-slate-900 sm:p-7">
-      <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{eyebrow}</div>
-      <div className="mt-3">
-        {parentHref ? <Link to={parentHref}>{parentContent}</Link> : parentContent}
-      </div>
-      <div className="mx-auto h-5 w-px bg-blue-200 dark:bg-blue-900" aria-hidden="true" />
-      <div className="relative grid gap-2 sm:grid-cols-2 before:absolute before:-top-5 before:left-1/4 before:right-1/4 before:hidden before:h-5 before:rounded-t-xl before:border-x before:border-t before:border-blue-200 sm:before:block dark:before:border-blue-900">
-        {children.map(({ name, code, detail, href, Icon }) => {
-          const content = (
-            <div className="relative h-full rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 transition-colors hover:border-emerald-400 dark:border-emerald-900 dark:bg-emerald-950/20">
-              <div className="flex items-start gap-2.5">
-                <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"><Icon size={17} weight="duotone" /></div>
-                <div className="min-w-0">
-                  <div className="text-xs font-bold text-slate-950 dark:text-white">{name}</div>
-                  <div className="mt-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-300">{code}</div>
-                </div>
-              </div>
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-emerald-200/70 pt-2 text-[9px] font-bold uppercase tracking-[0.1em] text-emerald-700 dark:border-emerald-900 dark:text-emerald-300">
-                <span>{detail}</span><span className="rounded-full bg-emerald-100 px-2 py-1 dark:bg-emerald-950">Forecastable</span>
-              </div>
-            </div>
-          );
-          return href ? <Link key={name} to={href}>{content}</Link> : <div key={name}>{content}</div>;
-        })}
-      </div>
-      <p className="mt-4 text-xs leading-5 text-slate-500">{description}</p>
-    </article>
   );
 }

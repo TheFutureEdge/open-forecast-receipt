@@ -1,6 +1,18 @@
 import { useEffect, useState } from "react";
+import {
+  ArrowDown,
+  ArrowRight,
+  ChartLineUp,
+  Database,
+  Fingerprint,
+  Receipt,
+  SealCheck,
+  Target,
+  UserCircle,
+} from "@phosphor-icons/react";
 import config from "../../data/eas-base-sepolia.json";
 import { getLibraryManifest } from "../../lib/library/repository";
+import { KnowledgeGraphConceptDiagram, KnowledgeGraphExamples } from "../knowledge/KnowledgeGraphArchitecture";
 
 export function StandardsPage() {
   const [proofCounts, setProofCounts] = useState({ selected: 0, verified: 0 });
@@ -21,10 +33,62 @@ export function StandardsPage() {
   const selectedCount = proofCounts.selected;
   const verifiedCount = proofCounts.verified;
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-        How Open Forecast Receipt works
-      </h1>
+    <div className="mx-auto max-w-6xl space-y-8">
+      <section className="overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 px-6 py-9 shadow-sm dark:border-blue-950 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/40 sm:px-9">
+        <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-600">Concept · Architecture · Standard</div>
+        <h1 className="mt-3 max-w-4xl text-3xl font-black tracking-tight text-slate-950 dark:text-white sm:text-5xl">
+          How Open Forecast Library works
+        </h1>
+        <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base sm:leading-7">
+          The Knowledge Graph identifies what a forecast is about. The target defines exactly what is being predicted. The Open Forecast Receipt preserves the forecast, its forecaster, timing, context, and evidence as one verifiable record.
+        </p>
+        <nav className="mt-7 flex flex-wrap gap-2" aria-label="How it works sections">
+          <SectionLink href="#concept" label="Concept" />
+          <SectionLink href="#knowledge-graph" label="Knowledge Graph" />
+          <SectionLink href="#receipt-lifecycle" label="Receipt lifecycle" />
+          <SectionLink href="#technical-standard" label="Technical standard" />
+        </nav>
+      </section>
+
+      <section id="concept" className="scroll-mt-24">
+        <SectionHeading
+          eyebrow="The concept"
+          title="A shared memory for forecasts"
+          description="The Library answers four different questions without mixing them together."
+        />
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <ConceptCard Icon={Database} question="What is it about?" answer="A governed entity and its relationships in the Knowledge Graph." />
+          <ConceptCard Icon={Target} question="What is being predicted?" answer="A precise target, dimension, unit, cadence, and horizon." />
+          <ConceptCard Icon={Receipt} question="What was forecast?" answer="A forecast sealed with its forecaster, timing, context, and provenance." />
+          <ConceptCard Icon={Fingerprint} question="Can we trust the record?" answer="Integrity proof now; accuracy evaluation only after the target matures." />
+        </div>
+      </section>
+
+      <section id="knowledge-graph" className="scroll-mt-24 space-y-4">
+        <SectionHeading
+          eyebrow="Knowledge Graph"
+          title="Entity, target, and forecast are different objects"
+          description="An entity is a stable real-world or conceptual thing. A target is a measurable property or outcome applied to that entity. A forecast is one forecaster's prediction for that approved subject-target binding."
+        />
+        <KnowledgeGraphConceptDiagram />
+        <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm dark:border-slate-800">
+          <div className="border-b border-slate-200 bg-white px-6 py-5 dark:border-slate-800 dark:bg-slate-900 sm:px-7">
+            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-blue-600">Concrete examples</div>
+            <h3 className="mt-1 text-lg font-bold text-slate-950 dark:text-white">The same structure works across domains</h3>
+            <p className="mt-1 text-xs leading-5 text-slate-500">Market securities and macroeconomic forecasts use the same entity-plus-target contract.</p>
+          </div>
+          <KnowledgeGraphExamples />
+        </div>
+      </section>
+
+      <section id="receipt-lifecycle" className="scroll-mt-24">
+        <SectionHeading
+          eyebrow="Receipt lifecycle"
+          title="From prediction to permanent, inspectable record"
+          description="The forecaster produces the forecast. The receipt seals it. A blockchain proof may anchor its digest, and evaluation happens only when the target can be resolved."
+        />
+        <ReceiptLifecycleDiagram />
+      </section>
 
       <section className="rounded-2xl border border-blue-200 bg-blue-50 p-5 dark:border-blue-900 dark:bg-blue-950/30">
         <h2 className="text-base font-semibold text-blue-950 dark:text-blue-100">Public submissions are reviewed manually</h2>
@@ -34,8 +98,16 @@ export function StandardsPage() {
         </p>
       </section>
 
+      <section id="technical-standard" className="scroll-mt-24 border-t border-slate-200 pt-8 dark:border-slate-800">
+        <SectionHeading
+          eyebrow="Technical standard"
+          title="Open Forecast Receipt v0.1.0"
+          description="The sections below define the portable JSON contract, deterministic digest, optional blockchain attestation, and current reference implementation."
+        />
+      </section>
+
       {/* What is an OFR */}
-      <section>
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">What is an Open Forecast Receipt?</h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
           An Open Forecast Receipt (OFR) is a structured, provenance-aware forecast record defined by the
@@ -166,6 +238,94 @@ export function StandardsPage() {
           The first reference implementation began during the <strong>AI Factory Hackathon</strong> with <strong>builder.nativelyai.com</strong>. It is now maintained by Future Edge Group as the public iPulse AI forecast showcase and open-source verification toolkit.
         </p>
       </section>
+    </div>
+  );
+}
+
+function SectionLink({ href, label }: { href: string; label: string }) {
+  return (
+    <a href={href} className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white px-3 py-2 text-xs font-semibold text-blue-700 shadow-sm hover:border-blue-300 dark:border-blue-900 dark:bg-slate-900 dark:text-blue-300">
+      {label} <ArrowRight size={13} />
+    </a>
+  );
+}
+
+function SectionHeading({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
+  return (
+    <div className="max-w-4xl">
+      <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-blue-600">{eyebrow}</div>
+      <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950 dark:text-white sm:text-3xl">{title}</h2>
+      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{description}</p>
+    </div>
+  );
+}
+
+function ConceptCard({ Icon, question, answer }: { Icon: typeof Database; question: string; answer: string }) {
+  return (
+    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"><Icon size={21} weight="duotone" /></div>
+      <h3 className="mt-4 text-sm font-bold text-slate-950 dark:text-white">{question}</h3>
+      <p className="mt-1.5 text-xs leading-5 text-slate-500 dark:text-slate-400">{answer}</p>
+    </article>
+  );
+}
+
+const receiptLifecycle = [
+  {
+    Icon: UserCircle,
+    step: "1",
+    title: "Forecaster",
+    text: "A human, AI model, algorithm, ensemble, hybrid, or organization produces a forecast.",
+  },
+  {
+    Icon: ChartLineUp,
+    step: "2",
+    title: "Forecast",
+    text: "Predicted values are tied to one approved entity-target binding and horizon.",
+  },
+  {
+    Icon: Receipt,
+    step: "3",
+    title: "Receipt",
+    text: "The forecast, timing, context boundaries, evidence, and provenance are sealed together.",
+  },
+  {
+    Icon: SealCheck,
+    step: "4",
+    title: "Proof",
+    text: "An optional blockchain attestation anchors the receipt digest without claiming accuracy.",
+  },
+  {
+    Icon: ChartLineUp,
+    step: "5",
+    title: "Evaluation",
+    text: "After maturity, the forecast is compared with the governed observed outcome.",
+  },
+] as const;
+
+function ReceiptLifecycleDiagram() {
+  return (
+    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/40 sm:p-5">
+      <div className="grid gap-2 xl:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_1fr] xl:items-stretch">
+        {receiptLifecycle.map(({ Icon, step, title, text }, index) => (
+          <div key={title} className="contents">
+            <article className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-center justify-between gap-3">
+                <div className="grid size-9 place-items-center rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"><Icon size={19} weight="duotone" /></div>
+                <div className="text-[10px] font-black text-slate-300 dark:text-slate-700">{step}</div>
+              </div>
+              <h3 className="mt-3 text-sm font-bold text-slate-950 dark:text-white">{title}</h3>
+              <p className="mt-1 text-[10px] leading-4 text-slate-500">{text}</p>
+            </article>
+            {index < receiptLifecycle.length - 1 && (
+              <div className="flex items-center justify-center text-blue-400" aria-hidden="true">
+                <ArrowDown className="xl:hidden" size={18} />
+                <ArrowRight className="hidden xl:block" size={18} />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -11,6 +11,21 @@ const labelMap: Record<string, string> = {
   forecasters: "Forecasters",
   organizations: "Organizations",
   entities: "Entities",
+  directory: "Entity Directory",
+  subjects: "Forecast Subjects",
+  context: "Context Entities",
+  "listed-securities": "Listed Securities",
+  "funds-etfs": "Funds & ETFs",
+  cryptoassets: "Cryptoassets",
+  commodities: "Commodities",
+  "currency-pairs": "Currency Pairs",
+  "market-indices": "Market Indices",
+  macroeconomics: "Macroeconomics",
+  corporations: "Corporations",
+  "investment-funds": "Investment Funds",
+  countries: "Countries & Economies",
+  "markets-venues": "Markets & Venues",
+  "networks-protocols": "Networks & Protocols",
   manifest: "Forecasts",
   "batch-6": "Public Forecasts",
   assets: "Assets",
@@ -33,9 +48,14 @@ function isNavigableBreadcrumb(path: string): boolean {
     path === "/standards"
     || path === "/test"
     || path === "/entities"
+    || path === "/entities/directory"
     || path === "/entities/organizations"
     || path === "/entities/forecasters"
-    || /^\/entities\/[^/]+$/.test(path)
+    || /^\/entities\/(subjects|context)\/[^/]+$/.test(path)
+    || (
+      /^\/entities\/[^/]+$/.test(path)
+      && !["/entities/subjects", "/entities/context", "/entities/directory", "/entities/organizations", "/entities/forecasters"].includes(path)
+    )
     || path === "/forecasts"
     || path === "/forecasters"
     || path === "/showcase"

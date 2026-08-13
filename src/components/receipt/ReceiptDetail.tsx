@@ -9,6 +9,7 @@ import { VerificationPanel } from "./VerificationPanel";
 import { TamperSandbox } from "./TamperSandbox";
 import { StatusBadge } from "../common/StatusBadge";
 import { presentForecaster } from "../../lib/forecasters/presentation";
+import { PageSeo } from "../seo/PageSeo";
 
 import { getLibraryReceipt } from "../../lib/library/repository";
 
@@ -46,7 +47,7 @@ export function ReceiptDetail({ receiptDigest }: { receiptDigest: string }) {
   if (!receiptDigest || !fixture || loadError) {
     return (
       <div className="text-center py-20">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Receipt not found</h2>
+        <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Receipt not found</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           {loadError || <>No receipt with digest <code className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">{receiptDigest}</code></>}
         </p>
@@ -73,15 +74,32 @@ export function LoadedReceiptDetail({
   const payload = document.receiptPayload;
   const forecaster = presentForecaster(payload.forecast);
   const { result, loading } = useVerification(document, projection.protocolSuppliedAfterIssuance.attestationUID);
+  const Heading = embedded ? "h2" : "h1";
+  const subjectReference = projection.encodedFields.subjectRef;
+  const fallbackSubjectLabel = subjectReference?.startsWith("ticker:")
+    ? subjectReference.slice("ticker:".length).replace("@", " on ")
+    : subjectReference;
+  const entityName = payload.forecast.entity?.name
+    ?? fallbackSubjectLabel
+    ?? "the forecast subject";
 
   return (
-    <div className="space-y-4">
+    <>
+      {!embedded && (
+        <PageSeo
+          title={`${forecaster.displayName} Forecast for ${entityName} | Open Forecast Receipt`}
+          description={`Inspect the sealed forecast, timing, provenance, integrity digest, and optional blockchain proof for ${forecaster.displayName}'s forecast of ${entityName}.`}
+          canonicalPath={`/receipts/${document.proofEnvelope.payloadDigestSha256}`}
+          pageType="article"
+        />
+      )}
+      <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-blue-600">Individual forecast receipt</div>
-          <h2 className={`${embedded ? "text-xl" : "text-2xl"} font-bold tracking-tight text-slate-950 dark:text-white`}>
+          <Heading className={`${embedded ? "text-xl" : "text-2xl"} font-bold tracking-tight text-slate-950 dark:text-white`}>
             {forecaster.displayName}
-          </h2>
+          </Heading>
           <p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">
             {forecaster.description}
           </p>
@@ -92,7 +110,7 @@ export function LoadedReceiptDetail({
             <span aria-hidden="true">·</span>
             <span>{forecaster.reviewStatusLabel}</span>
             <span aria-hidden="true">·</span>
-            <span>Forecast for {payload.forecast.entity.name}</span>
+            <span>Forecast for {entityName}</span>
             <span aria-hidden="true">·</span>
             <span>Created {new Date(payload.forecast.temporal.forecastCreatedAt).toLocaleDateString()}</span>
           </div>
@@ -154,6 +172,7 @@ export function LoadedReceiptDetail({
 
       {/* Tamper Sandbox */}
       <TamperSandbox document={document} />
-    </div>
+      </div>
+    </>
   );
 }

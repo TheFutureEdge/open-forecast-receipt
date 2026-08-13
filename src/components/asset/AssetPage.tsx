@@ -12,6 +12,7 @@ import {
   listLibraryForecasts,
 } from "../../lib/library/repository";
 import type { PublicCollectionEntityRecord, PublicForecastRecord } from "../../lib/library/types";
+import { PageSeo } from "../seo/PageSeo";
 
 export function AssetPage({ batchId, routeSlug }: { batchId: string; routeSlug: string }) {
   const [asset, setAsset] = useState<PublicCollectionEntityRecord | null>(null);
@@ -72,7 +73,7 @@ export function AssetPage({ batchId, routeSlug }: { batchId: string; routeSlug: 
   if (!asset) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white px-6 py-20 text-center dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200">Entity not found</h2>
+        <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-200">Entity not found</h1>
         {loadError && <p className="mt-2 text-sm text-red-600">{loadError}</p>}
         <Link to="/showcase" className="mt-4 inline-block text-sm font-semibold text-blue-600 hover:underline">Back to showcase</Link>
       </div>
@@ -82,7 +83,14 @@ export function AssetPage({ batchId, routeSlug }: { batchId: string; routeSlug: 
   const showcaseCounts = getEntityProofCounts(asset);
 
   return (
-    <div className="space-y-3.5">
+    <>
+      <PageSeo
+        title={`${asset.name} AI Forecasts and Receipts | Open Forecast Library`}
+        description={`Inspect ${asset.advisorCount} independent AI forecasts for ${asset.name} (${asset.displaySymbol}), including forecast paths, receipt integrity, provenance, and optional blockchain proofs.`}
+        canonicalPath={`/showcase/${asset.slug}`}
+        pageType="article"
+      />
+      <div className="space-y-3.5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Link to="/showcase" aria-label="Back to showcase" className="grid size-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-blue-300 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-900">
@@ -131,6 +139,7 @@ export function AssetPage({ batchId, routeSlug }: { batchId: string; routeSlug: 
           )}
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }

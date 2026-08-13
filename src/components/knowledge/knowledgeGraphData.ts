@@ -17,6 +17,8 @@ export interface KnowledgeGraphViewNode {
   subtitle: string;
   description: string;
   schemaOrgType?: string;
+  dimension?: string;
+  unit?: string;
   position: { x: number; y: number };
 }
 
@@ -54,8 +56,10 @@ export const knowledgeGraphViewNodes: KnowledgeGraphViewNode[] = [
     kind: "target_definition",
     eyebrow: "Target definition",
     title: "Adjusted close return",
-    subtitle: "Step-over-step change · %",
+    subtitle: "Reusable measurement contract",
     description: "A reusable, versioned definition of the measurable quantity, including its dimension, unit, cadence, and resolution policy.",
+    dimension: "Step-over-step change",
+    unit: "%",
     position: { x: 0, y: 190 },
   },
   {

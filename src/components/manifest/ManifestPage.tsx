@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BatchManifestComponent } from "./BatchManifest";
 import { getLibraryManifest } from "../../lib/library/repository";
 import type { LibraryManifest } from "../../lib/library/types";
+import { PageSeo } from "../seo/PageSeo";
 
 export function ManifestPage({ batchId }: { batchId: string }) {
   const [manifest, setManifest] = useState<LibraryManifest | null>(null);
@@ -32,9 +33,9 @@ export function ManifestPage({ batchId }: { batchId: string }) {
   if (!manifest || error) {
     return (
       <div className="text-center py-20">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+        <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
           {error ? "Library unavailable" : "Collection not found"}
-        </h2>
+        </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {error || <>No public collection was found for <code className="text-xs font-mono">{batchId}</code>.</>}
         </p>
@@ -42,5 +43,14 @@ export function ManifestPage({ batchId }: { batchId: string }) {
     );
   }
 
-  return <BatchManifestComponent manifest={manifest} />;
+  return (
+    <>
+      <PageSeo
+        title="iPulse AI Public Market Forecasts | Open Forecast Library"
+        description="Browse individual iPulse AI market forecasts, inspect their Open Forecast Receipts, and check optional per-receipt blockchain proof status."
+        canonicalPath="/forecasts"
+      />
+      <BatchManifestComponent manifest={manifest} />
+    </>
+  );
 }

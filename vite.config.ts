@@ -15,6 +15,16 @@ const svgImportPlugin = () => ({
   },
 });
 
+const seoEnvironmentPlugin = (mode: string) => ({
+  name: 'ofl-seo-environment',
+  transformIndexHtml(html: string) {
+    const robots = mode === 'production'
+      ? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'
+      : 'noindex,nofollow';
+    return html.replace('__OFL_ROBOTS__', robots);
+  },
+});
+
 /// <reference types="vitest" />
 function normalizeViteBase(value: string | undefined): string {
   const trimmed = String(value || '').trim();
@@ -23,10 +33,11 @@ function normalizeViteBase(value: string | undefined): string {
 }
 
 // https://vite.dev/config/
-export default defineConfig(() => ({
+export default defineConfig(({ mode }) => ({
   base: normalizeViteBase(process.env.VITE_BASE_PATH),
   plugins: [
     react(),
+    seoEnvironmentPlugin(mode),
     tailwindcss(),
     svgImportPlugin(),
     svgr({

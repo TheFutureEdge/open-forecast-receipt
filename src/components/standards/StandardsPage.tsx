@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import config from "../../data/eas-base-sepolia.json";
 import { getLibraryManifest } from "../../lib/library/repository";
+import { useLocation } from "../../lib/router";
 import { KnowledgeGraphConceptDiagram, KnowledgeGraphExamples } from "../knowledge/KnowledgeGraphArchitecture";
 
 const InteractiveKnowledgeGraph = lazy(() =>
@@ -21,7 +22,16 @@ const InteractiveKnowledgeGraph = lazy(() =>
 );
 
 export function StandardsPage() {
+  const { hash } = useLocation();
   const [proofCounts, setProofCounts] = useState({ selected: 0, verified: 0 });
+
+  useEffect(() => {
+    if (!hash) return;
+    const targetId = decodeURIComponent(hash.slice(1));
+    window.requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({ block: "start", behavior: "auto" });
+    });
+  }, [hash]);
 
   useEffect(() => {
     getLibraryManifest("batch-6")

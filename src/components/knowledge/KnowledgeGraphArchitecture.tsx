@@ -14,6 +14,8 @@ import {
   UserCircle,
 } from "@phosphor-icons/react";
 import { Link } from "../../lib/router";
+import { KnowledgeGraphLegend } from "./KnowledgeGraphLegend";
+import { KnowledgeGraphTag } from "./KnowledgeGraphTag";
 import { SchemaOrgTypeTag } from "./SchemaOrgTypeTag";
 
 export function KnowledgeGraphConceptDiagram() {
@@ -26,6 +28,8 @@ export function KnowledgeGraphConceptDiagram() {
           The Library keeps the real-world subject separate from the measurable target. A forecaster predicts that subject-target binding, and an Open Forecast Receipt preserves the resulting forecast and its provenance.
         </p>
       </div>
+
+      <KnowledgeGraphLegend className="border-b border-slate-200 dark:border-slate-800" />
 
       <div className="grid gap-4 bg-slate-50 p-5 dark:bg-slate-950/40 sm:p-7 xl:grid-cols-[1fr_auto_1fr_auto_1fr] xl:items-stretch">
         <ArchitectureStage
@@ -44,7 +48,7 @@ export function KnowledgeGraphConceptDiagram() {
           title="Forecast definition"
           description="Exactly what will be predicted"
           nodes={[
-            { Icon: Target, eyebrow: "Target definition", title: "Adjusted close return", meta: "Dimension · step-over-step change · Unit · %" },
+            { Icon: Target, eyebrow: "Target definition", title: "Adjusted close return", meta: "Reusable measurement contract", dimension: "Step-over-step change", unit: "%" },
             { Icon: CheckCircle, eyebrow: "Approved binding", title: "BABA + return target", meta: "Cadence and horizon are versioned" },
           ]}
           relationships={["applies to subject"]}
@@ -78,6 +82,8 @@ interface ArchitectureNode {
   title: string;
   meta: string;
   schemaOrgType?: string;
+  dimension?: string;
+  unit?: string;
 }
 
 function ArchitectureStage({
@@ -103,7 +109,7 @@ function ArchitectureStage({
         </div>
       </div>
       <div className="mt-4 space-y-2">
-        {nodes.map(({ Icon, eyebrow, title: nodeTitle, meta, schemaOrgType }, index) => (
+        {nodes.map(({ Icon, eyebrow, title: nodeTitle, meta, schemaOrgType, dimension, unit }, index) => (
           <div key={`${eyebrow}-${nodeTitle}`}>
             {index > 0 && (
               <div className="flex h-7 items-center justify-center gap-1.5 text-[8px] font-bold uppercase tracking-[0.12em] text-slate-400">
@@ -117,6 +123,12 @@ function ArchitectureStage({
                 <div className="mt-0.5 text-xs font-bold text-slate-950 dark:text-white">{nodeTitle}</div>
                 <div className="mt-1 text-[9px] leading-4 text-slate-500 dark:text-slate-400">{meta}</div>
                 {schemaOrgType && <SchemaOrgTypeTag value={schemaOrgType} className="mt-2" />}
+                {(dimension || unit) && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {dimension && <KnowledgeGraphTag kind="dimension" title={`Dimension: ${dimension}`}>Dim.: {dimension}</KnowledgeGraphTag>}
+                    {unit && <KnowledgeGraphTag kind="unit">Unit: {unit}</KnowledgeGraphTag>}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -149,8 +161,10 @@ function Outcome({ Icon, label, text }: { Icon: typeof Receipt; label: string; t
 
 export function KnowledgeGraphExamples() {
   return (
-    <div className="grid gap-px bg-slate-200 dark:bg-slate-800 xl:grid-cols-2">
-      <RelationshipExample
+    <div>
+      <KnowledgeGraphLegend className="border-b border-slate-200 dark:border-slate-800" />
+      <div className="grid gap-px bg-slate-200 dark:bg-slate-800 xl:grid-cols-2">
+        <RelationshipExample
         eyebrow="Live catalog example"
         icon={<Buildings size={20} weight="duotone" />}
         parentLabel="Issuer organization"
@@ -185,7 +199,7 @@ export function KnowledgeGraphExamples() {
           },
         ]}
       />
-      <RelationshipExample
+        <RelationshipExample
         eyebrow="Illustrative expansion"
         icon={<GlobeHemisphereWest size={20} weight="duotone" />}
         parentLabel="Geographic context"
@@ -216,7 +230,8 @@ export function KnowledgeGraphExamples() {
             Icon: Bank,
           },
         ]}
-      />
+        />
+      </div>
     </div>
   );
 }
@@ -284,23 +299,17 @@ function RelationshipExample({
                   </div>
                 </div>
                 <div className="mt-auto grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-1.5 pt-3 text-[9px] font-semibold">
-                  <span className="truncate rounded-full bg-emerald-100 px-2 py-1 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" title={entityType}>{entityType}</span>
+                  <KnowledgeGraphTag kind="entity" title={`Library entity type: ${entityType}`}>{entityType}</KnowledgeGraphTag>
                   <SchemaOrgTypeTag value={schemaOrgType} />
                 </div>
               </div>
               <div className="border-t border-emerald-200/70 p-3.5 dark:border-emerald-900">
-                <div className="text-[8px] font-bold uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">Forecast target</div>
+                <KnowledgeGraphTag kind="target">Forecast target</KnowledgeGraphTag>
                 <div className="mt-1 text-[11px] font-bold leading-4 text-slate-900 dark:text-white">{targetName}</div>
-                <dl className="mt-2 space-y-1.5 text-[9px] leading-4">
-                  <div>
-                    <dt className="text-slate-400">Dimension</dt>
-                    <dd className="font-semibold text-slate-600 dark:text-slate-300">{dimension}</dd>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <dt className="text-slate-400">Unit</dt>
-                    <dd className="font-semibold text-slate-600 dark:text-slate-300">{unit}</dd>
-                  </div>
-                </dl>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <KnowledgeGraphTag kind="dimension" title={`Dimension: ${dimension}`}>Dim.: {dimension}</KnowledgeGraphTag>
+                  <KnowledgeGraphTag kind="unit">Unit: {unit}</KnowledgeGraphTag>
+                </div>
                 <div className="mt-2 text-[8px] font-bold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300">Forecast-ready</div>
               </div>
             </div>

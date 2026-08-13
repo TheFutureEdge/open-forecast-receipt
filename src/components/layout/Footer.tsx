@@ -3,7 +3,8 @@ import { BookOpenText, GithubLogo, InstagramLogo, LinkedinLogo } from "@phosphor
 import { Link } from "../../lib/router";
 
 const internalLinks = [
-  { label: "Entity catalog", to: "/entities" },
+  { label: "Entity directory", to: "/entities/directory" },
+  { label: "Forecast subjects", to: "/entities" },
   { label: "Forecast collections", to: "/forecasts" },
   { label: "Forecasters", to: "/entities/forecasters" },
   { label: "How it works", to: "/standards" },

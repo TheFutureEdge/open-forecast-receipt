@@ -93,7 +93,7 @@ function stableDocumentId(prefix, ...parts) {
 }
 
 function entityType(asset) {
-  if (asset.contract_or_ownership_type === "etf") return "exchange_traded_fund";
+  if (asset.contract_or_ownership_type === "etf") return "listed_fund_share";
   switch (asset.subject_category) {
     case "equity": return "listed_security";
     case "crypto": return "cryptoasset";

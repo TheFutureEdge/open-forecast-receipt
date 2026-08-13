@@ -29,6 +29,8 @@ import {
   knowledgeGraphViewNodes,
   type KnowledgeNodeKind,
 } from "./knowledgeGraphData";
+import { KnowledgeGraphLegend } from "./KnowledgeGraphLegend";
+import { KnowledgeGraphTag } from "./KnowledgeGraphTag";
 import { SchemaOrgTypeTag } from "./SchemaOrgTypeTag";
 
 type KnowledgeNodeData = Record<string, unknown> & {
@@ -38,6 +40,8 @@ type KnowledgeNodeData = Record<string, unknown> & {
   subtitle: string;
   description: string;
   schemaOrgType?: string;
+  dimension?: string;
+  unit?: string;
 };
 
 type KnowledgeFlowNode = Node<KnowledgeNodeData, "knowledge">;
@@ -124,6 +128,8 @@ export function InteractiveKnowledgeGraph() {
         </button>
       </div>
 
+      <KnowledgeGraphLegend className="border-b border-slate-200 dark:border-slate-800" />
+
       <div className="grid xl:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="h-[38rem] min-w-0 border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/40 xl:border-b-0 xl:border-r">
           <ReactFlow
@@ -190,6 +196,12 @@ function KnowledgeGraphNode({ data, selected }: NodeProps<KnowledgeFlowNode>) {
           <div className="mt-0.5 text-xs font-bold leading-4 text-slate-950 dark:text-white">{data.title}</div>
           <div className="mt-1 text-[9px] leading-4 text-slate-500 dark:text-slate-400">{data.subtitle}</div>
           {data.schemaOrgType && <SchemaOrgTypeTag value={data.schemaOrgType} className="mt-2" />}
+          {(data.dimension || data.unit) && (
+            <div className="mt-2 flex max-w-full flex-wrap gap-1">
+              {data.dimension && <KnowledgeGraphTag kind="dimension" title={`Dimension: ${data.dimension}`}>Dim.: {data.dimension}</KnowledgeGraphTag>}
+              {data.unit && <KnowledgeGraphTag kind="unit">Unit: {data.unit}</KnowledgeGraphTag>}
+            </div>
+          )}
         </div>
       </div>
       <Handle type="source" position={Position.Right} className="!size-2 !border-2 !border-white !bg-slate-500" isConnectable={false} />
@@ -207,6 +219,12 @@ function NodeDetails({ data }: { data: KnowledgeNodeData }) {
       <h4 className="mt-1 text-base font-bold text-slate-950 dark:text-white">{data.title}</h4>
       <div className="mt-1 text-[10px] font-semibold text-slate-500">{data.subtitle}</div>
       {data.schemaOrgType && <SchemaOrgTypeTag value={data.schemaOrgType} className="mt-3" />}
+      {(data.dimension || data.unit) && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {data.dimension && <KnowledgeGraphTag kind="dimension" title={`Dimension: ${data.dimension}`}>Dim.: {data.dimension}</KnowledgeGraphTag>}
+          {data.unit && <KnowledgeGraphTag kind="unit">Unit: {data.unit}</KnowledgeGraphTag>}
+        </div>
+      )}
       <p className="mt-3 text-xs leading-5 text-slate-600 dark:text-slate-300">{data.description}</p>
     </div>
   );

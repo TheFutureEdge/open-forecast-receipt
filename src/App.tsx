@@ -8,9 +8,11 @@ import { StandardsPage } from "./components/standards/StandardsPage";
 import { NotFoundPage } from "./components/common/NotFoundPage";
 import { useLocation } from "./lib/router";
 import { LandingPage } from "./components/landing/LandingPage";
-import { EntityCatalogPage } from "./components/entities/EntityCatalogPage";
+import { EntityCatalogPage, ENTITY_CATALOG_PRESETS } from "./components/entities/EntityCatalogPage";
 import { EntityDetailPage } from "./components/entities/EntityDetailPage";
+import { EntityCategoryComingSoonPage } from "./components/entities/EntityCategoryComingSoonPage";
 import { ForecasterCatalogPage } from "./components/forecasters/ForecasterCatalogPage";
+import { RouteSeo } from "./components/seo/RouteSeo";
 
 function resolveRoute(pathname: string): ReactNode {
   if (
@@ -28,11 +30,34 @@ function resolveRoute(pathname: string): ReactNode {
   }
 
   if (pathname === "/entities" || pathname === "/entities/") {
-    return <EntityCatalogPage view="forecastable" />;
+    return <EntityCatalogPage preset={ENTITY_CATALOG_PRESETS["all-forecast-subjects"]} />;
+  }
+
+  if (pathname === "/entities/directory" || pathname === "/entities/directory/") {
+    return <EntityCatalogPage preset={ENTITY_CATALOG_PRESETS.directory} />;
+  }
+
+  const subjectCatalogMatch = pathname.match(/^\/entities\/subjects\/(listed-securities|funds-etfs|cryptoassets|commodities|currency-pairs|market-indices)\/?$/);
+  if (subjectCatalogMatch) {
+    return <EntityCatalogPage preset={ENTITY_CATALOG_PRESETS[subjectCatalogMatch[1]]} />;
+  }
+
+  if (pathname === "/entities/subjects/macroeconomics" || pathname === "/entities/subjects/macroeconomics/") {
+    return <EntityCategoryComingSoonPage categoryKey="macroeconomics" />;
+  }
+
+  const contextCatalogMatch = pathname.match(/^\/entities\/context\/(corporations|investment-funds)\/?$/);
+  if (contextCatalogMatch) {
+    return <EntityCatalogPage preset={ENTITY_CATALOG_PRESETS[contextCatalogMatch[1]]} />;
+  }
+
+  const contextComingSoonMatch = pathname.match(/^\/entities\/context\/(countries|markets-venues|networks-protocols)\/?$/);
+  if (contextComingSoonMatch) {
+    return <EntityCategoryComingSoonPage categoryKey={contextComingSoonMatch[1]} />;
   }
 
   if (pathname === "/entities/organizations" || pathname === "/entities/organizations/") {
-    return <EntityCatalogPage view="organizations" />;
+    return <EntityCatalogPage preset={ENTITY_CATALOG_PRESETS.corporations} />;
   }
 
   if (
@@ -98,6 +123,9 @@ export default function App() {
   const { pathname } = useLocation();
 
   return (
-    <AppShell landing={pathname === "/"}>{resolveRoute(pathname)}</AppShell>
+    <>
+      <RouteSeo pathname={pathname} />
+      <AppShell landing={pathname === "/"}>{resolveRoute(pathname)}</AppShell>
+    </>
   );
 }

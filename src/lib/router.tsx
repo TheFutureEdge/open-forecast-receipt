@@ -31,20 +31,34 @@ export function stripBasePath(pathname: string, basePath = APP_BASE_PATH): strin
 
 function subscribeToLocation(onStoreChange: () => void): () => void {
   window.addEventListener("popstate", onStoreChange);
-  return () => window.removeEventListener("popstate", onStoreChange);
+  window.addEventListener("hashchange", onStoreChange);
+  return () => {
+    window.removeEventListener("popstate", onStoreChange);
+    window.removeEventListener("hashchange", onStoreChange);
+  };
 }
 
 function getPathname(): string {
   return stripBasePath(window.location.pathname);
 }
 
-export function useLocation(): { pathname: string } {
+function getSearch(): string {
+  return window.location.search;
+}
+
+function getHash(): string {
+  return window.location.hash;
+}
+
+export function useLocation(): { pathname: string; search: string; hash: string } {
   const pathname = useSyncExternalStore(
     subscribeToLocation,
     getPathname,
     () => "/"
   );
-  return { pathname };
+  const search = useSyncExternalStore(subscribeToLocation, getSearch, () => "");
+  const hash = useSyncExternalStore(subscribeToLocation, getHash, () => "");
+  return { pathname, search, hash };
 }
 
 export function navigate(to: string, options?: { replace?: boolean }): void {
@@ -55,7 +69,16 @@ export function navigate(to: string, options?: { replace?: boolean }): void {
     window.history.pushState(null, "", browserPath);
   }
   window.dispatchEvent(new PopStateEvent("popstate"));
-  window.scrollTo({ top: 0, behavior: "auto" });
+  const hash = new URL(browserPath, window.location.origin).hash.slice(1);
+  if (hash) {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        document.getElementById(decodeURIComponent(hash))?.scrollIntoView({ block: "start", behavior: "auto" });
+      });
+    });
+  } else {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
 }
 
 interface LinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> {

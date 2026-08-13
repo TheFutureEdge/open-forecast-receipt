@@ -15,6 +15,7 @@ import { getPublicEntity, listEntityCollections } from "../../lib/library/reposi
 import type { PublicCollectionEntityRecord, PublicEntityRecord } from "../../lib/library/types";
 import { Link } from "../../lib/router";
 import { SchemaOrgTypeTag } from "../knowledge/SchemaOrgTypeTag";
+import { getPublicSiteOrigin, PageSeo } from "../seo/PageSeo";
 
 function humanize(value: string): string {
   return value.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
@@ -75,7 +76,7 @@ export function EntityDetailPage({ routeKey }: { routeKey: string }) {
       .map((related) => related.schemaTickerSymbol);
     return {
       "@context": "https://schema.org",
-      "@id": `${window.location.origin}/entities/${encodeURIComponent(entity.stableSlug)}`,
+      "@id": `${getPublicSiteOrigin()}/entities/${encodeURIComponent(entity.stableSlug)}`,
       "@type": entity.schemaOrgTypes[0] || "Thing",
       additionalType: entity.entityClasses?.includes("forecastable_entity")
         ? `https://ipulseai.com/standards/semantic-entities/v0.1#${humanize(entity.entityType).replaceAll(" ", "")}`
@@ -102,7 +103,6 @@ export function EntityDetailPage({ routeKey }: { routeKey: string }) {
 
   useEffect(() => {
     if (!entity || !jsonLd) return;
-    document.title = `${entity.canonicalName} · Open Forecast Library`;
     const script = document.createElement("script");
     script.type = "application/ld+json";
     script.dataset.oflEntity = entity.entityId;
@@ -110,7 +110,6 @@ export function EntityDetailPage({ routeKey }: { routeKey: string }) {
     document.head.appendChild(script);
     return () => {
       script.remove();
-      document.title = "Open Forecast Library";
     };
   }, [entity, jsonLd]);
 
@@ -133,7 +132,14 @@ export function EntityDetailPage({ routeKey }: { routeKey: string }) {
     : [];
 
   return (
-    <div className="space-y-5">
+    <>
+      <PageSeo
+        title={`${entity.canonicalName} Forecast Entity Profile | Open Forecast Library`}
+        description={entity.description || `Inspect ${entity.canonicalName}, its stable identifiers, semantic type, relationships, and linked public forecast collections.`}
+        canonicalPath={`/entities/${encodeURIComponent(entity.stableSlug)}`}
+        pageType="profile"
+      />
+      <div className="space-y-5">
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
         <Link to="/entities" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-700">
           <ArrowLeft size={14} /> Entity catalog
@@ -300,7 +306,8 @@ export function EntityDetailPage({ routeKey }: { routeKey: string }) {
           </section>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

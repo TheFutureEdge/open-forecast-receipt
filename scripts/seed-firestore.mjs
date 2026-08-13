@@ -130,12 +130,12 @@ function subjectAssignmentId(forecastId) {
   return String(forecastId || "").match(/__(xrefsubjtskconf_[0-9a-f-]+)__/i)?.[1];
 }
 
-const SPECIALIZATION_ORDER = ["equity", "crypto", "forex", "commodity", "index", "fund"];
+const SUBJECT_CATEGORY_ORDER = ["equity", "crypto", "forex", "commodity", "index", "fund"];
 
-function sortSpecializations(values) {
+function sortSubjectCategories(values) {
   return [...new Set(values.filter(Boolean))].sort((left, right) => {
-    const leftRank = SPECIALIZATION_ORDER.indexOf(left);
-    const rightRank = SPECIALIZATION_ORDER.indexOf(right);
+    const leftRank = SUBJECT_CATEGORY_ORDER.indexOf(left);
+    const rightRank = SUBJECT_CATEGORY_ORDER.indexOf(right);
     if (leftRank === -1 && rightRank === -1) return left.localeCompare(right);
     if (leftRank === -1) return 1;
     if (rightRank === -1) return -1;
@@ -256,7 +256,7 @@ for (const [sortOrder, entry] of catalog.entries.entries()) {
         analystId: forecaster.id,
       },
       modes: [],
-      specializations: [],
+      publishedSubjectCategories: [],
       taskConfigurationIds: [],
       subjectAssignmentIds: [],
       sameAs: [],
@@ -268,8 +268,8 @@ for (const [sortOrder, entry] of catalog.entries.entries()) {
   const forecasterRecord = forecasterRecords.get(forecaster.id);
   forecasterRecord.modes = [...new Set([...forecasterRecord.modes, forecaster.mode].filter(Boolean))].sort();
   const subjectCategory = forecast.entity.identifiers?.subjectCategory || forecast.entity.type;
-  forecasterRecord.specializations = sortSpecializations([
-    ...forecasterRecord.specializations,
+  forecasterRecord.publishedSubjectCategories = sortSubjectCategories([
+    ...forecasterRecord.publishedSubjectCategories,
     subjectCategory,
   ]);
   forecasterRecord.taskConfigurationIds = [...new Set([

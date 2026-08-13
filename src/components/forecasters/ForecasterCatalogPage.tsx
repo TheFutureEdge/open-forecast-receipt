@@ -20,7 +20,7 @@ interface ForecasterCoverage {
   forecasts: number;
   entities: number;
   modes: string[];
-  specializations: string[];
+  publishedSubjectCategories: string[];
   proofSelected: number;
   proofVerified: number;
 }
@@ -45,7 +45,7 @@ function buildCoverage(forecasters: PublicForecasterRecord[], forecasts: PublicF
       forecasts: records.length,
       entities: new Set(records.map((record) => record.entityId)).size,
       modes: [...new Set(records.map((record) => record.forecasterMode || modeFromDescription(record.forecaster.description)).filter((mode): mode is string => Boolean(mode)))].sort(),
-      specializations: [...new Set(records.map((record) => record.subjectCategory).filter((value): value is string => Boolean(value)))].sort(),
+      publishedSubjectCategories: [...new Set(records.map((record) => record.subjectCategory).filter((value): value is string => Boolean(value)))].sort(),
       proofSelected: records.filter((record) => record.showcaseSelected).length,
       proofVerified: records.filter((record) => record.chainStatus === "verified").length,
     });
@@ -89,7 +89,7 @@ export function ForecasterCatalogPage() {
       forecaster.typeLabel,
       forecaster.model?.name,
       forecaster.model?.provider,
-      ...(forecaster.specializations || []),
+      ...(forecaster.publishedSubjectCategories || []),
     ].filter(Boolean).some((value) => String(value).toLowerCase().includes(normalized)));
   }, [forecasters, queryText]);
 
@@ -154,15 +154,17 @@ export function ForecasterCatalogPage() {
             <input
               value={queryText}
               onChange={(event) => setQueryText(event.target.value)}
-              placeholder="Search forecasters, roles, models, or providers"
+              placeholder="Search forecasters, models, or published coverage"
               className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none focus:border-blue-400 focus:bg-white dark:border-slate-700 dark:bg-slate-800"
             />
           </label>
         </div>
         <div className="grid gap-px bg-slate-100 p-px dark:bg-slate-800 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((forecaster) => {
-            const stats = coverage.get(forecaster.forecasterId) || { forecasts: 0, entities: 0, modes: [], specializations: [], proofSelected: 0, proofVerified: 0 };
-            const specializations = forecaster.specializations?.length ? forecaster.specializations : stats.specializations;
+            const stats = coverage.get(forecaster.forecasterId) || { forecasts: 0, entities: 0, modes: [], publishedSubjectCategories: [], proofSelected: 0, proofVerified: 0 };
+            const publishedSubjectCategories = forecaster.publishedSubjectCategories?.length
+              ? forecaster.publishedSubjectCategories
+              : stats.publishedSubjectCategories;
             const forecasterForecasts = forecasts.filter((forecast) => forecast.forecasterId === forecaster.forecasterId);
             const taskConfigurationIds = forecaster.taskConfigurationIds || [...new Set(
               forecasterForecasts.map((forecast) => forecast.taskConfigurationId).filter((value): value is string => Boolean(value)),
@@ -214,8 +216,8 @@ export function ForecasterCatalogPage() {
                     <span className="font-medium text-slate-700 dark:text-slate-200">{stats.modes.join(" · ") || "Not recorded"}</span>
                   </div>
                   <div className="flex items-start justify-between gap-3">
-                    <span className="inline-flex shrink-0 items-center gap-1.5 text-slate-400"><Stack size={14} /> Specializations</span>
-                    <span className="text-right font-medium capitalize text-slate-700 dark:text-slate-200">{specializations.join(", ") || "Not recorded"}</span>
+                    <span className="inline-flex shrink-0 items-center gap-1.5 text-slate-400"><Stack size={14} /> Published coverage</span>
+                    <span className="text-right font-medium capitalize text-slate-700 dark:text-slate-200">{publishedSubjectCategories.join(", ") || "Not recorded"}</span>
                   </div>
                   <div className="flex items-center justify-between gap-3">
                     <span className="inline-flex items-center gap-1.5 text-slate-400"><Stack size={14} /> Task configurations</span>

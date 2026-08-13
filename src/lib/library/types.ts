@@ -183,7 +183,7 @@ export interface PublicForecasterRecord {
     analystId?: string;
   };
   modes?: string[];
-  specializations?: string[];
+  publishedSubjectCategories?: string[];
   taskConfigurationIds?: string[];
   subjectAssignmentIds?: string[];
   sameAs?: string[];

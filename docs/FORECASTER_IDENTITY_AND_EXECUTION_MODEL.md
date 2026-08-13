@@ -88,7 +88,7 @@ Publisher organization
     "provider": "Google"
   },
   "modes": ["RESEARCHER", "THINKER"],
-  "specializations": ["equity", "crypto", "index"],
+  "publishedSubjectCategories": ["equity", "crypto", "index"],
   "taskConfigurationIds": ["taskconfig_..."],
   "subjectAssignmentIds": ["xrefsubjtskconf_..."],
   "sameAs": []
@@ -99,7 +99,15 @@ The public profile is an index. Each individual forecast receipt freezes the
 exact forecaster, model, mode, task configuration, input/output lineage, review,
 and temporal boundaries used for that forecast.
 
-`specializations` is a structured list of governed entity/subject categories
-the forecaster has actually covered, such as `equity`, `crypto`, or `index`.
-The UI may present the array as a comma-separated label, but the stored value
-remains an extensible list rather than a free-form string.
+`publishedSubjectCategories` is a structured list of governed entity/subject
+categories the forecaster has actually covered in published receipts, such as
+`equity`, `crypto`, or `index`. The UI may present the array as a comma-separated
+label, but the stored value remains an extensible list rather than a free-form
+string. This field records demonstrated public coverage, not an asserted area
+of expertise or the broader configured applicability of the analyst and its
+task configurations.
+
+Configured applicability is a separate concept. When an iPulse AI adapter
+publishes it, it should come from the governed analyst and task-configuration
+records; a null analyst category filter means universal applicability. It must
+not be inferred from the categories happened to appear in published receipts.

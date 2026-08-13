@@ -7,6 +7,16 @@ import { canonicalize } from "json-canonicalize";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const MAX_SAFE_DOCUMENT_BYTES = 900_000;
+const PUBLISHER_ORGANIZATION = {
+  organizationId: "oflorg_future_edge_group_fze",
+  name: "Future Edge Group FZE",
+  schemaOrgType: "Organization",
+};
+const PUBLISHER_TEAM = {
+  teamId: "oflteam_ipulse_ai_research",
+  name: "iPulse AI Research",
+  product: "iPulse AI",
+};
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -56,7 +66,7 @@ function forecasterTypeLabel(type) {
   return `${normalized.replaceAll("_", " ")} forecaster`;
 }
 
-function forecasterDisplayName(forecaster) {
+function forecasterPersonaLabel(forecaster) {
   if (isHumanParty(forecaster.type)) return forecaster.name;
   const normalized = normalizeForecasterType(forecaster.type);
   const suffix = normalized.includes("ai")
@@ -67,6 +77,13 @@ function forecasterDisplayName(forecaster) {
   return new RegExp(`\\b${suffix}$`, "i").test(forecaster.name)
     ? forecaster.name
     : `${forecaster.name} ${suffix}`;
+}
+
+function forecasterDisplayName(forecaster) {
+  const personaLabel = forecasterPersonaLabel(forecaster);
+  const modelName = forecaster.model?.name?.trim();
+  if (!modelName || personaLabel.toLowerCase().includes(modelName.toLowerCase())) return personaLabel;
+  return `${personaLabel} on ${modelName}`;
 }
 
 function forecastReviewSummary(forecast) {
@@ -90,6 +107,7 @@ function forecastForecasterSummary(forecast) {
   return {
     type: forecaster.type,
     sourceName: forecaster.name,
+    personaLabel: forecasterPersonaLabel(forecaster),
     displayName: forecasterDisplayName(forecaster),
     description: forecaster.description
       || [forecaster.role, forecaster.mode].filter(Boolean).join(" · ")
@@ -106,6 +124,10 @@ function forecastForecasterSummary(forecast) {
     reviewerCount: review.reviewerCount,
     humanReviewerCount: review.humanReviewerCount,
   };
+}
+
+function subjectAssignmentId(forecastId) {
+  return String(forecastId || "").match(/__(xrefsubjtskconf_[0-9a-f-]+)__/i)?.[1];
 }
 
 const projectId = argumentValue("--project")
@@ -197,22 +219,48 @@ for (const [sortOrder, entry] of catalog.entries.entries()) {
   const forecaster = forecast.forecaster;
   const forecasterSummary = forecastForecasterSummary(forecast);
   const protocol = projection.protocolSuppliedAfterIssuance;
+  const generationConfiguration = payload.provenance?.generationConfiguration;
+  const assignmentId = subjectAssignmentId(forecast.forecastId);
 
   if (!forecasterRecords.has(forecaster.id)) {
     forecasterRecords.set(forecaster.id, {
       forecasterId: forecaster.id,
+      entityScope: "platform",
+      profileType: "ai_forecaster_profile",
       type: forecaster.type,
       name: forecaster.name,
+      personaLabel: forecasterSummary.personaLabel,
       displayName: forecasterSummary.displayName,
       description: forecasterSummary.description,
       typeLabel: forecasterSummary.typeLabel,
       architectureAuthors: forecasterSummary.architectureAuthors,
       model: forecaster.model || null,
+      publisherOrganization: PUBLISHER_ORGANIZATION,
+      publisherTeam: PUBLISHER_TEAM,
+      sourceProfile: {
+        sourceSystem: "iPulse AI prediction architecture v2",
+        sourceType: "ai_analyst",
+        analystId: forecaster.id,
+      },
+      modes: [],
+      taskConfigurationIds: [],
+      subjectAssignmentIds: [],
+      sameAs: [],
       reviewCapabilities: ["human", "ai", "algorithm", "organization"],
       publicationStatus: "published",
       visibility: "public",
     });
   }
+  const forecasterRecord = forecasterRecords.get(forecaster.id);
+  forecasterRecord.modes = [...new Set([...forecasterRecord.modes, forecaster.mode].filter(Boolean))].sort();
+  forecasterRecord.taskConfigurationIds = [...new Set([
+    ...forecasterRecord.taskConfigurationIds,
+    generationConfiguration?.taskConfigId,
+  ].filter(Boolean))].sort();
+  forecasterRecord.subjectAssignmentIds = [...new Set([
+    ...forecasterRecord.subjectAssignmentIds,
+    assignmentId,
+  ].filter(Boolean))].sort();
 
   addDocument("public_forecasts", forecast.forecastId, {
     collectionId: manifest.batchId,
@@ -222,6 +270,9 @@ for (const [sortOrder, entry] of catalog.entries.entries()) {
     forecasterLabel: entry.forecasterLabel,
     forecaster: forecasterSummary,
     forecastId: forecast.forecastId,
+    forecasterMode: forecaster.mode,
+    taskConfigurationId: generationConfiguration?.taskConfigId,
+    subjectAssignmentId: assignmentId,
     receiptDigest: entry.receiptDigest,
     targetName: forecast.target.name,
     forecastCreatedAt: forecast.temporal.forecastCreatedAt,

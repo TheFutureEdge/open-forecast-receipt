@@ -1,27 +1,13 @@
 import { useMemo, useState } from "react";
 import { CheckCircle, LinkSimple, MagnifyingGlass } from "@phosphor-icons/react";
 import type { PublicForecastRecord } from "../../lib/library/types";
+import { getForecasterAvatar } from "../../lib/forecasters/avatar";
 
 interface AdvisorCardListProps {
   fixtures: PublicForecastRecord[];
   advisorCount: number;
   selectedDigest?: string;
   onSelect?: (fixture: PublicForecastRecord) => void;
-}
-
-const avatarByName: Record<string, string> = {
-  "Elon Musk": "elon_musk.jpg",
-  "J.P. Morgan": "jp_morgan.jpg",
-  "Michael Burry": "michael_burry.jpg",
-  "Niccolo Machiavelli": "niccolo_machiavelli.jpg",
-  "Ray Dalio": "ray_dalio.jpg",
-  "Sherlock Holmes": "sherlock_holmes.jpg",
-  Superintelligence: "superintelligence.jpg",
-  "Warren Buffett": "warren_buffett.jpg",
-};
-
-export function getForecasterAvatar(sourceName: string): string {
-  return `/assets/forecasters/${avatarByName[sourceName] ?? "consensus.jpg"}`;
 }
 
 export function AdvisorCardList({ fixtures, advisorCount, selectedDigest, onSelect }: AdvisorCardListProps) {

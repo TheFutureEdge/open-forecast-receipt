@@ -71,6 +71,12 @@ export interface PublicEntityRecord {
   schemaOrgTypes: string[];
   externalIdentifiers: PublicEntityIdentifier[];
   sameAs: string[];
+  lifecycle?: {
+    status: "active" | "deprecated" | "inactive";
+    sourcePulseStatus?: string;
+    sourceOverallStatus?: string;
+    sourceUpdatedAt?: string;
+  };
   logo?: PublicEntityMedia;
   profile?: PublicEntityProfile;
   relatedEntities?: PublicRelatedEntity[];
@@ -124,6 +130,9 @@ export interface PublicForecastRecord {
     humanReviewerCount: number;
   };
   forecastId: string;
+  forecasterMode?: string;
+  taskConfigurationId?: string;
+  subjectAssignmentId?: string;
   receiptDigest: string;
   targetName: string;
   forecastCreatedAt: string;
@@ -136,6 +145,46 @@ export interface PublicForecastRecord {
   transactionHash?: string;
   attester?: string;
   blockTimestamp?: number;
+  publicationStatus: typeof PUBLICATION_STATUS;
+  visibility: typeof PUBLIC_VISIBILITY;
+}
+
+export interface PublicForecasterRecord {
+  forecasterId: string;
+  entityScope?: "global" | "platform";
+  profileType?: "ai_forecaster_profile" | "human_forecaster_profile" | "algorithm_forecaster_profile" | "organization_forecaster_profile";
+  type: string;
+  name: string;
+  personaLabel?: string;
+  displayName: string;
+  description: string;
+  typeLabel: string;
+  architectureAuthors?: unknown[];
+  model?: {
+    name?: string;
+    provider?: string;
+    apiIdentifier?: string;
+  } | null;
+  reviewCapabilities?: string[];
+  publisherOrganization?: {
+    organizationId: string;
+    name: string;
+    schemaOrgType: "Organization";
+  };
+  publisherTeam?: {
+    teamId: string;
+    name: string;
+    product: string;
+  };
+  sourceProfile?: {
+    sourceSystem: string;
+    sourceType: "ai_analyst" | "human_forecaster" | "algorithm" | "organization";
+    analystId?: string;
+  };
+  modes?: string[];
+  taskConfigurationIds?: string[];
+  subjectAssignmentIds?: string[];
+  sameAs?: string[];
   publicationStatus: typeof PUBLICATION_STATUS;
   visibility: typeof PUBLIC_VISIBILITY;
 }

@@ -10,6 +10,7 @@ import { useLocation } from "./lib/router";
 import { LandingPage } from "./components/landing/LandingPage";
 import { EntityCatalogPage } from "./components/entities/EntityCatalogPage";
 import { EntityDetailPage } from "./components/entities/EntityDetailPage";
+import { ForecasterCatalogPage } from "./components/forecasters/ForecasterCatalogPage";
 
 function resolveRoute(pathname: string): ReactNode {
   if (
@@ -27,7 +28,20 @@ function resolveRoute(pathname: string): ReactNode {
   }
 
   if (pathname === "/entities" || pathname === "/entities/") {
-    return <EntityCatalogPage />;
+    return <EntityCatalogPage view="forecastable" />;
+  }
+
+  if (pathname === "/entities/organizations" || pathname === "/entities/organizations/") {
+    return <EntityCatalogPage view="organizations" />;
+  }
+
+  if (
+    pathname === "/forecasters"
+    || pathname === "/forecasters/"
+    || pathname === "/entities/forecasters"
+    || pathname === "/entities/forecasters/"
+  ) {
+    return <ForecasterCatalogPage />;
   }
 
   const entityMatch = pathname.match(/^\/entities\/([^/]+)\/?$/);

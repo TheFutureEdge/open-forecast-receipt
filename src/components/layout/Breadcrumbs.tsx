@@ -8,6 +8,8 @@ interface BreadcrumbSegment {
 const labelMap: Record<string, string> = {
   showcase: "Forecasts",
   forecasts: "Forecasts",
+  forecasters: "Forecasters",
+  organizations: "Organizations",
   entities: "Entities",
   manifest: "Forecasts",
   "batch-6": "Public Forecasts",
@@ -31,8 +33,11 @@ function isNavigableBreadcrumb(path: string): boolean {
     path === "/standards"
     || path === "/test"
     || path === "/entities"
+    || path === "/entities/organizations"
+    || path === "/entities/forecasters"
     || /^\/entities\/[^/]+$/.test(path)
     || path === "/forecasts"
+    || path === "/forecasters"
     || path === "/showcase"
     || /^\/showcase\/[^/]+$/.test(path)
     || /^\/manifest\/[^/]+$/.test(path)

@@ -15,18 +15,38 @@ import type {
   PublicCollectionEntityRecord,
   PublicEntityRecord,
   PublicForecastRecord,
+  PublicForecasterRecord,
   PublicReceiptRecord,
 } from "./types";
 
-export async function listPublicEntities(): Promise<PublicEntityRecord[]> {
-  const db = getLibraryFirestore();
-  const [forecastableSnapshots, fundamentalSnapshots] = await Promise.all([
-    getDocs(query(collection(db, "public_entities"), where("entityClasses", "array-contains", "forecastable_entity"))),
-    getDocs(query(collection(db, "public_entities"), where("entityClasses", "array-contains", "fundamental_entity"))),
-  ]);
-  return [...forecastableSnapshots.docs, ...fundamentalSnapshots.docs]
+export async function listPublicForecasters(): Promise<PublicForecasterRecord[]> {
+  const snapshots = await getDocs(collection(getLibraryFirestore(), "public_forecasters"));
+  return snapshots.docs
+    .map((snapshot) => snapshot.data() as PublicForecasterRecord)
+    .sort((left, right) => left.displayName.localeCompare(right.displayName));
+}
+
+export async function listPublicForecasts(): Promise<PublicForecastRecord[]> {
+  const snapshots = await getDocs(collection(getLibraryFirestore(), "public_forecasts"));
+  return snapshots.docs.map((snapshot) => snapshot.data() as PublicForecastRecord);
+}
+
+async function listPublicEntitiesByClass(entityClass: string): Promise<PublicEntityRecord[]> {
+  const snapshots = await getDocs(query(
+    collection(getLibraryFirestore(), "public_entities"),
+    where("entityClasses", "array-contains", entityClass),
+  ));
+  return snapshots.docs
     .map((snapshot) => snapshot.data() as PublicEntityRecord)
     .sort((left, right) => left.canonicalName.localeCompare(right.canonicalName));
+}
+
+export function listPublicForecastableEntities(): Promise<PublicEntityRecord[]> {
+  return listPublicEntitiesByClass("forecastable_entity");
+}
+
+export function listPublicOrganizations(): Promise<PublicEntityRecord[]> {
+  return listPublicEntitiesByClass("organization");
 }
 
 export async function getPublicEntity(routeKey: string): Promise<PublicEntityRecord | null> {

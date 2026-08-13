@@ -8,19 +8,27 @@ import {
   Database,
   MagnifyingGlass,
 } from "@phosphor-icons/react";
-import { listPublicEntities } from "../../lib/library/repository";
+import { listPublicForecastableEntities, listPublicOrganizations } from "../../lib/library/repository";
 import type { PublicEntityRecord } from "../../lib/library/types";
 import { Link } from "../../lib/router";
 
 const PAGE_SIZE = 30;
 
 function categoryFor(entity: PublicEntityRecord): string {
-  if (entity.entityClasses?.includes("organization")) return "organization";
-  if (entity.entityClasses?.includes("underlying_entity")) return "underlying_entity";
+  if (entity.entityClasses?.includes("organization") || entity.entityClasses?.includes("underlying_entity")) {
+    return entity.entityType;
+  }
   return entity.classifications.find((item) => item.scheme === "ipulse-subject-category")?.code || "other";
 }
 
 function displayIdentifier(entity: PublicEntityRecord): string {
+  if (entity.entityClasses?.includes("organization")) {
+    const listings = (entity.relatedEntities || [])
+      .filter((related) => related.predicate === "has_market_representation")
+      .map((related) => related.displayIdentifier)
+      .filter((value): value is string => Boolean(value));
+    if (listings.length > 0) return `${listings.slice(0, 2).join(" · ")}${listings.length > 2 ? ` · +${listings.length - 2}` : ""}`;
+  }
   const preferred = ["ticker_venue", "ipulse_symbol", "isin"];
   for (const scheme of preferred) {
     const match = (entity.externalIdentifiers || []).find((identifier) => identifier.scheme === scheme);
@@ -59,7 +67,7 @@ function EntityGlyph({ entity }: { entity: PublicEntityRecord }) {
   );
 }
 
-export function EntityCatalogPage() {
+export function EntityCatalogPage({ view }: { view: "forecastable" | "organizations" }) {
   const [entities, setEntities] = useState<PublicEntityRecord[]>([]);
   const [queryText, setQueryText] = useState("");
   const [category, setCategory] = useState("all");
@@ -69,7 +77,8 @@ export function EntityCatalogPage() {
 
   useEffect(() => {
     let active = true;
-    listPublicEntities()
+    const load = view === "forecastable" ? listPublicForecastableEntities : listPublicOrganizations;
+    load()
       .then((records) => {
         if (active) setEntities(records);
       })
@@ -80,7 +89,7 @@ export function EntityCatalogPage() {
         if (active) setLoading(false);
       });
     return () => { active = false; };
-  }, []);
+  }, [view]);
 
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -123,15 +132,19 @@ export function EntityCatalogPage() {
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-blue-700 dark:border-blue-900 dark:bg-blue-950/60 dark:text-blue-300">
               <Database size={15} weight="fill" /> Semantic entity catalog
             </div>
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl dark:text-white">Browse entities and organizations</h1>
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl dark:text-white">
+              {view === "forecastable" ? "Browse forecastable entities" : "Browse organizations"}
+            </h1>
             <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
-              Browse persistent market subjects and the organizations behind them. Names, tickers, and identifiers may change; governed entity identity and relationships remain stable.
+              {view === "forecastable"
+                ? "Start with the market instruments and other subjects that can receive forecasts. Each listing links to its underlying company, fund, venue, and governed identifiers."
+                : "Browse companies, funds, publishers, and other organizations separately from their market listings. One organization may relate to several forecastable instruments."}
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <CatalogMetric value={entities.length} label="Entities" />
-            <CatalogMetric value={entities.filter((entity) => entity.entityClasses?.includes("forecastable_entity")).length} label="Forecastable" />
-            <CatalogMetric value={entities.filter((entity) => entity.entityClasses?.includes("organization")).length} label="Organizations" />
+            <CatalogMetric value={entities.length} label={view === "forecastable" ? "Forecastable" : "Organizations"} />
+            <CatalogMetric value={entities.filter((entity) => (entity.relatedEntities || []).length > 0).length} label={view === "forecastable" ? "Linked to owner" : "With listings"} />
+            <CatalogMetric value={entities.filter((entity) => Boolean(entity.logo?.url)).length} label="With logos" />
             <CatalogMetric value={entities.filter((entity) => (entity.sameAs || []).length > 0).length} label="Verified sameAs" />
           </div>
         </div>
@@ -154,7 +167,7 @@ export function EntityCatalogPage() {
             aria-label="Filter entities by category"
             className="h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:border-blue-400 dark:border-slate-700 dark:bg-slate-800"
           >
-            <option value="all">All categories ({entities.length})</option>
+            <option value="all">All {view === "forecastable" ? "forecast types" : "organization types"} ({entities.length})</option>
             {categoryCounts.map(([value, count]) => (
               <option key={value} value={value}>{entityTypeLabel(value)} ({count})</option>
             ))}
@@ -178,7 +191,9 @@ export function EntityCatalogPage() {
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500">
                   <span>{displayIdentifier(entity)}</span>
                   <span className="rounded bg-slate-100 px-1.5 py-0.5 dark:bg-slate-800">{entityTypeLabel(entity.entityType)}</span>
-                  <span>{entity.entityClasses?.includes("forecastable_entity") ? "Forecast subject" : "Related organization"}</span>
+                  <span>{entity.entityClasses?.includes("forecastable_entity")
+                    ? "Forecastable entity"
+                    : `${(entity.relatedEntities || []).filter((related) => related.predicate === "has_market_representation").length} market listing${(entity.relatedEntities || []).filter((related) => related.predicate === "has_market_representation").length === 1 ? "" : "s"}`}</span>
                 </div>
               </div>
               <ArrowRight className="shrink-0 text-slate-300" size={16} aria-hidden="true" />
@@ -203,7 +218,7 @@ export function EntityCatalogPage() {
       </section>
 
       <p className="text-xs leading-5 text-slate-500">
-        Current source: the governed iPulse AI market-entity catalog. Publisher collections and forecasts reference these stable entity IDs.
+        Current source: the governed iPulse AI semantic catalog. Forecasts reference stable entity IDs; market listings and their underlying organizations remain separate, related records.
       </p>
     </div>
   );

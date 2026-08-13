@@ -14,7 +14,7 @@ const DEFAULT_SOURCE_PROJECT = "data-platform-436809";
 const DEFAULT_TARGET_PROJECT = "oflapp-staging";
 const ENTITY_VERSION_NAMESPACE = "cef63097-4d84-5018-9778-d4be189e320f";
 const RELATIONSHIP_NAMESPACE = "b2cc5767-24c5-5971-aa70-5b1648004cbe";
-const CATALOG_POLICY_VERSION = "ofl-ipulse-import-0.3";
+const CATALOG_POLICY_VERSION = "ofl-ipulse-import-0.4";
 const MAX_BATCH_WRITES = 400;
 const UNIQUE_IDENTIFIER_SCHEMES = new Set([
   "ipulse_asset_id",
@@ -256,6 +256,7 @@ function publicEntityProjection(entity, identifiers) {
         .filter((identifier) => identifier.matchType === "same_as" && identifier.canonicalUri)
         .map((identifier) => identifier.canonicalUri),
     ])],
+    lifecycle: entity.lifecycle,
     source: entity.source,
     publicationStatus: "published",
     visibility: "public",
@@ -455,6 +456,12 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
       schemaOrgTypes: [semantic?.schema_org_primary_type || schemaOrgTypes(type)[0]],
       logo: effectiveLogo ? { ...effectiveLogo, alt: `${asset.name} logo` } : undefined,
       relatedEntities: relatedFundamental ? [relatedFundamental] : [],
+      lifecycle: {
+        status: "active",
+        sourcePulseStatus: asset.pulse_status,
+        sourceOverallStatus: asset.object_overall_status,
+        sourceUpdatedAt: asset.updated_at,
+      },
       currency: asset.currency,
       originCountryCode: asset.origin_country_code,
       source: {
@@ -667,6 +674,56 @@ async function applyPlan(plan, targetProject) {
   return { created: missing.length - updated, updated, unchanged };
 }
 
+async function applyInactiveAssetLifecycle(inactiveAssets, targetProject) {
+  if (inactiveAssets.length === 0) return { updated: 0, unchanged: 0, missing: 0 };
+  if (getApps().length === 0) initializeApp({ projectId: targetProject, credential: applicationDefault() });
+  const db = getFirestore();
+  let updated = 0;
+  let unchanged = 0;
+  let missing = 0;
+
+  for (let offset = 0; offset < inactiveAssets.length; offset += Math.floor(MAX_BATCH_WRITES / 2)) {
+    const assets = inactiveAssets.slice(offset, offset + Math.floor(MAX_BATCH_WRITES / 2));
+    const targets = assets.flatMap((asset) => [
+      { asset, reference: db.collection("entities").doc(asset.asset_id) },
+      { asset, reference: db.collection("public_entities").doc(asset.asset_id) },
+    ]);
+    const snapshots = await db.getAll(...targets.map((target) => target.reference));
+    const batch = db.batch();
+    let chunkUpdates = 0;
+
+    snapshots.forEach((snapshot, index) => {
+      const { asset, reference } = targets[index];
+      if (!snapshot.exists) {
+        missing += 1;
+        return;
+      }
+      const current = snapshot.data();
+      const entityClasses = [...new Set([
+        ...(current.entityClasses || []).filter((value) => value !== "forecastable_entity"),
+        "historical_entity",
+      ])];
+      const lifecycle = {
+        status: "deprecated",
+        sourcePulseStatus: asset.pulse_status,
+        sourceOverallStatus: asset.object_overall_status,
+        sourceUpdatedAt: String(asset.updated_at),
+      };
+      if (canonicalize(current.entityClasses || []) === canonicalize(entityClasses)
+        && canonicalize(current.lifecycle || {}) === canonicalize(lifecycle)) {
+        unchanged += 1;
+        return;
+      }
+      batch.update(reference, { entityClasses, lifecycle });
+      updated += 1;
+      chunkUpdates += 1;
+    });
+    if (chunkUpdates > 0) await batch.commit();
+  }
+
+  return { updated, unchanged, missing };
+}
+
 const sourceProject = argumentValue("--source-project") || DEFAULT_SOURCE_PROJECT;
 const targetProject = argumentValue("--project") || DEFAULT_TARGET_PROJECT;
 const semanticEnvironment = argumentValue("--semantic-environment") || "staging";
@@ -682,7 +739,7 @@ const latestBatchRows = requestedBatch ? [{ scoring_batch: requestedBatch }] : b
 const scoringBatch = Number(latestBatchRows[0]?.scoring_batch);
 assert(Number.isInteger(scoringBatch) && scoringBatch > 0, "Could not resolve a positive scoring batch");
 
-const assetRows = bqQuery(sourceProject, `
+const cohortAssetRows = bqQuery(sourceProject, `
   WITH cohort AS (
     SELECT DISTINCT subject_id
     FROM \`${sourceProject}.prod__dp_oracle_fincore_prediction_market__datasets.prediction_status\`
@@ -705,7 +762,16 @@ const assetRows = bqQuery(sourceProject, `
   FROM cohort c JOIN assets a ON a.asset_id = c.subject_id
   ORDER BY asset_id
 `);
+const inactiveAssetRows = cohortAssetRows.filter((asset) => (
+  String(asset.pulse_status || "").toUpperCase() !== "ACTIVE"
+  || String(asset.object_overall_status || "").toUpperCase() !== "ACTIVE"
+));
+const assetRows = cohortAssetRows.filter((asset) => !inactiveAssetRows.includes(asset));
 assert(assetRows.length > 0, `No finished entities found for scoring batch ${scoringBatch}`);
+assert(assetRows.every((asset) => (
+  String(asset.pulse_status).toUpperCase() === "ACTIVE"
+  && String(asset.object_overall_status).toUpperCase() === "ACTIVE"
+)), "The public forecastable catalog must contain only active source assets");
 
 const exchangeIds = [...new Set(assetRows.map((asset) => asset.exchange_id))];
 const quotedExchangeIds = exchangeIds.map((id) => `'${String(id).replaceAll("'", "\\'")}'`).join(",");
@@ -882,15 +948,21 @@ const { plan, entitySummaries, fundamentalSummaries } = buildPlan(
   mediaRows,
   profileRows,
 );
+assert(new Set(entitySummaries.map((entity) => entity.entityId)).size === entitySummaries.length, "Forecastable entity IDs must be unique");
+assert(new Set(entitySummaries.map((entity) => entity.stableSlug)).size === entitySummaries.length, "Forecastable entity slugs must be unique");
+const tickerVenueValues = entitySummaries.flatMap((entity) => (
+  entity.identifiers.filter((identifier) => identifier.scheme === "ticker_venue").map((identifier) => identifier.value)
+));
+assert(new Set(tickerVenueValues).size === tickerVenueValues.length, "Active ticker-and-venue identifiers must be unique");
 const snapshotAt = assetRows.map((asset) => asset.updated_at).sort().at(-1);
 const catalog = {
-  catalogVersion: "ofl-ipulse-entity-catalog-0.1.0",
+  catalogVersion: "ofl-ipulse-entity-catalog-0.2.0",
   generatedFrom: {
     projectId: sourceProject,
     scoringBatch,
     sourceSnapshotAt: snapshotAt,
     semanticEnvironment,
-    selection: "forecastable market entities in the scoring cohort, plus governed fundamental entities from the semantic registry",
+    selection: "active forecastable market entities in the scoring cohort, plus governed fundamental entities from the semantic registry",
   },
   identityPolicy: {
     ipulseEntities: "Reuse the exact deterministic iPulse asset_id as OFL entityId",
@@ -912,12 +984,14 @@ await writeFile(resolve(outputDir, `scoring-batch-${scoringBatch}-entity-catalog
 await writeFile(resolve(outputDir, `scoring-batch-${scoringBatch}-entity-catalog.sha256`), `${catalogDigest}\n`);
 
 let applyResult;
+let lifecycleResult;
 if (apply) {
   assert(
     process.env.OFR_CONFIRM_FIRESTORE_PROJECT === targetProject,
     "Set OFR_CONFIRM_FIRESTORE_PROJECT to the exact target project before --apply",
   );
   applyResult = await applyPlan(plan, targetProject);
+  lifecycleResult = await applyInactiveAssetLifecycle(inactiveAssetRows, targetProject);
 }
 
 console.log(JSON.stringify({
@@ -926,6 +1000,12 @@ console.log(JSON.stringify({
   targetProject: apply ? targetProject : null,
   scoringBatch,
   forecastableEntities: assetRows.length,
+  excludedInactiveForecastableEntities: inactiveAssetRows.map((asset) => ({
+    entityId: asset.asset_id,
+    symbol: asset.asset_symbol_pulse,
+    pulseStatus: asset.pulse_status,
+    overallStatus: asset.object_overall_status,
+  })),
   fundamentalEntities: fundamentalSummaries.length,
   governedMediaMappings: mediaRows.length,
   semanticEnvironment,
@@ -934,4 +1014,5 @@ console.log(JSON.stringify({
   catalogDigest,
   output: `data/ipulse/scoring-batch-${scoringBatch}-entity-catalog.json`,
   applyResult,
+  lifecycleResult,
 }, null, 2));

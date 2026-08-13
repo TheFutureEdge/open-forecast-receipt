@@ -18,7 +18,11 @@ export function NavBar() {
 
   const linkClass = (path: string) =>
     `border-b-2 px-1 py-[18px] text-sm font-medium transition-colors ${
-      (path === "/" ? location.pathname === "/" : location.pathname.startsWith(path))
+      (path === "/"
+        ? location.pathname === "/"
+        : path === "/entities"
+          ? location.pathname.startsWith("/entities") && !location.pathname.startsWith("/entities/forecasters")
+          : location.pathname.startsWith(path))
       || (path === "/forecasts" && (
         location.pathname.startsWith("/showcase")
         || location.pathname.startsWith("/manifest")
@@ -45,6 +49,9 @@ export function NavBar() {
             </Link>
             <Link to="/forecasts" className={linkClass("/forecasts")}>
               Forecasts
+            </Link>
+            <Link to="/entities/forecasters" className={linkClass("/entities/forecasters")}>
+              Forecasters
             </Link>
             <Link to="/standards" className={linkClass("/standards")}>
               How it works

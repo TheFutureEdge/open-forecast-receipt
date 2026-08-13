@@ -1,19 +1,22 @@
 import {
   BookOpenText,
+  Buildings,
   ChartLineUp,
-  Database,
   EnvelopeSimple,
   Fingerprint,
   SealCheck,
-  FolderOpen,
   GlobeHemisphereWest,
-  ShieldCheck,
-  SquaresFour,
+  UsersThree,
 } from "@phosphor-icons/react";
 import { Link, useLocation } from "../../lib/router";
 
-const primary = [
-  { label: "Entity catalog", path: "/entities", Icon: GlobeHemisphereWest },
+const entities = [
+  { label: "Forecastable entities", path: "/entities", Icon: GlobeHemisphereWest },
+  { label: "Organizations", path: "/entities/organizations", Icon: Buildings },
+  { label: "Forecaster profiles", path: "/entities/forecasters", Icon: UsersThree },
+];
+
+const forecasts = [
   { label: "Forecast collections", path: "/forecasts", Icon: ChartLineUp },
   { label: "PepsiCo receipt example", path: "/showcase/pepsi", Icon: SealCheck },
 ];
@@ -28,26 +31,14 @@ export function ProductSidebar() {
 
   return (
     <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 border-r border-slate-200 bg-white md:flex dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex w-12 flex-col items-center border-r border-slate-200 bg-slate-950 py-3 text-slate-400 dark:border-slate-800">
-        <div className="mb-7 grid size-8 place-items-center rounded-lg bg-blue-600 text-white shadow-sm">
-          <Database size={18} weight="fill" aria-hidden="true" />
-        </div>
-        <div className="space-y-2">
-          {[SquaresFour, FolderOpen, GlobeHemisphereWest, ShieldCheck].map((Icon, index) => (
-            <div key={index} className={`grid size-8 place-items-center rounded-lg ${index === 0 ? "bg-white/10 text-white" : "hover:bg-white/10 hover:text-white"}`}>
-              <Icon size={17} aria-hidden="true" />
-            </div>
-          ))}
-        </div>
-      </div>
-
       <div className="flex min-w-0 flex-1 flex-col px-3 py-4">
         <Link to="/" className="mb-5 block px-2">
           <div className="text-sm font-bold tracking-tight text-slate-950 dark:text-white">Open Forecast Library</div>
           <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-600">Built on Open Forecast Receipt</div>
         </Link>
 
-        <SidebarGroup label="Explore" items={primary} pathname={location.pathname} />
+        <SidebarGroup label="Entities" items={entities} pathname={location.pathname} />
+        <SidebarGroup label="Forecasts" items={forecasts} pathname={location.pathname} />
         <SidebarGroup label="Protocol" items={resources} pathname={location.pathname} />
 
         <div className="mt-auto rounded-xl border border-blue-100 bg-blue-50 p-3 dark:border-blue-900/70 dark:bg-blue-950/30">
@@ -67,7 +58,7 @@ function SidebarGroup({
   pathname,
 }: {
   label: string;
-  items: typeof primary;
+  items: typeof entities;
   pathname: string;
 }) {
   return (
@@ -75,8 +66,11 @@ function SidebarGroup({
       <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{label}</div>
       <div className="space-y-1">
         {items.map(({ label: itemLabel, path, Icon }) => {
-          const active = path === "/forecasts"
+          const active = path === "/entities"
+            ? pathname === "/entities" || /^\/entities\/[^/]+$/.test(pathname) && pathname !== "/entities/organizations" && pathname !== "/entities/forecasters"
+            : path === "/forecasts"
             ? pathname === "/forecasts" || pathname === "/showcase" || pathname.startsWith("/manifest")
+              || pathname.startsWith("/receipts")
             : pathname === path || pathname.startsWith(`${path}/`);
           return (
             <Link

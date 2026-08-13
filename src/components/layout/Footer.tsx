@@ -5,6 +5,7 @@ import { Link } from "../../lib/router";
 const internalLinks = [
   { label: "Entity catalog", to: "/entities" },
   { label: "Forecast collections", to: "/forecasts" },
+  { label: "Forecasters", to: "/entities/forecasters" },
   { label: "How it works", to: "/standards" },
   { label: "Integrity test", to: "/test" },
 ] as const;

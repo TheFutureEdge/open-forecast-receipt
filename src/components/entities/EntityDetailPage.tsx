@@ -70,8 +70,8 @@ export function EntityDetailPage({ routeKey }: { routeKey: string }) {
   const jsonLd = useMemo(() => {
     if (!entity || typeof window === "undefined") return null;
     const tickerSymbols = (entity.relatedEntities || [])
-      .filter((related) => related.predicate === "has_market_representation" && related.displayIdentifier)
-      .map((related) => related.displayIdentifier);
+      .filter((related) => related.predicate === "has_market_representation" && related.schemaTickerSymbol)
+      .map((related) => related.schemaTickerSymbol);
     return {
       "@context": "https://schema.org",
       "@id": `${window.location.origin}/entities/${encodeURIComponent(entity.stableSlug)}`,

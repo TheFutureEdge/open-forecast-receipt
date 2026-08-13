@@ -14,7 +14,7 @@ const DEFAULT_SOURCE_PROJECT = "data-platform-436809";
 const DEFAULT_TARGET_PROJECT = "oflapp-staging";
 const ENTITY_VERSION_NAMESPACE = "cef63097-4d84-5018-9778-d4be189e320f";
 const RELATIONSHIP_NAMESPACE = "b2cc5767-24c5-5971-aa70-5b1648004cbe";
-const CATALOG_POLICY_VERSION = "ofl-ipulse-import-0.2";
+const CATALOG_POLICY_VERSION = "ofl-ipulse-import-0.3";
 const MAX_BATCH_WRITES = 400;
 const UNIQUE_IDENTIFIER_SCHEMES = new Set([
   "ipulse_asset_id",
@@ -347,6 +347,7 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
   function relatedAssetSummary(asset) {
     const assetTags = parseJsonObject(asset.tags);
     const assetSemantic = semanticById.get(asset.asset_id);
+    const exchange = exchangeById.get(asset.exchange_id);
     return compact({
       predicate: "has_market_representation",
       entityId: asset.asset_id,
@@ -356,6 +357,9 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
       displayIdentifier: asset.ticker_on_exchange
         ? `${asset.ticker_on_exchange}:${asset.exchange_code_pulse}`
         : asset.asset_symbol_pulse,
+      schemaTickerSymbol: asset.ticker_on_exchange
+        ? `${exchange?.mic?.trim() || asset.exchange_code_pulse}:${asset.ticker_on_exchange}`
+        : undefined,
       logoUrl: mediaByEntityId.get(assetSemantic?.parent_entity_id)?.url
         || mediaByEntityId.get(asset.asset_id)?.url
         || legacyLogoForAsset(asset)?.url,

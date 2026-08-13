@@ -54,6 +54,7 @@ export interface PublicRelatedEntity {
   stableSlug: string;
   entityType: string;
   displayIdentifier?: string;
+  schemaTickerSymbol?: string;
   logoUrl?: string;
 }
 

@@ -130,6 +130,19 @@ function subjectAssignmentId(forecastId) {
   return String(forecastId || "").match(/__(xrefsubjtskconf_[0-9a-f-]+)__/i)?.[1];
 }
 
+const SPECIALIZATION_ORDER = ["equity", "crypto", "forex", "commodity", "index", "fund"];
+
+function sortSpecializations(values) {
+  return [...new Set(values.filter(Boolean))].sort((left, right) => {
+    const leftRank = SPECIALIZATION_ORDER.indexOf(left);
+    const rightRank = SPECIALIZATION_ORDER.indexOf(right);
+    if (leftRank === -1 && rightRank === -1) return left.localeCompare(right);
+    if (leftRank === -1) return 1;
+    if (rightRank === -1) return -1;
+    return leftRank - rightRank;
+  });
+}
+
 const projectId = argumentValue("--project")
   || process.env.GCLOUD_PROJECT
   || process.env.GOOGLE_CLOUD_PROJECT;
@@ -243,6 +256,7 @@ for (const [sortOrder, entry] of catalog.entries.entries()) {
         analystId: forecaster.id,
       },
       modes: [],
+      specializations: [],
       taskConfigurationIds: [],
       subjectAssignmentIds: [],
       sameAs: [],
@@ -253,6 +267,11 @@ for (const [sortOrder, entry] of catalog.entries.entries()) {
   }
   const forecasterRecord = forecasterRecords.get(forecaster.id);
   forecasterRecord.modes = [...new Set([...forecasterRecord.modes, forecaster.mode].filter(Boolean))].sort();
+  const subjectCategory = forecast.entity.identifiers?.subjectCategory || forecast.entity.type;
+  forecasterRecord.specializations = sortSpecializations([
+    ...forecasterRecord.specializations,
+    subjectCategory,
+  ]);
   forecasterRecord.taskConfigurationIds = [...new Set([
     ...forecasterRecord.taskConfigurationIds,
     generationConfiguration?.taskConfigId,
@@ -275,6 +294,7 @@ for (const [sortOrder, entry] of catalog.entries.entries()) {
     subjectAssignmentId: assignmentId,
     receiptDigest: entry.receiptDigest,
     targetName: forecast.target.name,
+    subjectCategory,
     forecastCreatedAt: forecast.temporal.forecastCreatedAt,
     horizonEndAt: forecast.temporal.horizonEndAt,
     sortOrder,

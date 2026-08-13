@@ -135,6 +135,7 @@ export interface PublicForecastRecord {
   subjectAssignmentId?: string;
   receiptDigest: string;
   targetName: string;
+  subjectCategory?: string;
   forecastCreatedAt: string;
   horizonEndAt: string;
   sortOrder: number;
@@ -182,6 +183,7 @@ export interface PublicForecasterRecord {
     analystId?: string;
   };
   modes?: string[];
+  specializations?: string[];
   taskConfigurationIds?: string[];
   subjectAssignmentIds?: string[];
   sameAs?: string[];

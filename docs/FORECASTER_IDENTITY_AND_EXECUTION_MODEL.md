@@ -88,6 +88,7 @@ Publisher organization
     "provider": "Google"
   },
   "modes": ["RESEARCHER", "THINKER"],
+  "specializations": ["equity", "crypto", "index"],
   "taskConfigurationIds": ["taskconfig_..."],
   "subjectAssignmentIds": ["xrefsubjtskconf_..."],
   "sameAs": []
@@ -97,3 +98,8 @@ Publisher organization
 The public profile is an index. Each individual forecast receipt freezes the
 exact forecaster, model, mode, task configuration, input/output lineage, review,
 and temporal boundaries used for that forecast.
+
+`specializations` is a structured list of governed entity/subject categories
+the forecaster has actually covered, such as `equity`, `crypto`, or `index`.
+The UI may present the array as a comma-separated label, but the stored value
+remains an extensible list rather than a free-form string.

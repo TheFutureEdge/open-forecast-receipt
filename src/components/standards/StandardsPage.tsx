@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   ArrowDown,
   ArrowRight,
@@ -13,6 +13,12 @@ import {
 import config from "../../data/eas-base-sepolia.json";
 import { getLibraryManifest } from "../../lib/library/repository";
 import { KnowledgeGraphConceptDiagram, KnowledgeGraphExamples } from "../knowledge/KnowledgeGraphArchitecture";
+
+const InteractiveKnowledgeGraph = lazy(() =>
+  import("../knowledge/InteractiveKnowledgeGraph").then((module) => ({
+    default: module.InteractiveKnowledgeGraph,
+  })),
+);
 
 export function StandardsPage() {
   const [proofCounts, setProofCounts] = useState({ selected: 0, verified: 0 });
@@ -70,6 +76,15 @@ export function StandardsPage() {
           title="Entity, target, and forecast are different objects"
           description="An entity is a stable real-world or conceptual thing. A target is a measurable property or outcome applied to that entity. A forecast is one forecaster's prediction for that approved subject-target binding."
         />
+        <Suspense
+          fallback={(
+            <div className="grid h-80 place-items-center rounded-2xl border border-slate-200 bg-white text-sm text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              Loading interactive knowledge graph…
+            </div>
+          )}
+        >
+          <InteractiveKnowledgeGraph />
+        </Suspense>
         <KnowledgeGraphConceptDiagram />
         <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm dark:border-slate-800">
           <div className="border-b border-slate-200 bg-white px-6 py-5 dark:border-slate-800 dark:bg-slate-900 sm:px-7">

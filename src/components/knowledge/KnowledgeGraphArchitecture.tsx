@@ -14,6 +14,7 @@ import {
   UserCircle,
 } from "@phosphor-icons/react";
 import { Link } from "../../lib/router";
+import { SchemaOrgTypeTag } from "./SchemaOrgTypeTag";
 
 export function KnowledgeGraphConceptDiagram() {
   return (
@@ -32,8 +33,8 @@ export function KnowledgeGraphConceptDiagram() {
           title="Knowledge Graph"
           description="Stable identities and typed relationships"
           nodes={[
-            { Icon: Buildings, eyebrow: "Context entity", title: "Alibaba Group", meta: "Schema.org · Corporation" },
-            { Icon: TrendUp, eyebrow: "Subject entity", title: "BABA ADR", meta: "Schema.org · Thing · Listed Security" },
+            { Icon: Buildings, eyebrow: "Context entity", title: "Alibaba Group", meta: "Issuer organization", schemaOrgType: "Corporation" },
+            { Icon: TrendUp, eyebrow: "Subject entity", title: "BABA ADR", meta: "Listed Security", schemaOrgType: "Thing" },
           ]}
           relationships={["issues"]}
         />
@@ -76,6 +77,7 @@ interface ArchitectureNode {
   eyebrow: string;
   title: string;
   meta: string;
+  schemaOrgType?: string;
 }
 
 function ArchitectureStage({
@@ -101,7 +103,7 @@ function ArchitectureStage({
         </div>
       </div>
       <div className="mt-4 space-y-2">
-        {nodes.map(({ Icon, eyebrow, title: nodeTitle, meta }, index) => (
+        {nodes.map(({ Icon, eyebrow, title: nodeTitle, meta, schemaOrgType }, index) => (
           <div key={`${eyebrow}-${nodeTitle}`}>
             {index > 0 && (
               <div className="flex h-7 items-center justify-center gap-1.5 text-[8px] font-bold uppercase tracking-[0.12em] text-slate-400">
@@ -114,6 +116,7 @@ function ArchitectureStage({
                 <div className="text-[8px] font-bold uppercase tracking-[0.12em] text-blue-500">{eyebrow}</div>
                 <div className="mt-0.5 text-xs font-bold text-slate-950 dark:text-white">{nodeTitle}</div>
                 <div className="mt-1 text-[9px] leading-4 text-slate-500 dark:text-slate-400">{meta}</div>
+                {schemaOrgType && <SchemaOrgTypeTag value={schemaOrgType} className="mt-2" />}
               </div>
             </div>
           </div>
@@ -161,6 +164,7 @@ export function KnowledgeGraphExamples() {
             entityCode: "9988 · Hong Kong",
             entityType: "Listed Security",
             schemaOrgType: "Thing",
+            relationship: "issues",
             targetName: "Adjusted end-of-day close return",
             dimension: "Step-over-step percentage change",
             unit: "%",
@@ -172,6 +176,7 @@ export function KnowledgeGraphExamples() {
             entityCode: "BABA · New York",
             entityType: "Listed Security",
             schemaOrgType: "Thing",
+            relationship: "issues",
             targetName: "Adjusted end-of-day close return",
             dimension: "Step-over-step percentage change",
             unit: "%",
@@ -193,6 +198,7 @@ export function KnowledgeGraphExamples() {
             entityCode: "US",
             entityType: "Country",
             schemaOrgType: "Country",
+            relationship: "measures for",
             targetName: "Real GDP growth",
             dimension: "Quarterly · annualized change",
             unit: "%",
@@ -203,6 +209,7 @@ export function KnowledgeGraphExamples() {
             entityCode: "United States",
             entityType: "Central Bank",
             schemaOrgType: "GovernmentOrganization",
+            relationship: "has institution",
             targetName: "Federal funds target rate",
             dimension: "Policy rate level",
             unit: "%",
@@ -219,6 +226,7 @@ interface RelationshipChild {
   entityCode: string;
   entityType: string;
   schemaOrgType: string;
+  relationship: string;
   targetName: string;
   dimension: string;
   unit: string;
@@ -251,7 +259,7 @@ function RelationshipExample({
       <div className="min-w-0">
         <div className="text-[9px] font-bold uppercase tracking-[0.12em] text-blue-500">{parentLabel}</div>
         <div className="mt-0.5 truncate text-sm font-bold text-slate-950 dark:text-white">{parentName}</div>
-        <div className="mt-1 text-[9px] font-semibold text-slate-500 dark:text-slate-400">Schema.org · {parentSchemaOrgType}</div>
+        <SchemaOrgTypeTag value={parentSchemaOrgType} className="mt-2" />
       </div>
       {parentHref && <ArrowRight className="ml-auto shrink-0 text-blue-400" size={15} />}
     </div>
@@ -263,10 +271,10 @@ function RelationshipExample({
       <div className="mt-3">{parentHref ? <Link to={parentHref}>{parentContent}</Link> : parentContent}</div>
       <div className="mx-auto h-5 w-px bg-blue-200 dark:bg-blue-900" aria-hidden="true" />
       <div className="relative grid gap-2 sm:grid-cols-2 before:absolute before:-top-5 before:left-1/4 before:right-1/4 before:hidden before:h-5 before:rounded-t-xl before:border-x before:border-t before:border-blue-200 sm:before:block dark:before:border-blue-900">
-        {children.map(({ entityName, entityCode, entityType, schemaOrgType, targetName, dimension, unit, href, Icon }) => {
+        {children.map(({ entityName, entityCode, entityType, schemaOrgType, relationship, targetName, dimension, unit, href, Icon }) => {
           const content = (
             <div className="relative h-full overflow-hidden rounded-xl border border-emerald-200 bg-white transition-colors hover:border-emerald-400 dark:border-emerald-900 dark:bg-slate-900">
-              <div className="bg-emerald-50/70 p-3.5 dark:bg-emerald-950/20">
+              <div className="flex min-h-[9.25rem] flex-col bg-emerald-50/70 p-3.5 dark:bg-emerald-950/20">
                 <div className="mb-2 text-[8px] font-bold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300">Subject entity</div>
                 <div className="flex items-start gap-2.5">
                   <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"><Icon size={17} weight="duotone" /></div>
@@ -275,9 +283,9 @@ function RelationshipExample({
                     <div className="mt-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-300">{entityCode}</div>
                   </div>
                 </div>
-                <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[9px] font-semibold">
-                  <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">{entityType}</span>
-                  <span className="rounded-full border border-emerald-200 bg-white/80 px-2 py-1 text-slate-600 dark:border-emerald-900 dark:bg-slate-900/60 dark:text-slate-300">Schema.org · {schemaOrgType}</span>
+                <div className="mt-auto grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-1.5 pt-3 text-[9px] font-semibold">
+                  <span className="truncate rounded-full bg-emerald-100 px-2 py-1 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" title={entityType}>{entityType}</span>
+                  <SchemaOrgTypeTag value={schemaOrgType} />
                 </div>
               </div>
               <div className="border-t border-emerald-200/70 p-3.5 dark:border-emerald-900">
@@ -297,7 +305,15 @@ function RelationshipExample({
               </div>
             </div>
           );
-          return href ? <Link key={entityName} to={href}>{content}</Link> : <div key={`${entityName}-${targetName}`}>{content}</div>;
+          const connectedContent = (
+            <div className="relative h-full pt-8">
+              <div className="absolute inset-x-0 top-0 flex h-8 items-center justify-center gap-1 text-[8px] font-bold uppercase tracking-[0.1em] text-blue-600 dark:text-blue-300">
+                <ArrowDown size={13} weight="bold" /> {relationship}
+              </div>
+              {content}
+            </div>
+          );
+          return href ? <Link key={entityName} to={href}>{connectedContent}</Link> : <div key={`${entityName}-${targetName}`}>{connectedContent}</div>;
         })}
       </div>
       <p className="mt-4 text-xs leading-5 text-slate-500">{description}</p>

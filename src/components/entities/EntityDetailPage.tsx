@@ -14,6 +14,7 @@ import {
 import { getPublicEntity, listEntityCollections } from "../../lib/library/repository";
 import type { PublicCollectionEntityRecord, PublicEntityRecord } from "../../lib/library/types";
 import { Link } from "../../lib/router";
+import { SchemaOrgTypeTag } from "../knowledge/SchemaOrgTypeTag";
 
 function humanize(value: string): string {
   return value.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
@@ -215,7 +216,14 @@ export function EntityDetailPage({ routeKey }: { routeKey: string }) {
             <dl className="mt-4 space-y-3 text-xs">
               <KeyValue label="Entity ID" value={entity.entityId} mono />
               <KeyValue label="Version ID" value={entity.currentVersionId} mono />
-              <KeyValue label="Schema.org" value={entity.schemaOrgTypes.join(", ") || "Thing"} />
+              <div>
+                <dt className="text-slate-400">Semantic web type</dt>
+                <dd className="mt-1.5 flex flex-wrap gap-1.5">
+                  {(entity.schemaOrgTypes.length > 0 ? entity.schemaOrgTypes : ["Thing"]).map((schemaOrgType) => (
+                    <SchemaOrgTypeTag key={schemaOrgType} value={schemaOrgType} />
+                  ))}
+                </dd>
+              </div>
               <KeyValue label="Source" value={entity.source?.system || "Open Forecast Library"} />
             </dl>
             {(entity.sameAs || []).length > 0 && (

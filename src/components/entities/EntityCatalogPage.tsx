@@ -15,6 +15,8 @@ import type { PublicEntityRecord } from "../../lib/library/types";
 import { Link } from "../../lib/router";
 
 const PAGE_SIZE = 30;
+const FORECAST_TARGET_QUESTION = "What is a forecast target?";
+const FORECAST_TARGET_ANSWER = "A forecast target is the exact measurable outcome predicted for a governed entity. It defines the dimension, unit, cadence, and horizon—such as the percentage return of a listed security, a country's real GDP growth, or a central bank's policy rate.";
 
 function categoryFor(entity: PublicEntityRecord): string {
   if (entity.entityClasses?.includes("organization") || entity.entityClasses?.includes("underlying_entity")) {
@@ -93,6 +95,27 @@ export function EntityCatalogPage({ view }: { view: "forecastable" | "organizati
     return () => { active = false; };
   }, [view]);
 
+  useEffect(() => {
+    if (view !== "forecastable") return undefined;
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.dataset.oflFaq = "forecast-target";
+    script.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: [{
+        "@type": "Question",
+        name: FORECAST_TARGET_QUESTION,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: FORECAST_TARGET_ANSWER,
+        },
+      }],
+    });
+    document.head.appendChild(script);
+    return () => script.remove();
+  }, [view]);
+
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const entity of entities) {
@@ -128,6 +151,8 @@ export function EntityCatalogPage({ view }: { view: "forecastable" | "organizati
 
   return (
     <div className="space-y-5">
+      {view === "forecastable" && <ForecastableEntityExplainer />}
+
       <section className="overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 px-6 py-8 shadow-sm dark:border-blue-950 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/40 sm:px-9">
         <div className="flex flex-col gap-7 xl:flex-row xl:items-end xl:justify-between">
           <div className="min-w-0 max-w-3xl xl:flex-1">
@@ -151,8 +176,6 @@ export function EntityCatalogPage({ view }: { view: "forecastable" | "organizati
           </div>
         </div>
       </section>
-
-      {view === "forecastable" && <ForecastableEntityExplainer />}
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row dark:border-slate-800">
@@ -243,11 +266,11 @@ function ForecastableEntityExplainer() {
       <div className="grid gap-6 border-b border-slate-200 bg-gradient-to-r from-slate-950 to-blue-950 px-6 py-7 text-white dark:border-slate-800 sm:px-8 xl:grid-cols-[1fr_auto] xl:items-end">
         <div className="max-w-3xl">
           <div className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-blue-300">
-            <GitBranch size={16} weight="duotone" /> How the catalog works
+            <GitBranch size={16} weight="duotone" /> Forecast target FAQ
           </div>
-          <h2 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl">Context is connected. Forecasts stay precise.</h2>
+          <h2 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl">What is a Forecast Target?</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-            A forecast starts with an exact, stable entity and then defines what will be measured about it. A listed security, organization, country, or other governed thing can be the subject; price return, GDP growth, or a policy rate is the target.
+            {FORECAST_TARGET_ANSWER}
           </p>
         </div>
         <div className="rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-xs leading-5 text-slate-200 backdrop-blur">

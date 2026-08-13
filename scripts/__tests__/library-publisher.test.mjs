@@ -70,7 +70,7 @@ function reseal(entry) {
 }
 
 describe("OFL publication bundle planner", () => {
-  it("plans immutable public records and one private proof job", () => {
+  it("plans immutable receipts, mutable collection indexes, and one private proof job", () => {
     const plan = planPublicationBundle(publicationBundle(), validateReceipt);
     expect(plan.counts).toEqual({
       entities: 1,
@@ -82,11 +82,13 @@ describe("OFL publication bundle planner", () => {
     expect(plan.documents.some((document) => document.collectionName === "public_receipts")).toBe(true);
     expect(plan.documents.some((document) => document.collectionName === "proof_jobs")).toBe(true);
     const forecast = plan.documents.find((document) => document.collectionName === "public_forecasts");
-    expect(forecast.value.forecaster.displayName).toBe("Ray Dalio AI");
+    expect(forecast.value.forecaster.displayName).toBe("Ray Dalio AI on Gemini 3.1 Pro");
     expect(forecast.value.forecaster.description).toBe("The Strategist · RESEARCHER");
     expect(forecast.value.chainStatus).toBe("not_issued");
     const entity = plan.documents.find((document) => document.collectionName === "public_collection_entities");
     expect(entity.value.loadedCount).toBe(1);
+    expect(entity.writeMode).toBe("mutable_current");
+    expect(plan.documents.some((document) => document.collectionName === "public_entities")).toBe(false);
   });
 
   it("rejects a changed forecast value whose sealed digest was not updated", () => {

@@ -70,7 +70,7 @@ export function BatchManifestComponent({ manifest }: BatchManifestProps) {
         <div className="flex items-start gap-2.5">
           <CheckCircle className="mt-0.5 shrink-0" size={18} weight="fill" aria-hidden="true" />
           <div>
-            <span className="font-semibold">The full public showcase is loaded.</span> Each asset has 12 individual AI-forecaster receipts. {proofCounts.selected} receipts were selected in advance for separate Base Sepolia proofs; {proofCounts.verified} are currently verified onchain.
+            <span className="font-semibold">The complete public Batch 6 collection is loaded.</span> Each asset row shows its individual AI-forecaster receipt count. {proofCounts.selected} receipts were selected in advance for separate Base Sepolia proofs; {proofCounts.verified} are currently verified onchain.
           </div>
         </div>
       </div>
@@ -79,7 +79,7 @@ export function BatchManifestComponent({ manifest }: BatchManifestProps) {
         <div className="md:col-span-3">
           <h2 id="test-the-showcase" className="text-sm font-semibold text-slate-950 dark:text-white">Test it in three simple steps</h2>
         </div>
-        <TestStep number="1" title="Choose an asset" description="Open one of the five iPulse AI assets below." />
+        <TestStep number="1" title="Choose an asset" description="Open any asset in the public Batch 6 collection below." />
         <TestStep number="2" title="Choose a forecaster" description="Inspect the prediction path, timing, model boundary, and receipt JSON." />
         <TestStep number="3" title="Change one value" description="In the tamper test, edit a percentage and watch integrity change from PASS to FAIL." />
       </section>

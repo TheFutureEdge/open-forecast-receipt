@@ -2,7 +2,7 @@
 
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import process from "node:process";
 import { applicationDefault, getApps, initializeApp } from "firebase-admin/app";
@@ -14,7 +14,7 @@ const DEFAULT_SOURCE_PROJECT = "data-platform-436809";
 const DEFAULT_TARGET_PROJECT = "oflapp-staging";
 const ENTITY_VERSION_NAMESPACE = "cef63097-4d84-5018-9778-d4be189e320f";
 const RELATIONSHIP_NAMESPACE = "b2cc5767-24c5-5971-aa70-5b1648004cbe";
-const CATALOG_POLICY_VERSION = "ofl-ipulse-import-0.4";
+const CATALOG_POLICY_VERSION = "ofl-ipulse-import-0.5";
 const MAX_BATCH_WRITES = 400;
 const UNIQUE_IDENTIFIER_SCHEMES = new Set([
   "ipulse_asset_id",
@@ -341,7 +341,7 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
         sortOrder,
         status: "active",
         sourceVersion,
-      }, "immutable");
+      }, "mutable_current");
     }
   }
 
@@ -730,6 +730,11 @@ const semanticEnvironment = argumentValue("--semantic-environment") || "staging"
 assert(["staging", "prod"].includes(semanticEnvironment), "--semantic-environment must be staging or prod");
 const apply = process.argv.includes("--apply");
 const requestedBatch = argumentValue("--scoring-batch");
+const reviewedIdentityRegistryPath = argumentValue("--reviewed-identity-registry");
+let reviewedIdentityRegistry;
+if (reviewedIdentityRegistryPath) {
+  reviewedIdentityRegistry = JSON.parse(await readFile(resolve(reviewedIdentityRegistryPath), "utf8"));
+}
 
 const latestBatchRows = requestedBatch ? [{ scoring_batch: requestedBatch }] : bqQuery(sourceProject, `
   SELECT MAX(scoring_batch) AS scoring_batch
@@ -890,6 +895,25 @@ for (const enriched of enrichedSemanticRows) {
   )));
   semanticByIdForMerge.set(enriched.entity_id, { ...current, ...governedValues });
 }
+for (const reviewed of reviewedIdentityRegistry?.records || []) {
+  if (![
+    "verified_exact_isin",
+    "verified_official_website",
+    "verified_ticker_and_name",
+  ].includes(reviewed.reviewStatus)) continue;
+  const current = semanticByIdForMerge.get(reviewed.fundamentalSubjectId);
+  if (!current || !reviewed.wikidataId) continue;
+  semanticByIdForMerge.set(reviewed.fundamentalSubjectId, {
+    ...current,
+    canonical_name: reviewed.canonicalName || current.canonical_name,
+    wikidata_id: reviewed.wikidataId,
+    google_knowledge_graph_mid: reviewed.googleKnowledgeGraphMid,
+    official_website_url: reviewed.officialWebsiteUrl || reviewed.sourceWebsiteUrl,
+    wikipedia_url: reviewed.wikipediaUrl,
+    same_as_urls: reviewed.sameAsUrls || [],
+    updated_at: reviewedIdentityRegistry.retrievedAt || current.updated_at,
+  });
+}
 const semanticRows = [...semanticByIdForMerge.values()].sort((left, right) => left.entity_id.localeCompare(right.entity_id));
 
 const registryRows = bqQuery(sourceProject, `
@@ -962,6 +986,14 @@ const catalog = {
     scoringBatch,
     sourceSnapshotAt: snapshotAt,
     semanticEnvironment,
+    reviewedIdentityRegistryRetrievedAt: reviewedIdentityRegistry?.retrievedAt,
+    reviewedIdentityRegistryAcceptedRecords: reviewedIdentityRegistry
+      ? (reviewedIdentityRegistry.records || []).filter((record) => [
+        "verified_exact_isin",
+        "verified_official_website",
+        "verified_ticker_and_name",
+      ].includes(record.reviewStatus)).length
+      : 0,
     selection: "active forecastable market entities in the scoring cohort, plus governed fundamental entities from the semantic registry",
   },
   identityPolicy: {
@@ -1009,6 +1041,15 @@ console.log(JSON.stringify({
   fundamentalEntities: fundamentalSummaries.length,
   governedMediaMappings: mediaRows.length,
   semanticEnvironment,
+  reviewedIdentityRegistry: reviewedIdentityRegistryPath ? {
+    path: reviewedIdentityRegistryPath,
+    retrievedAt: reviewedIdentityRegistry.retrievedAt,
+    acceptedRecords: (reviewedIdentityRegistry.records || []).filter((record) => [
+      "verified_exact_isin",
+      "verified_official_website",
+      "verified_ticker_and_name",
+    ].includes(record.reviewStatus)).length,
+  } : null,
   supportingVenueEntities: exchangeRows.length,
   plannedDocuments: plan.size,
   catalogDigest,

@@ -5,6 +5,17 @@ import { canonicalize } from "json-canonicalize";
 
 export const PUBLICATION_BUNDLE_VERSION = "ofl-publication-bundle-v0.1.0";
 export const MAX_SAFE_DOCUMENT_BYTES = 900_000;
+const PUBLISHER_ORGANIZATION = {
+  organizationId: "oflorg_future_edge_group_fze",
+  name: "Future Edge Group FZE",
+  schemaOrgType: "Organization",
+};
+const PUBLISHER_TEAM = {
+  teamId: "oflteam_ipulse_ai_research",
+  name: "iPulse AI Research",
+  product: "iPulse AI",
+};
+const SUBJECT_CATEGORY_ORDER = ["equity", "crypto", "forex", "commodity", "index", "fund"];
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -53,9 +64,39 @@ function forecasterDisplayName(forecaster) {
     : normalized.includes("algorithm") || normalized.includes("model")
       ? "Model"
       : "Forecaster";
-  return new RegExp(`\\b${suffix}$`, "i").test(forecaster.name)
+  const personaLabel = new RegExp(`\\b${suffix}$`, "i").test(forecaster.name)
     ? forecaster.name
     : `${forecaster.name} ${suffix}`;
+  const modelName = forecaster.model?.name?.trim();
+  return !modelName || personaLabel.toLowerCase().includes(modelName.toLowerCase())
+    ? personaLabel
+    : `${personaLabel} on ${modelName}`;
+}
+
+function forecasterPersonaLabel(forecaster) {
+  if (isHumanParty(forecaster.type)) return forecaster.name;
+  const normalized = normalizeType(forecaster.type);
+  const suffix = normalized.includes("ai")
+    ? "AI"
+    : normalized.includes("algorithm") || normalized.includes("model")
+      ? "Model"
+      : "Forecaster";
+  return new RegExp(`\\b${suffix}$`, "i").test(forecaster.name) ? forecaster.name : `${forecaster.name} ${suffix}`;
+}
+
+function subjectAssignmentId(forecastId) {
+  return String(forecastId || "").match(/__(xrefsubjtskconf_[0-9a-f-]+)__/i)?.[1];
+}
+
+function sortSubjectCategories(values) {
+  return [...new Set(values.filter(Boolean))].sort((left, right) => {
+    const leftRank = SUBJECT_CATEGORY_ORDER.indexOf(left);
+    const rightRank = SUBJECT_CATEGORY_ORDER.indexOf(right);
+    if (leftRank === -1 && rightRank === -1) return left.localeCompare(right);
+    if (leftRank === -1) return 1;
+    if (rightRank === -1) return -1;
+    return leftRank - rightRank;
+  });
 }
 
 function forecastReview(forecast) {
@@ -84,6 +125,7 @@ function forecasterSummary(forecast) {
   return {
     type: forecaster.type,
     sourceName: forecaster.name,
+    personaLabel: forecasterPersonaLabel(forecaster),
     displayName: forecasterDisplayName(forecaster),
     description: forecaster.description
       || [forecaster.role, forecaster.mode].filter(Boolean).join(" · ")
@@ -119,7 +161,7 @@ function stableEntityPresentation(entry, forecast) {
   };
 }
 
-function addPlannedDocument(target, collectionName, documentId, value) {
+function addPlannedDocument(target, collectionName, documentId, value, writeMode = "immutable") {
   const normalized = jsonCopy(value);
   assertDocumentSize(collectionName, documentId, normalized);
   const key = `${collectionName}/${documentId}`;
@@ -131,7 +173,7 @@ function addPlannedDocument(target, collectionName, documentId, value) {
     );
     return;
   }
-  target.set(key, { collectionName, documentId, value: normalized });
+  target.set(key, { collectionName, documentId, value: normalized, writeMode });
 }
 
 /** Validate a caller-supplied bundle and create a deterministic Firestore plan. */
@@ -145,6 +187,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
   const collectionId = bundle.collection.collectionId;
   const planned = new Map();
   const entityGroups = new Map();
+  const forecasterGroups = new Map();
   const receiptDigests = new Set();
   const forecastIds = new Set();
   let selectedProofCount = 0;
@@ -183,29 +226,37 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
     if (proofRequested) selectedProofCount += 1;
     if (protocol.attestationUID) verifiedProofCount += 1;
 
-    addPlannedDocument(planned, "public_forecasters", forecast.forecaster.id, {
-      forecasterId: forecast.forecaster.id,
-      type: forecast.forecaster.type,
-      name: forecast.forecaster.name,
-      displayName: summary.displayName,
-      description: summary.description,
-      typeLabel: summary.typeLabel,
-      architectureAuthors: summary.architectureAuthors,
-      model: forecast.forecaster.model || null,
-      publicationStatus: "published",
-      visibility: "public",
-    });
+    const forecasterGroup = forecasterGroups.get(forecast.forecaster.id) || {
+      forecast,
+      summary,
+      modes: new Set(),
+      subjectCategories: new Set(),
+      taskConfigurationIds: new Set(),
+      subjectAssignmentIds: new Set(),
+    };
+    forecasterGroup.modes.add(forecast.forecaster.mode);
+    forecasterGroup.subjectCategories.add(forecast.entity.identifiers?.subjectCategory || forecast.entity.type);
+    if (payload.provenance?.generationConfiguration?.taskConfigId) {
+      forecasterGroup.taskConfigurationIds.add(payload.provenance.generationConfiguration.taskConfigId);
+    }
+    const assignmentId = subjectAssignmentId(forecast.forecastId);
+    if (assignmentId) forecasterGroup.subjectAssignmentIds.add(assignmentId);
+    forecasterGroups.set(forecast.forecaster.id, forecasterGroup);
 
     addPlannedDocument(planned, "public_forecasts", forecast.forecastId, {
       collectionId,
       entityId: forecast.entity.id,
       entitySlug: presentation.routeSlug,
       forecasterId: forecast.forecaster.id,
-      forecasterLabel: projection.encodedFields?.forecasterLabel || summary.displayName,
+      forecasterLabel: entry.forecasterLabel || projection.encodedFields?.forecasterLabel || summary.displayName,
       forecaster: summary,
       forecastId: forecast.forecastId,
+      forecasterMode: forecast.forecaster.mode,
+      taskConfigurationId: payload.provenance?.generationConfiguration?.taskConfigId,
+      subjectAssignmentId: assignmentId,
       receiptDigest: digest,
       targetName: forecast.target.name,
+      subjectCategory: forecast.entity.identifiers?.subjectCategory || forecast.entity.type,
       forecastCreatedAt: forecast.temporal.forecastCreatedAt,
       horizonEndAt: forecast.temporal.horizonEndAt,
       sortOrder: entry.sortOrder ?? entryIndex,
@@ -218,7 +269,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
       blockTimestamp: protocol.blockTimestamp || undefined,
       publicationStatus: "published",
       visibility: "public",
-    });
+    }, "mutable_current");
 
     addPlannedDocument(planned, "public_receipts", digest, {
       collectionId,
@@ -260,25 +311,45 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
         projectionVersion: projection.projectionVersion,
         createdAt: bundle.createdAt,
         attempts: 0,
-      });
+      }, "mutable_current");
     }
+  }
+
+  for (const [forecasterId, group] of forecasterGroups) {
+    const { forecast, summary } = group;
+    addPlannedDocument(planned, "public_forecasters", forecasterId, {
+      forecasterId,
+      entityScope: "platform",
+      profileType: "ai_forecaster_profile",
+      type: forecast.forecaster.type,
+      name: forecast.forecaster.name,
+      personaLabel: summary.personaLabel,
+      displayName: summary.displayName,
+      description: summary.description,
+      typeLabel: summary.typeLabel,
+      architectureAuthors: summary.architectureAuthors,
+      model: forecast.forecaster.model || null,
+      publisherOrganization: PUBLISHER_ORGANIZATION,
+      publisherTeam: PUBLISHER_TEAM,
+      sourceProfile: {
+        sourceSystem: "iPulse AI prediction architecture v2",
+        sourceType: "ai_analyst",
+        analystId: forecasterId,
+      },
+      modes: [...group.modes].filter(Boolean).sort(),
+      publishedSubjectCategories: sortSubjectCategories([...group.subjectCategories]),
+      taskConfigurationIds: [...group.taskConfigurationIds].sort(),
+      subjectAssignmentIds: [...group.subjectAssignmentIds].sort(),
+      sameAs: [],
+      reviewCapabilities: ["human", "ai", "algorithm", "organization"],
+      publicationStatus: "published",
+      visibility: "public",
+    }, "mutable_current");
   }
 
   for (const [entityIndex, [entityId, group]] of [...entityGroups.entries()].entries()) {
     const proofSelected = group.entries.filter(({ entry }) => entry.requestBlockchainProof).length;
     const proofVerified = group.entries.filter(({ projection }) => proofMetadata(projection).attestationUID).length;
-    addPlannedDocument(planned, "public_entities", entityId, {
-      entityId,
-      entityType: group.entity.type,
-      canonicalName: group.entity.name,
-      stableSlug: group.presentation.routeSlug,
-      aliases: group.presentation.aliases,
-      identifiers: group.entity.identifiers || {},
-      currentDisplaySymbol: group.presentation.displaySymbol,
-      currentMarketIdentifier: group.presentation.marketIdentifier,
-      publicationStatus: "published",
-      visibility: "public",
-    });
     addPlannedDocument(planned, "public_collection_entities", `${collectionId}__${group.presentation.routeSlug}`, {
       slug: group.presentation.routeSlug,
       aliases: group.presentation.aliases,
@@ -298,7 +369,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
       sortOrder: group.entries[0].entry.entitySortOrder ?? entityIndex,
       publicationStatus: "published",
       visibility: "public",
-    });
+    }, "mutable_current");
   }
 
   addPlannedDocument(planned, "public_collections", collectionId, {
@@ -313,7 +384,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
     publishedAt: bundle.collection.publishedAt || bundle.createdAt,
     publicationStatus: "published",
     visibility: "public",
-  });
+  }, "mutable_current");
 
   const bundleDigest = sha256Canonical(bundle);
   return {
@@ -330,48 +401,55 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
   };
 }
 
-async function createOrVerify(reference, value) {
-  const snapshot = await reference.get();
-  if (snapshot.exists) {
-    assert(
-      canonicalize(snapshot.data()) === canonicalize(value),
-      `Existing document differs: ${reference.path}`,
-    );
-    return "unchanged";
-  }
-  try {
-    await reference.create(value);
-    return "created";
-  } catch (error) {
-    if (error?.code !== 6 && error?.code !== "already-exists") throw error;
-    const racedSnapshot = await reference.get();
-    assert(racedSnapshot.exists && canonicalize(racedSnapshot.data()) === canonicalize(value), `Concurrent publication conflict: ${reference.path}`);
-    return "unchanged";
-  }
-}
-
-/** Apply a validated plan using create-or-verify semantics for safe retries. */
-export async function publishPlan(plan, projectId) {
-  if (getApps().length === 0) {
-    initializeApp({ projectId, credential: applicationDefault() });
-  }
-  const db = getFirestore();
+/** Apply immutable records with create-or-verify semantics and refresh mutable collection indexes with Firestore BulkWriter. */
+export async function publishPlan(plan, projectId, { startIndex = 0 } = {}) {
+  const appName = `ofl-publisher-${projectId}`;
+  const app = getApps().find((candidate) => candidate.name === appName)
+    || initializeApp({ projectId, credential: applicationDefault() }, appName);
+  const db = getFirestore(app);
   let created = 0;
+  let updated = 0;
   let unchanged = 0;
-  for (const item of plan.documents) {
-    const result = await createOrVerify(db.collection(item.collectionName).doc(item.documentId), item.value);
-    if (result === "created") created += 1;
-    else unchanged += 1;
-  }
+  let completed = 0;
+  const writer = db.bulkWriter();
+  writer.onWriteError((error) => [4, 8, 10, 13, 14].includes(error.code) && error.failedAttempts < 4);
+  assert(Number.isInteger(startIndex) && startIndex >= 0 && startIndex <= plan.documents.length, "Invalid publisher resume index");
+  const pendingDocuments = plan.documents.slice(startIndex);
+  const operations = pendingDocuments.map(async (item) => {
+    const reference = db.collection(item.collectionName).doc(item.documentId);
+    if (item.writeMode === "mutable_current") {
+      await writer.set(reference, item.value);
+      updated += 1;
+    } else {
+      try {
+        await writer.create(reference, item.value);
+        created += 1;
+      } catch (error) {
+        if (error?.code !== 6 && error?.code !== "already-exists") throw error;
+        const snapshot = await reference.get();
+        assert(snapshot.exists && canonicalize(snapshot.data()) === canonicalize(item.value), `Immutable public document differs: ${reference.path}`);
+        unchanged += 1;
+      }
+    }
+    completed += 1;
+    if (completed % 1_000 === 0 || completed === pendingDocuments.length) {
+      console.log(`Published or verified ${completed} of ${pendingDocuments.length} pending Firestore documents...`);
+    }
+  });
+  const operationResults = Promise.all(operations);
+  await writer.close();
+  await operationResults;
   const completedAt = new Date().toISOString();
-  await createOrVerify(db.collection("publisher_runs").doc(plan.bundleDigest), {
+  await db.collection("publisher_runs").doc(plan.bundleDigest).set({
     bundleDigest: plan.bundleDigest,
     collectionId: plan.collectionId,
     created,
+    updated,
     unchanged,
     documentCount: plan.documents.length,
+    resumedFrom: startIndex,
     completedAt,
     status: "complete",
   });
-  return { created, unchanged, completedAt };
+  return { created, updated, unchanged, resumedFrom: startIndex, completedAt };
 }

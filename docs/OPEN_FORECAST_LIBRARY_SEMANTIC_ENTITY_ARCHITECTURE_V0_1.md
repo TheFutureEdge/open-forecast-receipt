@@ -286,7 +286,7 @@ OFL Publisher Service -> Private Firestore master -> Public Firestore projection
 
 The existing iPulse `dim_fincore_market_assets` table remains the operational master for assets that iPulse actively sources and forecasts. OFL is the semantic master for reviewed identity assertions, external mappings, relationships, and domain-general entities. For iPulse-origin entities there is no artificial crosswalk: `asset_id = subject_id = entityId` at the identity layer.
 
-The first governed snapshot contains all 377 distinct entities with an ACTIVE, FINISHED forecast in iPulse AI scoring batch 6, plus 19 supporting market-venue entities. It is stored as `data/ipulse/scoring-batch-6-entity-catalog.json`, sealed with SHA-256 digest `443f9cb315b4432d9a6be460e7cc82184a847ebba3e818ae0058f1cac92006e7`, and published to `oflapp-staging` as 5,726 Firestore documents. The forecast entities span listed securities, exchange-traded funds, cryptoassets, currency pairs, and commodity spot assets.
+The first governed snapshot contains 376 active forecastable entities from the iPulse AI scoring-batch-6 cohort, 364 governed fundamental/context entities, and 19 supporting market-venue entities. One stale Adyen listing in internal prediction status has no immutable public batch publication and is therefore not represented as a public receipt subject. The snapshot is stored as `data/ipulse/scoring-batch-6-entity-catalog.json` and sealed with SHA-256 digest `5eb7a7e9e3983030e7b733f9ca13f3439c620ee4d926d3b045444aad6a6f5e12`. The forecast entities span listed securities, exchange-traded funds, cryptoassets, currency pairs, and commodity spot assets.
 
 ### 4.4 Why a graph-shaped model does not require a graph database yet
 

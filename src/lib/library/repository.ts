@@ -49,6 +49,17 @@ export function listPublicOrganizations(): Promise<PublicEntityRecord[]> {
   return listPublicEntitiesByClass("organization");
 }
 
+export async function listPublicForecastCountsByEntity(): Promise<Map<string, number>> {
+  const snapshots = await getDocs(collection(getLibraryFirestore(), "public_collection_entities"));
+  const counts = new Map<string, number>();
+  for (const snapshot of snapshots.docs) {
+    const record = snapshot.data() as PublicCollectionEntityRecord;
+    const receiptCount = record.receiptCount ?? record.loadedCount ?? record.advisorCount ?? 0;
+    counts.set(record.entityId, (counts.get(record.entityId) || 0) + receiptCount);
+  }
+  return counts;
+}
+
 export async function getPublicEntity(routeKey: string): Promise<PublicEntityRecord | null> {
   const db = getLibraryFirestore();
   const directSnapshot = await getDoc(doc(db, "public_entities", routeKey));

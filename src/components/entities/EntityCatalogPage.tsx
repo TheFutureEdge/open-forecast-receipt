@@ -11,7 +11,11 @@ import {
   MagnifyingGlass,
 } from "@phosphor-icons/react";
 import { KnowledgeGraphExamples } from "../knowledge/KnowledgeGraphArchitecture";
-import { listPublicForecastableEntities, listPublicOrganizations } from "../../lib/library/repository";
+import {
+  listPublicForecastableEntities,
+  listPublicForecastCountsByEntity,
+  listPublicOrganizations,
+} from "../../lib/library/repository";
 import type { PublicEntityRecord } from "../../lib/library/types";
 import { Link } from "../../lib/router";
 
@@ -118,13 +122,6 @@ export const ENTITY_CATALOG_PRESETS: Record<string, EntityCatalogPreset> = {
   },
 };
 
-function categoryFor(entity: PublicEntityRecord): string {
-  if (entity.entityClasses?.includes("organization") || entity.entityClasses?.includes("underlying_entity")) {
-    return entity.entityType;
-  }
-  return entity.classifications.find((item) => item.scheme === "ipulse-subject-category")?.code || "other";
-}
-
 function displayIdentifier(entity: PublicEntityRecord): string {
   if (entity.entityClasses?.includes("organization")) {
     const listings = (entity.relatedEntities || [])
@@ -173,8 +170,9 @@ function EntityGlyph({ entity }: { entity: PublicEntityRecord }) {
 
 export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
   const [entities, setEntities] = useState<PublicEntityRecord[]>([]);
+  const [forecastCounts, setForecastCounts] = useState<Map<string, number>>(new Map());
   const [queryText, setQueryText] = useState("");
-  const [category, setCategory] = useState("all");
+  const [hasActiveForecastsOnly, setHasActiveForecastsOnly] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -188,9 +186,12 @@ export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
       : preset.view === "context"
         ? listPublicOrganizations()
         : Promise.all([listPublicForecastableEntities(), listPublicOrganizations()]).then(([forecastable, context]) => [...forecastable, ...context]);
-    load
-      .then((records) => {
-        if (active) setEntities(records);
+    Promise.all([load, listPublicForecastCountsByEntity()])
+      .then(([records, counts]) => {
+        if (active) {
+          setEntities(records);
+          setForecastCounts(counts);
+        }
       })
       .catch((reason: unknown) => {
         if (active) setError(reason instanceof Error ? reason.message : "Unable to load the public entity catalog");
@@ -202,7 +203,7 @@ export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
   }, [preset.view]);
 
   useEffect(() => {
-    setCategory("all");
+    setHasActiveForecastsOnly(false);
     setQueryText("");
     setVisibleCount(PAGE_SIZE);
   }, [preset.key]);
@@ -235,19 +236,10 @@ export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
     [entities, preset.entityTypes],
   );
 
-  const categoryCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const entity of scopedEntities) {
-      const key = categoryFor(entity);
-      counts.set(key, (counts.get(key) || 0) + 1);
-    }
-    return [...counts.entries()].sort((left, right) => right[1] - left[1]);
-  }, [scopedEntities]);
-
   const filtered = useMemo(() => {
     const normalized = queryText.trim().toLowerCase();
     return scopedEntities.filter((entity) => {
-      if (category !== "all" && categoryFor(entity) !== category) return false;
+      if (hasActiveForecastsOnly && (forecastCounts.get(entity.entityId) || 0) === 0) return false;
       if (!normalized) return true;
       return [
         entity.canonicalName,
@@ -256,9 +248,9 @@ export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
         ...(entity.externalIdentifiers || []).flatMap((identifier) => [identifier.scheme, identifier.value]),
       ].some((value) => value.toLowerCase().includes(normalized));
     });
-  }, [category, queryText, scopedEntities]);
+  }, [forecastCounts, hasActiveForecastsOnly, queryText, scopedEntities]);
 
-  useEffect(() => setVisibleCount(PAGE_SIZE), [category, queryText]);
+  useEffect(() => setVisibleCount(PAGE_SIZE), [hasActiveForecastsOnly, queryText]);
 
   if (loading) {
     return <div className="py-20 text-center text-sm text-slate-500">Loading the governed entity catalog…</div>;
@@ -317,23 +309,24 @@ export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
               className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none focus:border-blue-400 focus:bg-white dark:border-slate-700 dark:bg-slate-800"
             />
           </label>
-          {preset.categoryLabel ? (
+          {isAllForecastSubjects ? (
+            <label className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border px-3 text-xs font-semibold transition-colors ${hasActiveForecastsOnly
+              ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-300"
+              : "border-slate-200 bg-slate-50 text-slate-600 hover:border-blue-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            }`}>
+              <input
+                type="checkbox"
+                checked={hasActiveForecastsOnly}
+                onChange={(event) => setHasActiveForecastsOnly(event.target.checked)}
+                className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
+              Has Active Forecasts
+            </label>
+          ) : preset.categoryLabel ? (
             <div className="inline-flex h-10 items-center rounded-lg border border-blue-100 bg-blue-50 px-3 text-xs font-semibold text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
               Viewing: {preset.categoryLabel} ({scopedEntities.length})
             </div>
-          ) : (
-            <select
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-              aria-label="Filter entities by category"
-              className="h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:border-blue-400 dark:border-slate-700 dark:bg-slate-800"
-            >
-              <option value="all">All entity types ({scopedEntities.length})</option>
-              {categoryCounts.map(([value, count]) => (
-                <option key={value} value={value}>{entityTypeLabel(value)} ({count})</option>
-              ))}
-            </select>
-          )}
+          ) : null}
         </div>
 
         <div className="border-b border-slate-100 px-5 py-2.5 text-xs text-slate-500 dark:border-slate-800">
@@ -358,6 +351,16 @@ export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
                     : `${(entity.relatedEntities || []).filter((related) => related.predicate === "has_market_representation").length} market listing${(entity.relatedEntities || []).filter((related) => related.predicate === "has_market_representation").length === 1 ? "" : "s"}`}</span>
                 </div>
               </div>
+              <span
+                className={`grid size-8 shrink-0 place-items-center rounded-lg border text-xs font-bold tabular-nums ${(forecastCounts.get(entity.entityId) || 0) > 0
+                  ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-300"
+                  : "border-slate-200 bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
+                }`}
+                title={`${forecastCounts.get(entity.entityId) || 0} active forecasts`}
+                aria-label={`${forecastCounts.get(entity.entityId) || 0} active forecasts`}
+              >
+                {forecastCounts.get(entity.entityId) || 0}
+              </span>
               <ArrowRight className="shrink-0 text-slate-300" size={16} aria-hidden="true" />
             </Link>
           ))}

@@ -197,13 +197,13 @@ export function EntityDetailPage({ routeKey }: { routeKey: string }) {
             {missingSemanticIdentifiers.map((scheme) => (
               <div key={`missing-${scheme}`} className="grid gap-1 px-5 py-3 sm:grid-cols-[180px_1fr]">
                 <dt className="text-xs font-semibold text-slate-500">{identifierLabel(scheme)}</dt>
-                <dd className="text-xs font-medium text-amber-700 dark:text-amber-300">Awaiting identity review</dd>
+                <dd className="text-xs font-medium text-amber-700 dark:text-amber-300">No verified external match</dd>
               </div>
             ))}
           </dl>
           {missingSemanticIdentifiers.length > 0 && (
             <div className="border-t border-amber-200 bg-amber-50 px-5 py-3 text-xs leading-5 text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-              These external IDs are intentionally left blank until an editor verifies an exact match in the iPulse AI semantic registry. Open Forecast Library does not guess identity links. A source website may still appear in the organization profile below without being treated as a verified <code>sameAs</code> assertion.
+              The latest governed identity review did not find an exact external match that met the evidence threshold. Open Forecast Library does not guess identity links. A source website may still appear in the organization profile below without being treated as a verified <code>sameAs</code> assertion.
             </div>
           )}
           {relatedFundamental && (

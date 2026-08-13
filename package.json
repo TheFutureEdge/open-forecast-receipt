@@ -16,6 +16,7 @@
     "entities:snapshot": "node scripts/sync-ipulse-entity-catalog.mjs",
     "entities:sync:staging": "OFR_CONFIRM_FIRESTORE_PROJECT=oflapp-staging node scripts/sync-ipulse-entity-catalog.mjs --project=oflapp-staging --apply",
     "publish:bundle": "node scripts/publish-library-bundle.mjs",
+    "publish:ipulse-batch": "node scripts/publish-ipulse-batch.mjs",
     "smoke:staging": "node --env-file=.env.staging.local scripts/smoke-staging.mjs",
     "fixtures:phase1": "node scripts/generate-phase1-fixtures.mjs",
     "fixtures:reseal-entity-contract": "node scripts/reseal-entity-contract-fixtures.mjs",

@@ -3,6 +3,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { canonicalize } from "json-canonicalize";
 import { encodeAbiParameters, parseAbiParameters } from "viem";
 
@@ -37,7 +38,7 @@ function sha256(value) {
 
 function toIso(value) {
   if (!value) return undefined;
-  const normalized = String(value).replace(" ", "T").replace(/\+00:00$/, "Z");
+  const normalized = String(value).replace(" ", "T").replace(/\+00(?::00)?$/, "Z");
   return /Z$|[+-]\d\d:\d\d$/.test(normalized) ? normalized : `${normalized}Z`;
 }
 
@@ -149,7 +150,16 @@ function buildEvidence(context, contextFrozenAt, componentMeta, assetName) {
   return evidence;
 }
 
-function buildReceipt({ source, prediction, generation, contextMeta, componentMeta, asset }) {
+export function buildReceipt({
+  source,
+  prediction,
+  generation,
+  contextMeta,
+  componentMeta,
+  asset,
+  receiptIssuedAt = issuedAt,
+  publicShowcaseAsset = true,
+}) {
   const advisor = prediction.advisor_snapshot;
   const context = source.input_context_snapshot;
   const publication = source.publication_snapshot;
@@ -200,8 +210,8 @@ function buildReceipt({ source, prediction, generation, contextMeta, componentMe
       issuanceMode: "retrospective",
       revisionNumber: 1,
       revisionType: "original",
-      issuedAt,
-      sealedAt: issuedAt,
+      issuedAt: receiptIssuedAt,
+      sealedAt: receiptIssuedAt,
     },
     issuer: {
       id: "https://ipulseai.com",
@@ -382,7 +392,7 @@ function buildReceipt({ source, prediction, generation, contextMeta, componentMe
     },
     extensions: {
       ipulse: {
-        publicShowcaseAsset: true,
+        publicShowcaseAsset,
         consensusExcluded: true,
         individualForecastEntity: true,
       },
@@ -410,7 +420,7 @@ function buildReceipt({ source, prediction, generation, contextMeta, componentMe
   };
 }
 
-function buildProjection(document, derived) {
+export function buildProjection(document, derived) {
   const payload = document.receiptPayload;
   const forecast = payload.forecast;
   const assetIdentifiers = forecast.entity.identifiers || {};
@@ -529,6 +539,7 @@ async function writeJson(path, value) {
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+async function main() {
 const generationRows = await readJson(resolve(sourceDir, "ofr-batch6-generation.json"));
 const contextRows = await readJson(resolve(sourceDir, "ofr-batch6-context-metadata.json"));
 const componentRows = await readJson(resolve(sourceDir, "ofr-batch6-context-components.json"));
@@ -622,3 +633,8 @@ for (const manifestAsset of manifest.entities) {
 await writeJson(manifestPath, manifest);
 
 console.log(JSON.stringify({ receiptCount: catalog.length, issuedAt, output: "src/data/fixtures" }, null, 2));
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  await main();
+}

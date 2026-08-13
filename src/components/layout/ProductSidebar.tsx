@@ -9,7 +9,6 @@ import {
   Fingerprint,
   GitBranch,
   GlobeHemisphereWest,
-  SealCheck,
   UsersThree,
   type Icon,
 } from "@phosphor-icons/react";
@@ -64,7 +63,6 @@ const sections: SidebarSection[] = [
     items: [
       { label: "Forecaster profiles", path: "/entities/forecasters", Icon: UsersThree },
       { label: "Forecast collections", path: "/forecasts", Icon: ChartLineUp, match: "forecasts" },
-      { label: "PepsiCo receipt example", path: "/showcase/pepsi", Icon: SealCheck },
     ],
   },
   {

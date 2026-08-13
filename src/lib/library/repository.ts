@@ -20,13 +20,12 @@ import type {
 
 export async function listPublicEntities(): Promise<PublicEntityRecord[]> {
   const db = getLibraryFirestore();
-  const snapshots = await getDocs(collection(db, "public_entities"));
-  return snapshots.docs
+  const [forecastableSnapshots, fundamentalSnapshots] = await Promise.all([
+    getDocs(query(collection(db, "public_entities"), where("entityClasses", "array-contains", "forecastable_entity"))),
+    getDocs(query(collection(db, "public_entities"), where("entityClasses", "array-contains", "fundamental_entity"))),
+  ]);
+  return [...forecastableSnapshots.docs, ...fundamentalSnapshots.docs]
     .map((snapshot) => snapshot.data() as PublicEntityRecord)
-    .filter((record) => (
-      record.entityClasses?.includes("forecastable_entity")
-      || record.entityClasses?.includes("fundamental_entity")
-    ))
     .sort((left, right) => left.canonicalName.localeCompare(right.canonicalName));
 }
 

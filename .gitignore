@@ -8,6 +8,8 @@ dist/
 build/
 coverage/
 *.log
+__pycache__/
+*.pyc
 
 # Generated Native handoff artifacts are disposable local transport only.
 native-builder/*.zip

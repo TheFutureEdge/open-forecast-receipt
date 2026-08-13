@@ -27,7 +27,7 @@
         "runNumber": 6,
         "revision": 2
       },
-      "subject": {
+      "entity": {
         "type": "FinancialInstrument",
         "id": "crypto_8f824f2d-c67f-55e7-8124-aa113059635d",
         "name": "Bitcoin (BTC)",
@@ -370,7 +370,7 @@
     "canonicalization": "RFC8785",
     "hashAlgorithm": "SHA-256",
     "digestScope": "receiptPayload",
-    "payloadDigestSha256": "aa3971606f12763bc3c89bf9765a9b85b60e46e47d2308d18d4d95934644dd88",
+    "payloadDigestSha256": "0608fcf8a3f72329802adf0747ab786a7f44061619270c259676363faad37173",
     "proofs": []
   }
 }

@@ -21,11 +21,11 @@ export function BatchManifestComponent({ manifest }: BatchManifestProps) {
   const [query, setQuery] = useState("");
   const assets = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (!normalized) return manifest.assets;
-    return manifest.assets.filter((asset) =>
+    if (!normalized) return manifest.entities;
+    return manifest.entities.filter((asset) =>
       [asset.name, asset.displaySymbol, asset.marketIdentifier].some((value) => value.toLowerCase().includes(normalized)),
     );
-  }, [manifest.assets, query]);
+  }, [manifest.entities, query]);
   const receiptCount = manifest.receiptCount;
   const proofCounts = getManifestProofCounts(manifest);
 
@@ -35,10 +35,10 @@ export function BatchManifestComponent({ manifest }: BatchManifestProps) {
         <div className="grid gap-7 px-5 py-7 sm:px-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:px-9 lg:py-9">
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-blue-700 dark:border-blue-900 dark:bg-blue-950/60 dark:text-blue-300">
-              <ShieldCheck size={15} weight="fill" /> Open Forecast Receipt
+              <ShieldCheck size={15} weight="fill" /> Publisher: iPulse AI
             </div>
             <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl dark:text-white">
-              Explore selected iPulse AI forecasts
+              iPulse AI market forecasts
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
               Every forecast is preserved as its own receipt: what was predicted, who generated it, when it was created, and whether an independent blockchain proof is available.
@@ -59,7 +59,7 @@ export function BatchManifestComponent({ manifest }: BatchManifestProps) {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            <Metric value={String(manifest.assets.length)} label="Public assets" />
+            <Metric value={String(manifest.entities.length)} label="Collection entities" />
             <Metric value={String(receiptCount)} label="Receipts" />
             <Metric value={String(proofCounts.selected)} label="Selected proofs" />
           </div>
@@ -87,8 +87,8 @@ export function BatchManifestComponent({ manifest }: BatchManifestProps) {
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/40 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
         <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
           <div>
-            <h2 className="text-base font-semibold text-slate-950 dark:text-white">Public iPulse AI assets</h2>
-            <p className="mt-0.5 text-xs text-slate-500">A preserved snapshot from one completed forecast run</p>
+            <h2 className="text-base font-semibold text-slate-950 dark:text-white">Entities in this collection</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Published by iPulse AI · accountable organization: Future Edge Group FZE</p>
           </div>
           <label className="relative block sm:w-72">
             <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} aria-hidden="true" />

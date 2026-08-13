@@ -45,7 +45,7 @@ export interface OfrForecast {
     runNumber?: number;
     revision?: number;
   };
-  subject: {
+  entity: {
     type: string;
     id: string;
     name: string;

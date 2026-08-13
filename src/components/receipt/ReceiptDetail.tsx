@@ -92,7 +92,7 @@ export function LoadedReceiptDetail({
             <span aria-hidden="true">·</span>
             <span>{forecaster.reviewStatusLabel}</span>
             <span aria-hidden="true">·</span>
-            <span>Forecast for {payload.forecast.subject.name}</span>
+            <span>Forecast for {payload.forecast.entity.name}</span>
             <span aria-hidden="true">·</span>
             <span>Created {new Date(payload.forecast.temporal.forecastCreatedAt).toLocaleDateString()}</span>
           </div>

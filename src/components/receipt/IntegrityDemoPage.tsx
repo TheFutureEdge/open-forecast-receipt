@@ -3,7 +3,7 @@ import { ArrowRight, Fingerprint, ShieldCheck } from "@phosphor-icons/react";
 import { Link } from "../../lib/router";
 import {
   getLibraryReceipt,
-  getLibrarySubject,
+  getLibraryEntity,
   listLibraryForecasts,
 } from "../../lib/library/repository";
 import type { OfrDocument } from "../../types/ofr";
@@ -16,10 +16,10 @@ export function IntegrityDemoPage() {
 
   useEffect(() => {
     let active = true;
-    getLibrarySubject("batch-6", "pepsi")
-      .then(async (subject) => {
-        if (!subject) return null;
-        const forecasts = await listLibraryForecasts("batch-6", subject.subjectId);
+    getLibraryEntity("batch-6", "pepsi")
+      .then(async (entity) => {
+        if (!entity) return null;
+        const forecasts = await listLibraryForecasts("batch-6", entity.entityId);
         const featured = forecasts.find((forecast) => forecast.showcaseSelected) || forecasts[0];
         if (!featured) return null;
         const receipt = await getLibraryReceipt(featured.receiptDigest);

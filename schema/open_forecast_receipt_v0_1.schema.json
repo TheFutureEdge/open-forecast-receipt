@@ -124,7 +124,7 @@
       "required": [
         "forecastId",
         "run",
-        "subject",
+        "entity",
         "target",
         "temporal",
         "prediction",
@@ -142,7 +142,7 @@
             "revision": { "type": "integer", "minimum": 0 }
           }
         },
-        "subject": {
+        "entity": {
           "type": "object",
           "additionalProperties": false,
           "required": ["type", "id", "name"],
@@ -151,12 +151,12 @@
             "id": {
               "type": "string",
               "minLength": 1,
-              "description": "Stable subject identity assigned by the issuer. It must not change merely because a ticker, venue, name, or public URL changes."
+              "description": "Stable entity identity assigned by the issuer or an entity registry. It must not change merely because a ticker, venue, name, or public URL changes."
             },
             "name": { "type": "string", "minLength": 1 },
             "identifiers": {
               "type": "object",
-              "description": "Point-in-time identifier bundle applicable to this forecast record. Historical receipts remain unchanged after a ticker or venue change; current resolution belongs in a separate subject registry.",
+              "description": "Point-in-time identifier bundle applicable to this forecast record. Historical receipts remain unchanged after an identifier change; current resolution belongs in a separate entity registry.",
               "additionalProperties": { "type": "string" }
             }
           }

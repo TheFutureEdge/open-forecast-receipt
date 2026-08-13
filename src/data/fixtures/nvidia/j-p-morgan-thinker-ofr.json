@@ -27,7 +27,7 @@
         "runNumber": 6,
         "revision": 1
       },
-      "subject": {
+      "entity": {
         "type": "FinancialInstrument",
         "id": "equity_aff2387b-9d08-5e40-8737-a5d658baf07c",
         "name": "NVIDIA Corporation",
@@ -386,7 +386,7 @@
     "canonicalization": "RFC8785",
     "hashAlgorithm": "SHA-256",
     "digestScope": "receiptPayload",
-    "payloadDigestSha256": "743e74d3c50746bec31cead4083a9f645ea9f24b181546dd77318ba4f1e3e337",
+    "payloadDigestSha256": "30b5511a6122a77f8b03c97d7076e037cff0897d2b2bf818acb8c5c98fb2a7b0",
     "proofs": []
   }
 }

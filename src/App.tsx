@@ -8,11 +8,15 @@ import { StandardsPage } from "./components/standards/StandardsPage";
 import { NotFoundPage } from "./components/common/NotFoundPage";
 import { useLocation } from "./lib/router";
 import { LandingPage } from "./components/landing/LandingPage";
+import { EntityCatalogPage } from "./components/entities/EntityCatalogPage";
+import { EntityDetailPage } from "./components/entities/EntityDetailPage";
 
 function resolveRoute(pathname: string): ReactNode {
   if (
     pathname === "/showcase"
     || pathname === "/showcase/"
+    || pathname === "/forecasts"
+    || pathname === "/forecasts/"
     || pathname === "/manifest/batch-6"
   ) {
     return <ManifestPage batchId="batch-6" />;
@@ -20,6 +24,15 @@ function resolveRoute(pathname: string): ReactNode {
 
   if (pathname === "/") {
     return <LandingPage />;
+  }
+
+  if (pathname === "/entities" || pathname === "/entities/") {
+    return <EntityCatalogPage />;
+  }
+
+  const entityMatch = pathname.match(/^\/entities\/([^/]+)\/?$/);
+  if (entityMatch) {
+    return <EntityDetailPage routeKey={decodeURIComponent(entityMatch[1])} />;
   }
 
   if (pathname === "/receipts" || pathname === "/receipts/") {

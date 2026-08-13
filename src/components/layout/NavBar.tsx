@@ -19,7 +19,11 @@ export function NavBar() {
   const linkClass = (path: string) =>
     `border-b-2 px-1 py-[18px] text-sm font-medium transition-colors ${
       (path === "/" ? location.pathname === "/" : location.pathname.startsWith(path))
-      || (path === "/showcase" && location.pathname.startsWith("/manifest"))
+      || (path === "/forecasts" && (
+        location.pathname.startsWith("/showcase")
+        || location.pathname.startsWith("/manifest")
+        || location.pathname.startsWith("/receipts")
+      ))
         ? "border-blue-600 text-blue-700 dark:border-blue-400 dark:text-blue-300"
         : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
     }`;
@@ -36,8 +40,11 @@ export function NavBar() {
           </Link>
           <div className="hidden h-full items-center gap-5 sm:flex">
             <Link to="/" className={linkClass("/")}>Home</Link>
-            <Link to="/showcase" className={linkClass("/showcase")}>
-              iPulse AI Showcase
+            <Link to="/entities" className={linkClass("/entities")}>
+              Entities
+            </Link>
+            <Link to="/forecasts" className={linkClass("/forecasts")}>
+              Forecasts
             </Link>
             <Link to="/standards" className={linkClass("/standards")}>
               How it works

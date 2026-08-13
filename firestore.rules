@@ -10,12 +10,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    match /public_collection_subjects/{documentId} {
+    match /public_collection_entities/{documentId} {
       allow read: if true;
       allow write: if false;
     }
 
-    match /public_subjects/{documentId} {
+    match /public_entities/{documentId} {
       allow read: if true;
       allow write: if false;
     }

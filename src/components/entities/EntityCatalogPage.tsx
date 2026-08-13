@@ -1,0 +1,219 @@
+import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowRight,
+  Buildings,
+  ChartLineUp,
+  Coins,
+  CurrencyDollar,
+  Database,
+  MagnifyingGlass,
+} from "@phosphor-icons/react";
+import { listPublicEntities } from "../../lib/library/repository";
+import type { PublicEntityRecord } from "../../lib/library/types";
+import { Link } from "../../lib/router";
+
+const PAGE_SIZE = 30;
+
+function categoryFor(entity: PublicEntityRecord): string {
+  if (entity.entityClasses?.includes("organization")) return "organization";
+  if (entity.entityClasses?.includes("underlying_entity")) return "underlying_entity";
+  return entity.classifications.find((item) => item.scheme === "ipulse-subject-category")?.code || "other";
+}
+
+function displayIdentifier(entity: PublicEntityRecord): string {
+  const preferred = ["ticker_venue", "ipulse_symbol", "isin"];
+  for (const scheme of preferred) {
+    const match = (entity.externalIdentifiers || []).find((identifier) => identifier.scheme === scheme);
+    if (match) return match.value;
+  }
+  return entity.entityId;
+}
+
+function entityTypeLabel(value: string): string {
+  return value.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
+}
+
+function EntityGlyph({ entity }: { entity: PublicEntityRecord }) {
+  const type = entity.entityType;
+  const Icon = type === "listed_security"
+    ? Buildings
+    : type === "cryptoasset"
+      ? Coins
+      : type === "currency_pair"
+        ? CurrencyDollar
+        : ChartLineUp;
+  return (
+    <div className="relative grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-blue-50 text-blue-700 dark:border-slate-700 dark:bg-blue-950/50 dark:text-blue-300">
+      <Icon size={21} weight="duotone" aria-hidden="true" />
+      {entity.logo?.url && (
+        <img
+          src={entity.logo.url}
+          alt={entity.logo.alt || `${entity.canonicalName} logo`}
+          className="absolute inset-0 size-full bg-white object-contain p-1.5 dark:bg-slate-900"
+          loading="lazy"
+          decoding="async"
+          onError={(event) => { event.currentTarget.style.display = "none"; }}
+        />
+      )}
+    </div>
+  );
+}
+
+export function EntityCatalogPage() {
+  const [entities, setEntities] = useState<PublicEntityRecord[]>([]);
+  const [queryText, setQueryText] = useState("");
+  const [category, setCategory] = useState("all");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    listPublicEntities()
+      .then((records) => {
+        if (active) setEntities(records);
+      })
+      .catch((reason: unknown) => {
+        if (active) setError(reason instanceof Error ? reason.message : "Unable to load the public entity catalog");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
+
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const entity of entities) {
+      const key = categoryFor(entity);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    return [...counts.entries()].sort((left, right) => right[1] - left[1]);
+  }, [entities]);
+
+  const filtered = useMemo(() => {
+    const normalized = queryText.trim().toLowerCase();
+    return entities.filter((entity) => {
+      if (category !== "all" && categoryFor(entity) !== category) return false;
+      if (!normalized) return true;
+      return [
+        entity.canonicalName,
+        entity.stableSlug,
+        ...(entity.aliases || []),
+        ...(entity.externalIdentifiers || []).flatMap((identifier) => [identifier.scheme, identifier.value]),
+      ].some((value) => value.toLowerCase().includes(normalized));
+    });
+  }, [category, entities, queryText]);
+
+  useEffect(() => setVisibleCount(PAGE_SIZE), [category, queryText]);
+
+  if (loading) {
+    return <div className="py-20 text-center text-sm text-slate-500">Loading the governed entity catalog…</div>;
+  }
+
+  if (error) {
+    return <div className="py-20 text-center text-sm text-rose-600">{error}</div>;
+  }
+
+  return (
+    <div className="space-y-5">
+      <section className="overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 px-6 py-8 shadow-sm dark:border-blue-950 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/40 sm:px-9">
+        <div className="flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-blue-700 dark:border-blue-900 dark:bg-blue-950/60 dark:text-blue-300">
+              <Database size={15} weight="fill" /> Semantic entity catalog
+            </div>
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl dark:text-white">Browse entities and organizations</h1>
+            <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              Browse persistent market subjects and the organizations behind them. Names, tickers, and identifiers may change; governed entity identity and relationships remain stable.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <CatalogMetric value={entities.length} label="Entities" />
+            <CatalogMetric value={entities.filter((entity) => entity.entityClasses?.includes("forecastable_entity")).length} label="Forecastable" />
+            <CatalogMetric value={entities.filter((entity) => entity.entityClasses?.includes("organization")).length} label="Organizations" />
+            <CatalogMetric value={entities.filter((entity) => (entity.sameAs || []).length > 0).length} label="Verified sameAs" />
+          </div>
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row dark:border-slate-800">
+          <label className="relative block flex-1">
+            <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} aria-hidden="true" />
+            <input
+              value={queryText}
+              onChange={(event) => setQueryText(event.target.value)}
+              placeholder="Search by entity, ticker, ISIN, FIGI, or alias"
+              className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none focus:border-blue-400 focus:bg-white dark:border-slate-700 dark:bg-slate-800"
+            />
+          </label>
+          <select
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+            aria-label="Filter entities by category"
+            className="h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:border-blue-400 dark:border-slate-700 dark:bg-slate-800"
+          >
+            <option value="all">All categories ({entities.length})</option>
+            {categoryCounts.map(([value, count]) => (
+              <option key={value} value={value}>{entityTypeLabel(value)} ({count})</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="border-b border-slate-100 px-5 py-2.5 text-xs text-slate-500 dark:border-slate-800">
+          Showing {Math.min(filtered.length, visibleCount)} of {filtered.length} matching entities
+        </div>
+
+        <div className="grid divide-y divide-slate-100 dark:divide-slate-800 lg:grid-cols-2 lg:divide-y-0">
+          {filtered.slice(0, visibleCount).map((entity, index) => (
+            <Link
+              key={entity.entityId}
+              to={`/entities/${encodeURIComponent(entity.stableSlug)}`}
+              className={`flex min-w-0 items-center gap-3 px-5 py-4 hover:bg-blue-50/60 dark:hover:bg-blue-950/20 ${index % 2 === 0 ? "lg:border-r lg:border-slate-100 dark:lg:border-slate-800" : ""} lg:border-b lg:border-slate-100 dark:lg:border-slate-800`}
+            >
+              <EntityGlyph entity={entity} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-semibold text-slate-950 dark:text-white">{entity.canonicalName}</div>
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500">
+                  <span>{displayIdentifier(entity)}</span>
+                  <span className="rounded bg-slate-100 px-1.5 py-0.5 dark:bg-slate-800">{entityTypeLabel(entity.entityType)}</span>
+                  <span>{entity.entityClasses?.includes("forecastable_entity") ? "Forecast subject" : "Related organization"}</span>
+                </div>
+              </div>
+              <ArrowRight className="shrink-0 text-slate-300" size={16} aria-hidden="true" />
+            </Link>
+          ))}
+        </div>
+
+        {filtered.length === 0 && (
+          <div className="px-5 py-16 text-center text-sm text-slate-500">No entities match this search.</div>
+        )}
+        {visibleCount < filtered.length && (
+          <div className="border-t border-slate-200 p-4 text-center dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+              className="rounded-lg border border-slate-200 bg-white px-5 py-2 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            >
+              Show more entities
+            </button>
+          </div>
+        )}
+      </section>
+
+      <p className="text-xs leading-5 text-slate-500">
+        Current source: the governed iPulse AI market-entity catalog. Publisher collections and forecasts reference these stable entity IDs.
+      </p>
+    </div>
+  );
+}
+
+function CatalogMetric({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="min-w-24 rounded-xl border border-white/80 bg-white/90 px-3 py-3 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900/90">
+      <div className="text-xl font-bold text-slate-950 dark:text-white">{value}</div>
+      <div className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">{label}</div>
+    </div>
+  );
+}

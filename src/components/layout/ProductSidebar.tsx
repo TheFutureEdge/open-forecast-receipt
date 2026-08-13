@@ -13,8 +13,9 @@ import {
 import { Link, useLocation } from "../../lib/router";
 
 const primary = [
-  { label: "iPulse AI Showcase", path: "/showcase", Icon: ChartLineUp },
-  { label: "PepsiCo example", path: "/showcase/pepsi", Icon: SealCheck },
+  { label: "Entity catalog", path: "/entities", Icon: GlobeHemisphereWest },
+  { label: "Forecast collections", path: "/forecasts", Icon: ChartLineUp },
+  { label: "PepsiCo receipt example", path: "/showcase/pepsi", Icon: SealCheck },
 ];
 
 const resources = [
@@ -74,8 +75,8 @@ function SidebarGroup({
       <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{label}</div>
       <div className="space-y-1">
         {items.map(({ label: itemLabel, path, Icon }) => {
-          const active = path === "/showcase"
-            ? pathname === "/" || pathname === "/showcase" || pathname.startsWith("/manifest")
+          const active = path === "/forecasts"
+            ? pathname === "/forecasts" || pathname === "/showcase" || pathname.startsWith("/manifest")
             : pathname === path || pathname.startsWith(`${path}/`);
           return (
             <Link

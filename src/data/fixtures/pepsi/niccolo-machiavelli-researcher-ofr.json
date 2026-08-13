@@ -27,7 +27,7 @@
         "runNumber": 6,
         "revision": 2
       },
-      "subject": {
+      "entity": {
         "type": "FinancialInstrument",
         "id": "equity_ea8243e7-75bd-549b-9ba6-48e03cf982c1",
         "name": "PepsiCo, Inc.",
@@ -393,7 +393,7 @@
     "canonicalization": "RFC8785",
     "hashAlgorithm": "SHA-256",
     "digestScope": "receiptPayload",
-    "payloadDigestSha256": "8fb23227d128fa56564d535fb319924445649dcbc49809feaf4654e5784ab227",
+    "payloadDigestSha256": "e3d1b60a30b13b9a3f39669f2c40992e6e8f8a52662bac088ecaf3d3a8cd80c4",
     "proofs": []
   }
 }

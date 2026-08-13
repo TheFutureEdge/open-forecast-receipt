@@ -1,10 +1,10 @@
 import { CaretRight, CheckCircle, LinkSimple } from "@phosphor-icons/react";
 import { Link } from "../../lib/router";
-import type { BatchManifestAsset } from "../../types/manifest";
+import type { BatchManifestEntity } from "../../types/manifest";
 import { StatusBadge } from "../common/StatusBadge";
 
 interface AssetRowProps {
-  asset: BatchManifestAsset;
+  asset: BatchManifestEntity;
   batchId: string;
 }
 

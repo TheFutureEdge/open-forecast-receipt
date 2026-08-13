@@ -736,7 +736,7 @@ async function syncVerifiedProofs() {
   }
 
   const manifest = await readJson("src/data/fixtures/batch6-manifest.json");
-  for (const asset of manifest.assets) {
+  for (const asset of manifest.entities) {
     const selectedCount = context.selection.receipts.filter((item) => item.assetSlug === asset.slug).length;
     const proofCount = artifact.receipts.filter((item) => item.assetSlug === asset.slug).length;
     asset.showcaseSelectionCount = selectedCount;
@@ -746,7 +746,7 @@ async function syncVerifiedProofs() {
   pendingWrites.push(["src/data/fixtures/batch6-catalog.json", context.catalog]);
   pendingWrites.push(["src/data/fixtures/batch6-manifest.json", manifest]);
 
-  const catalogReceiptSummaries = manifest.assets.map((asset) => {
+  const catalogReceiptSummaries = manifest.entities.map((asset) => {
     const selectedRows = context.rows.filter((row) => row.assetSlug === asset.slug);
     const assetIds = new Set(selectedRows.map((row) => row.assetId));
     assert(selectedRows.length > 0, `No selected receipt exists for ${asset.slug}`);

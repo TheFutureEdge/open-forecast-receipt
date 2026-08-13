@@ -106,15 +106,15 @@ function proofMetadata(projection) {
   return projection?.protocolSuppliedAfterIssuance || {};
 }
 
-function stableSubjectPresentation(entry, forecast) {
-  const presentation = entry.subjectPresentation;
-  assert(presentation && typeof presentation === "object", `Forecast ${forecast.forecastId} is missing subjectPresentation`);
-  assert(typeof presentation.routeSlug === "string" && presentation.routeSlug.length > 0, `Forecast ${forecast.forecastId} is missing subjectPresentation.routeSlug`);
+function stableEntityPresentation(entry, forecast) {
+  const presentation = entry.entityPresentation;
+  assert(presentation && typeof presentation === "object", `Forecast ${forecast.forecastId} is missing entityPresentation`);
+  assert(typeof presentation.routeSlug === "string" && presentation.routeSlug.length > 0, `Forecast ${forecast.forecastId} is missing entityPresentation.routeSlug`);
   return {
     routeSlug: presentation.routeSlug,
     aliases: presentation.aliases || [],
-    displaySymbol: presentation.displaySymbol || forecast.subject.name,
-    marketIdentifier: presentation.marketIdentifier || Object.values(forecast.subject.identifiers || {})[0] || forecast.subject.id,
+    displaySymbol: presentation.displaySymbol || forecast.entity.name,
+    marketIdentifier: presentation.marketIdentifier || Object.values(forecast.entity.identifiers || {})[0] || forecast.entity.id,
     iconKey: presentation.iconKey || presentation.routeSlug,
   };
 }
@@ -144,7 +144,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
 
   const collectionId = bundle.collection.collectionId;
   const planned = new Map();
-  const subjectGroups = new Map();
+  const entityGroups = new Map();
   const receiptDigests = new Set();
   const forecastIds = new Set();
   let selectedProofCount = 0;
@@ -170,12 +170,12 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
     receiptDigests.add(digest);
     forecastIds.add(forecast.forecastId);
 
-    const presentation = stableSubjectPresentation(entry, forecast);
-    const subjectKey = forecast.subject.id;
-    const group = subjectGroups.get(subjectKey) || { entries: [], presentation, subject: forecast.subject };
-    assert(group.presentation.routeSlug === presentation.routeSlug, `Subject ${subjectKey} has conflicting route slugs`);
+    const presentation = stableEntityPresentation(entry, forecast);
+    const entityKey = forecast.entity.id;
+    const group = entityGroups.get(entityKey) || { entries: [], presentation, entity: forecast.entity };
+    assert(group.presentation.routeSlug === presentation.routeSlug, `Entity ${entityKey} has conflicting route slugs`);
     group.entries.push({ entry, document, projection, forecast, digest, presentation, entryIndex });
-    subjectGroups.set(subjectKey, group);
+    entityGroups.set(entityKey, group);
 
     const summary = forecasterSummary(forecast);
     const protocol = proofMetadata(projection);
@@ -198,8 +198,8 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
 
     addPlannedDocument(planned, "public_forecasts", forecast.forecastId, {
       collectionId,
-      subjectId: forecast.subject.id,
-      subjectSlug: presentation.routeSlug,
+      entityId: forecast.entity.id,
+      entitySlug: presentation.routeSlug,
       forecasterId: forecast.forecaster.id,
       forecasterLabel: projection.encodedFields?.forecasterLabel || summary.displayName,
       forecaster: summary,
@@ -222,8 +222,8 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
 
     addPlannedDocument(planned, "public_receipts", digest, {
       collectionId,
-      subjectId: forecast.subject.id,
-      subjectSlug: presentation.routeSlug,
+      entityId: forecast.entity.id,
+      entitySlug: presentation.routeSlug,
       forecasterId: forecast.forecaster.id,
       forecastId: forecast.forecastId,
       receiptDigest: digest,
@@ -264,25 +264,25 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
     }
   }
 
-  for (const [subjectIndex, [subjectId, group]] of [...subjectGroups.entries()].entries()) {
+  for (const [entityIndex, [entityId, group]] of [...entityGroups.entries()].entries()) {
     const proofSelected = group.entries.filter(({ entry }) => entry.requestBlockchainProof).length;
     const proofVerified = group.entries.filter(({ projection }) => proofMetadata(projection).attestationUID).length;
-    addPlannedDocument(planned, "public_subjects", subjectId, {
-      subjectId,
-      type: group.subject.type,
-      name: group.subject.name,
+    addPlannedDocument(planned, "public_entities", entityId, {
+      entityId,
+      entityType: group.entity.type,
+      canonicalName: group.entity.name,
       stableSlug: group.presentation.routeSlug,
       aliases: group.presentation.aliases,
-      identifiers: group.subject.identifiers || {},
+      identifiers: group.entity.identifiers || {},
       currentDisplaySymbol: group.presentation.displaySymbol,
       currentMarketIdentifier: group.presentation.marketIdentifier,
       publicationStatus: "published",
       visibility: "public",
     });
-    addPlannedDocument(planned, "public_collection_subjects", `${collectionId}__${group.presentation.routeSlug}`, {
+    addPlannedDocument(planned, "public_collection_entities", `${collectionId}__${group.presentation.routeSlug}`, {
       slug: group.presentation.routeSlug,
       aliases: group.presentation.aliases,
-      name: group.subject.name,
+      name: group.entity.name,
       displaySymbol: group.presentation.displaySymbol,
       marketIdentifier: group.presentation.marketIdentifier,
       iconKey: group.presentation.iconKey,
@@ -294,8 +294,8 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
       showcaseSelectionCount: proofSelected,
       proofCount: proofVerified,
       collectionId,
-      subjectId,
-      sortOrder: group.entries[0].entry.subjectSortOrder ?? subjectIndex,
+      entityId,
+      sortOrder: group.entries[0].entry.entitySortOrder ?? entityIndex,
       publicationStatus: "published",
       visibility: "public",
     });
@@ -306,7 +306,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
     batchId: collectionId,
     batchLabel: bundle.collection.label,
     description: bundle.collection.description,
-    subjectCount: subjectGroups.size,
+    entityCount: entityGroups.size,
     receiptCount: bundle.entries.length,
     selectedProofCount,
     verifiedProofCount,
@@ -321,7 +321,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
     collectionId,
     documents: [...planned.values()],
     counts: {
-      subjects: subjectGroups.size,
+      entities: entityGroups.size,
       forecasts: bundle.entries.length,
       receipts: receiptDigests.size,
       selectedProofs: selectedProofCount,

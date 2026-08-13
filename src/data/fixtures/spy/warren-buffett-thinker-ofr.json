@@ -27,7 +27,7 @@
         "runNumber": 6,
         "revision": 1
       },
-      "subject": {
+      "entity": {
         "type": "FinancialInstrument",
         "id": "fund_a02b062d-dd40-55e2-8113-721cc3c315af",
         "name": "SPDR S&P 500 ETF Trust",
@@ -365,7 +365,7 @@
     "canonicalization": "RFC8785",
     "hashAlgorithm": "SHA-256",
     "digestScope": "receiptPayload",
-    "payloadDigestSha256": "937010df9acd7ca7d0090d24bceb8ad2ee4d9817df814708bfb0aa73bfcdc31d",
+    "payloadDigestSha256": "52146b5964645da8d68da51a38bd7bc742644422123015b3585a7b0d501fb4b1",
     "proofs": []
   }
 }

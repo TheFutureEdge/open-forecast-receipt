@@ -32,9 +32,9 @@ const validateReceipt = (document) => ({
 function bundleEntry() {
   return {
     sortOrder: 0,
-    subjectSortOrder: 0,
+    entitySortOrder: 0,
     requestBlockchainProof: true,
-    subjectPresentation: {
+    entityPresentation: {
       routeSlug: "pepsi",
       aliases: ["pep"],
       displaySymbol: "PEP",
@@ -73,7 +73,7 @@ describe("OFL publication bundle planner", () => {
   it("plans immutable public records and one private proof job", () => {
     const plan = planPublicationBundle(publicationBundle(), validateReceipt);
     expect(plan.counts).toEqual({
-      subjects: 1,
+      entities: 1,
       forecasts: 1,
       receipts: 1,
       selectedProofs: 1,
@@ -85,8 +85,8 @@ describe("OFL publication bundle planner", () => {
     expect(forecast.value.forecaster.displayName).toBe("Ray Dalio AI");
     expect(forecast.value.forecaster.description).toBe("The Strategist · RESEARCHER");
     expect(forecast.value.chainStatus).toBe("not_issued");
-    const subject = plan.documents.find((document) => document.collectionName === "public_collection_subjects");
-    expect(subject.value.loadedCount).toBe(1);
+    const entity = plan.documents.find((document) => document.collectionName === "public_collection_entities");
+    expect(entity.value.loadedCount).toBe(1);
   });
 
   it("rejects a changed forecast value whose sealed digest was not updated", () => {

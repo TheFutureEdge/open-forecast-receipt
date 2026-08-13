@@ -6,8 +6,10 @@ interface BreadcrumbSegment {
 }
 
 const labelMap: Record<string, string> = {
-  showcase: "iPulse AI Showcase",
-  manifest: "Showcase",
+  showcase: "Forecasts",
+  forecasts: "Forecasts",
+  entities: "Entities",
+  manifest: "Forecasts",
   "batch-6": "Public Forecasts",
   assets: "Assets",
   pepsi: "PepsiCo",
@@ -28,6 +30,9 @@ function isNavigableBreadcrumb(path: string): boolean {
   return (
     path === "/standards"
     || path === "/test"
+    || path === "/entities"
+    || /^\/entities\/[^/]+$/.test(path)
+    || path === "/forecasts"
     || path === "/showcase"
     || /^\/showcase\/[^/]+$/.test(path)
     || /^\/manifest\/[^/]+$/.test(path)
@@ -42,7 +47,7 @@ export function Breadcrumbs() {
   if (location.pathname === "/") return null;
 
   const segments = location.pathname.split("/").filter(Boolean);
-  const crumbs: BreadcrumbSegment[] = [{ label: "Home", path: "/showcase" }];
+  const crumbs: BreadcrumbSegment[] = [{ label: "Home", path: "/" }];
 
   let current = "";
   for (const seg of segments) {

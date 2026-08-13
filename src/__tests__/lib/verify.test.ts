@@ -21,7 +21,7 @@ describe("canonicalize + hash — Ray payload digest regression", () => {
     const digest = await sha256(canon);
 
     expect(digest).toBe(rayOfr.proofEnvelope.payloadDigestSha256);
-    expect(digest).toBe("85e82d474841f0497fb7f6fcb0a7fec7ce808de9779ff69eff32a6b6560ea4a5");
+    expect(digest).toBe("af9593e0922992eab5f6051a39e9576de4c9e638080c47c4960f37fd793e84c2");
   });
 
   it("does not change when proof metadata changes", async () => {
@@ -139,7 +139,7 @@ describe("path reconstruction — canonical PepsiCo/Ray fixture", () => {
 
   it("regression: canonical payload digest is stable", () => {
     expect(rayOfr.proofEnvelope.payloadDigestSha256).toBe(
-      "85e82d474841f0497fb7f6fcb0a7fec7ce808de9779ff69eff32a6b6560ea4a5"
+      "af9593e0922992eab5f6051a39e9576de4c9e638080c47c4960f37fd793e84c2"
     );
   });
 
@@ -165,12 +165,12 @@ describe("path reconstruction — canonical PepsiCo/Ray fixture", () => {
 
 describe("Phase 1 fixture catalog", () => {
   it("keeps stable route slugs separate from point-in-time display symbols", () => {
-    const slugs = batchManifest.assets.map((asset) => asset.slug);
-    const symbols = batchManifest.assets.map((asset) => asset.displaySymbol);
+    const slugs = batchManifest.entities.map((entity) => entity.slug);
+    const symbols = batchManifest.entities.map((entity) => entity.displaySymbol);
     expect(slugs).toEqual(["pepsi", "nvidia", "bitcoin", "alphabet", "spy"]);
     expect(symbols).toEqual(["PEP", "NVDA", "BTC", "GOOG", "SPY"]);
-    expect(new Set(slugs).size).toBe(batchManifest.assets.length);
-    expect(batchManifest.assets.every((asset) => Array.isArray(asset.aliases))).toBe(true);
+    expect(new Set(slugs).size).toBe(batchManifest.entities.length);
+    expect(batchManifest.entities.every((entity) => Array.isArray(entity.aliases))).toBe(true);
   });
 
   it("contains 60 unique individual forecast receipts across five assets", () => {

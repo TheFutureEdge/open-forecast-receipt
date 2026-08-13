@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import process from "node:process";
 import { applicationDefault, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { canonicalize } from "json-canonicalize";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const MAX_SAFE_DOCUMENT_BYTES = 900_000;
@@ -113,17 +114,6 @@ const projectId = argumentValue("--project")
 const applyToCloud = process.argv.includes("--apply");
 
 assert(projectId, "Pass --project=<project-id>.");
-assert(applyToCloud, "Cloud writes require --apply.");
-assert(
-  process.env.OFR_CONFIRM_FIRESTORE_PROJECT === projectId,
-  "Set OFR_CONFIRM_FIRESTORE_PROJECT to the exact target project ID before a cloud import.",
-);
-
-if (getApps().length === 0) {
-  initializeApp({ projectId, credential: applicationDefault() });
-}
-
-const db = getFirestore();
 const [manifest, catalog, showcaseSelection] = await Promise.all([
   readJson("src/data/fixtures/batch6-manifest.json"),
   readJson("src/data/fixtures/batch6-catalog.json"),
@@ -151,7 +141,7 @@ addDocument("public_collections", manifest.batchId, {
   batchId: manifest.batchId,
   batchLabel: manifest.batchLabel,
   description: manifest.description,
-  subjectCount: manifest.assets.length,
+  entityCount: manifest.entities.length,
   receiptCount: catalog.entries.length,
   selectedProofCount: selectedDigests.size,
   verifiedProofCount,
@@ -160,45 +150,41 @@ addDocument("public_collections", manifest.batchId, {
   visibility: "public",
 });
 
-const subjectRecords = new Map();
+const entityRecords = new Map();
 const forecasterRecords = new Map();
 
-for (const [sortOrder, asset] of manifest.assets.entries()) {
+for (const [sortOrder, asset] of manifest.entities.entries()) {
   const assetEntries = entriesByAsset.get(asset.slug) || [];
   assert(assetEntries.length > 0, `No catalog entries found for ${asset.slug}`);
   const firstDocument = await readJson(documentPathFromCatalog(assetEntries[0].documentPath));
-  const subject = firstDocument.receiptPayload.forecast.subject;
+  const entity = firstDocument.receiptPayload.forecast.entity;
   const selectedCount = assetEntries.filter((entry) => selectedDigests.has(entry.receiptDigest)).length;
   const proofCount = assetEntries.filter((entry) => entry.chainStatus === "verified").length;
 
-  const publicSubject = {
-    subjectId: subject.id,
-    type: subject.type,
-    name: subject.name,
+  const publicEntity = {
+    entityId: entity.id,
+    entityType: entity.type,
+    canonicalName: entity.name,
     stableSlug: asset.slug,
     aliases: asset.aliases || [],
-    identifiers: subject.identifiers || {},
+    identifiers: entity.identifiers || {},
     currentDisplaySymbol: asset.displaySymbol,
     currentMarketIdentifier: asset.marketIdentifier,
     publicationStatus: "published",
     visibility: "public",
   };
-  subjectRecords.set(subject.id, publicSubject);
+  entityRecords.set(entity.id, publicEntity);
 
-  addDocument("public_collection_subjects", `${manifest.batchId}__${asset.slug}`, {
+  addDocument("public_collection_entities", `${manifest.batchId}__${asset.slug}`, {
     ...asset,
     collectionId: manifest.batchId,
-    subjectId: subject.id,
+    entityId: entity.id,
     showcaseSelectionCount: selectedCount,
     proofCount,
     sortOrder,
     publicationStatus: "published",
     visibility: "public",
   });
-}
-
-for (const [subjectId, subject] of subjectRecords) {
-  addDocument("public_subjects", subjectId, subject);
 }
 
 for (const [sortOrder, entry] of catalog.entries.entries()) {
@@ -230,8 +216,8 @@ for (const [sortOrder, entry] of catalog.entries.entries()) {
 
   addDocument("public_forecasts", forecast.forecastId, {
     collectionId: manifest.batchId,
-    subjectId: forecast.subject.id,
-    subjectSlug: entry.assetSlug,
+    entityId: forecast.entity.id,
+    entitySlug: entry.assetSlug,
     forecasterId: forecaster.id,
     forecasterLabel: entry.forecasterLabel,
     forecaster: forecasterSummary,
@@ -254,8 +240,8 @@ for (const [sortOrder, entry] of catalog.entries.entries()) {
 
   addDocument("public_receipts", entry.receiptDigest, {
     collectionId: manifest.batchId,
-    subjectId: forecast.subject.id,
-    subjectSlug: entry.assetSlug,
+    entityId: forecast.entity.id,
+    entitySlug: entry.assetSlug,
     forecasterId: forecaster.id,
     forecastId: forecast.forecastId,
     receiptDigest: entry.receiptDigest,
@@ -300,21 +286,71 @@ for (const [forecasterId, forecaster] of forecasterRecords) {
   addDocument("public_forecasters", forecasterId, forecaster);
 }
 
-assert(documents.length < 500, `The seed contains ${documents.length} writes; split it before using a Firestore batch.`);
-const batch = db.batch();
-for (const item of documents) {
-  const reference = db.collection(item.collectionName).doc(item.documentId);
-  batch.create(reference, item.value);
-}
-await batch.commit();
-
-console.log(JSON.stringify({
+const planSummary = {
+  mode: applyToCloud ? "apply" : "dry-run",
   target: projectId,
   collectionId: manifest.batchId,
-  writes: documents.length,
-  subjects: subjectRecords.size,
+  plannedDocuments: documents.length,
+  entities: entityRecords.size,
   forecasters: forecasterRecords.size,
   forecasts: catalog.entries.length,
   receipts: catalog.entries.length,
   proofJobs: documents.filter((item) => item.collectionName === "proof_jobs").length,
-}, null, 2));
+};
+console.log(JSON.stringify(planSummary, null, 2));
+
+if (!applyToCloud) {
+  console.log("Dry run complete. No Firestore connection or write was made.");
+  process.exit(0);
+}
+
+assert(
+  process.env.OFR_CONFIRM_FIRESTORE_PROJECT === projectId,
+  "Set OFR_CONFIRM_FIRESTORE_PROJECT to the exact target project ID before a cloud import.",
+);
+if (getApps().length === 0) {
+  initializeApp({ projectId, credential: applicationDefault() });
+}
+const db = getFirestore();
+
+// The semantic entity catalog is governed separately. This collection publisher
+// may reference its IDs, but must never replace the richer entity master records.
+const entityReferences = [...entityRecords.keys()].map((entityId) => db.collection("public_entities").doc(entityId));
+const entitySnapshots = await db.getAll(...entityReferences);
+const missingEntities = entitySnapshots.filter((snapshot) => !snapshot.exists).map((snapshot) => snapshot.id);
+assert(missingEntities.length === 0, `Publish the governed entity catalog first. Missing entity IDs: ${missingEntities.join(", ")}`);
+
+assert(documents.length < 500, `The publication contains ${documents.length} writes; split it before using a Firestore batch.`);
+const mutableCollections = new Set([
+  "public_collections",
+  "public_collection_entities",
+  "public_forecasters",
+  "public_forecasts",
+  "proof_jobs",
+]);
+const references = documents.map((item) => db.collection(item.collectionName).doc(item.documentId));
+const currentSnapshots = await db.getAll(...references);
+const batch = db.batch();
+let created = 0;
+let updated = 0;
+let unchanged = 0;
+
+for (const [index, item] of documents.entries()) {
+  const reference = references[index];
+  const snapshot = currentSnapshots[index];
+  if (!snapshot.exists) {
+    batch.create(reference, item.value);
+    created += 1;
+    continue;
+  }
+  if (canonicalize(snapshot.data()) === canonicalize(item.value)) {
+    unchanged += 1;
+    continue;
+  }
+  assert(mutableCollections.has(item.collectionName), `Immutable public document differs: ${reference.path}`);
+  batch.set(reference, item.value);
+  updated += 1;
+}
+await batch.commit();
+
+console.log(JSON.stringify({ ...planSummary, created, updated, unchanged }, null, 2));

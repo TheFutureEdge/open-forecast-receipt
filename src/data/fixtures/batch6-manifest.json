@@ -2,7 +2,7 @@
   "batchId": "batch-6",
   "batchLabel": "iPulse AI Public Forecast Showcase",
   "description": "Five public assets with 12 individual AI-forecaster receipts each, preserved from one iPulse AI forecast run.",
-  "assets": [
+  "entities": [
     {
       "name": "PepsiCo Inc",
       "marketIdentifier": "PEP:XNAS",

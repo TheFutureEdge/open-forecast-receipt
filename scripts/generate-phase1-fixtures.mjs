@@ -214,7 +214,7 @@ function buildReceipt({ source, prediction, generation, contextMeta, componentMe
         runNumber: Number(source.scoring_batch),
         revision: publicationRevision,
       },
-      subject: {
+      entity: {
         type: "FinancialInstrument",
         id: source.asset_id,
         name: source.asset_name,
@@ -413,7 +413,7 @@ function buildReceipt({ source, prediction, generation, contextMeta, componentMe
 function buildProjection(document, derived) {
   const payload = document.receiptPayload;
   const forecast = payload.forecast;
-  const assetIdentifiers = forecast.subject.identifiers || {};
+  const assetIdentifiers = forecast.entity.identifiers || {};
   const subjectRef = assetIdentifiers.marketIdentifierCode
     ? `ticker:${assetIdentifiers.ticker}@${assetIdentifiers.marketIdentifierCode}`
     : `ipulse:${assetIdentifiers.ipulseSymbol}`;
@@ -602,7 +602,7 @@ await writeJson(resolve(ROOT, "src/data/fixtures/batch6-catalog.json"), {
 const manifestPath = resolve(ROOT, "src/data/fixtures/batch6-manifest.json");
 const manifest = await readJson(manifestPath);
 manifest.description = "Batch 6 of the Open Forecast Receipt system. Five public assets with 12 individual AI-advisor forecast receipts each.";
-for (const manifestAsset of manifest.assets) {
+for (const manifestAsset of manifest.entities) {
   const assetSlug = manifestAsset.slug || manifestAsset.ticker;
   manifestAsset.slug = assetSlug;
   manifestAsset.aliases ||= [];

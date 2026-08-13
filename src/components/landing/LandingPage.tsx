@@ -58,8 +58,11 @@ export function LandingPage() {
               Open Forecast Library is a public, browsable record of what was forecast, by whom, using which information, and when. Every entry is stored as an Open Forecast Receipt that people can inspect and verify.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link to="/showcase" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700">
-                Explore the iPulse AI showcase <ArrowRight size={17} weight="bold" />
+              <Link to="/entities" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700">
+                Explore the entity catalog <ArrowRight size={17} weight="bold" />
+              </Link>
+              <Link to="/forecasts" className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                Browse published forecasts
               </Link>
               <a href="mailto:support@ipulseai.com?subject=Public%20forecast%20submission" className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
                 <EnvelopeSimple size={17} weight="bold" /> Submit a public forecast
@@ -138,7 +141,7 @@ export function LandingPage() {
               <h2 className="mt-3 text-3xl font-black">Built with real iPulse AI forecasts.</h2>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">The public showcase begins with five market subjects and 60 individual AI forecasts. It is the first working client of the standard—not a special schema that locks the Library to finance or AI.</p>
             </div>
-            <Link to="/showcase" className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-slate-950 hover:bg-blue-50">Open the showcase <ArrowRight size={17} weight="bold" /></Link>
+            <Link to="/forecasts" className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-slate-950 hover:bg-blue-50">Open the first collection <ArrowRight size={17} weight="bold" /></Link>
           </div>
         </div>
       </section>

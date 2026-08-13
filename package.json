@@ -11,9 +11,14 @@
     "preview": "vite preview",
     "test": "vitest run",
     "firestore:seed:staging": "node scripts/seed-firestore.mjs --project=oflapp-staging --apply",
+    "showcase:plan": "node scripts/seed-firestore.mjs --project=oflapp-staging",
+    "showcase:sync:staging": "OFR_CONFIRM_FIRESTORE_PROJECT=oflapp-staging node scripts/seed-firestore.mjs --project=oflapp-staging --apply",
+    "entities:snapshot": "node scripts/sync-ipulse-entity-catalog.mjs",
+    "entities:sync:staging": "OFR_CONFIRM_FIRESTORE_PROJECT=oflapp-staging node scripts/sync-ipulse-entity-catalog.mjs --project=oflapp-staging --apply",
     "publish:bundle": "node scripts/publish-library-bundle.mjs",
     "smoke:staging": "node --env-file=.env.staging.local scripts/smoke-staging.mjs",
     "fixtures:phase1": "node scripts/generate-phase1-fixtures.mjs",
+    "fixtures:reseal-entity-contract": "node scripts/reseal-entity-contract-fixtures.mjs",
     "eas:preflight": "node --env-file-if-exists=.env.local scripts/eas-showcase.mjs preflight",
     "eas:schema:register": "node --env-file-if-exists=.env.local scripts/eas-showcase.mjs register",
     "eas:showcase:issue": "node --env-file-if-exists=.env.local scripts/eas-showcase.mjs issue",
@@ -48,8 +53,5 @@
     "vite": "^7.2.4",
     "vite-plugin-svgr": "^4.5.0",
     "vitest": "^4.1.10"
-  },
-  "overrides": {
-    "uuid": "^11.1.1"
   }
 }

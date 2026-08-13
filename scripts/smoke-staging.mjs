@@ -27,16 +27,16 @@ const db = getFirestore(app);
 const collectionSnapshot = await getDoc(doc(db, "public_collections", "batch-6"));
 assert(collectionSnapshot.exists(), "Public collection batch-6 is not readable");
 const collectionRecord = collectionSnapshot.data();
-assert(collectionRecord.subjectCount === 5, `Expected 5 subjects, received ${collectionRecord.subjectCount}`);
+assert(collectionRecord.entityCount === 5, `Expected 5 entities, received ${collectionRecord.entityCount}`);
 assert(collectionRecord.receiptCount === 60, `Expected 60 receipts, received ${collectionRecord.receiptCount}`);
 
-const subjectSnapshot = await getDoc(doc(db, "public_collection_subjects", "batch-6__pepsi"));
-assert(subjectSnapshot.exists(), "PepsiCo collection subject is not readable");
-const subjectRecord = subjectSnapshot.data();
+const entitySnapshot = await getDoc(doc(db, "public_collection_entities", "batch-6__pepsi"));
+assert(entitySnapshot.exists(), "PepsiCo collection entity is not readable");
+const entityRecord = entitySnapshot.data();
 const forecastSnapshot = await getDocs(query(
   collection(db, "public_forecasts"),
   where("collectionId", "==", "batch-6"),
-  where("subjectId", "==", subjectRecord.subjectId),
+  where("entityId", "==", entityRecord.entityId),
 ));
 assert(forecastSnapshot.size === 12, `Expected 12 PepsiCo forecasts, received ${forecastSnapshot.size}`);
 
@@ -63,7 +63,7 @@ await expectPermissionDenied("Anonymous browser write", () => setDoc(
 console.log(JSON.stringify({
   projectId,
   collectionId: "batch-6",
-  subjects: collectionRecord.subjectCount,
+  entities: collectionRecord.entityCount,
   receipts: collectionRecord.receiptCount,
   pepsiForecasts: forecastSnapshot.size,
   directReceiptRead: true,

@@ -1,6 +1,6 @@
 import type { ChainStatus, CoverageStatus } from "./verification";
 
-export interface BatchManifestAsset {
+export interface BatchManifestEntity {
   slug: string;
   aliases?: string[];
   displaySymbol: string;
@@ -18,5 +18,5 @@ export interface BatchManifest {
   batchId: string;
   batchLabel: string;
   description: string;
-  assets: BatchManifestAsset[];
+  entities: BatchManifestEntity[];
 }

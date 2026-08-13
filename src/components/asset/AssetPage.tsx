@@ -7,14 +7,14 @@ import { LoadedReceiptDetail } from "../receipt/ReceiptDetail";
 import type { CompactEasProjection, OfrDocument } from "../../types/ofr";
 import {
   getLibraryReceipt,
-  getLibrarySubject,
-  getSubjectProofCounts,
+  getLibraryEntity,
+  getEntityProofCounts,
   listLibraryForecasts,
 } from "../../lib/library/repository";
-import type { PublicCollectionSubjectRecord, PublicForecastRecord } from "../../lib/library/types";
+import type { PublicCollectionEntityRecord, PublicForecastRecord } from "../../lib/library/types";
 
 export function AssetPage({ batchId, routeSlug }: { batchId: string; routeSlug: string }) {
-  const [asset, setAsset] = useState<PublicCollectionSubjectRecord | null>(null);
+  const [asset, setAsset] = useState<PublicCollectionEntityRecord | null>(null);
   const [fixtures, setFixtures] = useState<PublicForecastRecord[]>([]);
   const [selected, setSelected] = useState<PublicForecastRecord | undefined>();
   const [loaded, setLoaded] = useState<{ document: OfrDocument; projection: CompactEasProjection } | null>(null);
@@ -28,19 +28,19 @@ export function AssetPage({ batchId, routeSlug }: { batchId: string; routeSlug: 
     setSelected(undefined);
     setLoadError(null);
     setLoadingAsset(true);
-    getLibrarySubject(batchId, routeSlug)
-      .then(async (subject) => {
-        if (!subject) return { subject: null, forecasts: [] as PublicForecastRecord[] };
-        return { subject, forecasts: await listLibraryForecasts(batchId, subject.subjectId) };
+    getLibraryEntity(batchId, routeSlug)
+      .then(async (entity) => {
+        if (!entity) return { entity: null, forecasts: [] as PublicForecastRecord[] };
+        return { entity, forecasts: await listLibraryForecasts(batchId, entity.entityId) };
       })
-      .then(({ subject, forecasts }) => {
+      .then(({ entity, forecasts }) => {
         if (!active) return;
-        setAsset(subject);
+        setAsset(entity);
         setFixtures(forecasts);
         setSelected(forecasts[0]);
       })
       .catch((error: unknown) => {
-        if (active) setLoadError(error instanceof Error ? error.message : "Unable to load subject");
+        if (active) setLoadError(error instanceof Error ? error.message : "Unable to load entity");
       })
       .finally(() => {
         if (active) setLoadingAsset(false);
@@ -66,20 +66,20 @@ export function AssetPage({ batchId, routeSlug }: { batchId: string; routeSlug: 
   }, [selected]);
 
   if (loadingAsset) {
-    return <div className="py-20 text-center text-sm text-slate-500">Loading subject and forecast receipts…</div>;
+    return <div className="py-20 text-center text-sm text-slate-500">Loading entity and forecast receipts…</div>;
   }
 
   if (!asset) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white px-6 py-20 text-center dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200">Subject not found</h2>
+        <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200">Entity not found</h2>
         {loadError && <p className="mt-2 text-sm text-red-600">{loadError}</p>}
         <Link to="/showcase" className="mt-4 inline-block text-sm font-semibold text-blue-600 hover:underline">Back to showcase</Link>
       </div>
     );
   }
 
-  const showcaseCounts = getSubjectProofCounts(asset);
+  const showcaseCounts = getEntityProofCounts(asset);
 
   return (
     <div className="space-y-3.5">

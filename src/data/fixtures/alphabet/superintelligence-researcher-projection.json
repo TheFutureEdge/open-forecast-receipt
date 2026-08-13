@@ -35,7 +35,7 @@
     "cadenceMonths": 3,
     "pointCount": 20,
     "stepReturnBps": "-400,300,-500,-300,400,500,-200,-100,300,600,200,-200,200,400,100,-300,200,300,200,100",
-    "receiptDigest": "0x078b7272e3e2090e6728eba828afdf277db0d31b95e8e3e8d06d320561181b19"
+    "receiptDigest": "0xfcb1f124aa9e024a122b55ff187fb87afe28f169373c5e81036be53a7eeb9771"
   },
   "protocolSuppliedAfterIssuance": {
     "schemaUID": null,

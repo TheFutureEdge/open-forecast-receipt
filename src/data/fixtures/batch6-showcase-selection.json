@@ -9,32 +9,32 @@
     {
       "assetSlug": "alphabet",
       "mode": "RESEARCHER",
-      "receiptDigest": "24206a0229f9669c70b70a63549010ad48a0fa53602cc357a9ab19739c06d494"
+      "receiptDigest": "9ddf1c6ed2b95b7f28fd1bd15104e03bcbf487d5f505486b9dc12b7fd6499508"
     },
     {
       "assetSlug": "bitcoin",
       "mode": "RESEARCHER",
-      "receiptDigest": "aa3971606f12763bc3c89bf9765a9b85b60e46e47d2308d18d4d95934644dd88"
+      "receiptDigest": "0608fcf8a3f72329802adf0747ab786a7f44061619270c259676363faad37173"
     },
     {
       "assetSlug": "nvidia",
       "mode": "RESEARCHER",
-      "receiptDigest": "cf82d744a6acb36b49f2a3fd6362151d9d81e2e0c73f80885c8327d25d57c4ff"
+      "receiptDigest": "ff08ab464ea15dab8ffbcd7605a650fa9a9fa9c1152251e91d2005f0ad54dc31"
     },
     {
       "assetSlug": "pepsi",
       "mode": "RESEARCHER",
-      "receiptDigest": "85e82d474841f0497fb7f6fcb0a7fec7ce808de9779ff69eff32a6b6560ea4a5"
+      "receiptDigest": "af9593e0922992eab5f6051a39e9576de4c9e638080c47c4960f37fd793e84c2"
     },
     {
       "assetSlug": "pepsi",
       "mode": "THINKER",
-      "receiptDigest": "a9a02ae78878dab7866eaec9c940969e99f12fb43aa8dbe3af2ba72e16bc7422"
+      "receiptDigest": "21e5dd7f703fac2b8fd6ffaf6d7d40c7502449063edcd0009a6a55f62d55d017"
     },
     {
       "assetSlug": "spy",
       "mode": "RESEARCHER",
-      "receiptDigest": "ab039eeaf00f9f950fee893f9ecb162f9a9fb6f61a46ef2f19f94b7386e955fb"
+      "receiptDigest": "3bb31a5e9ee18ef500ebb3c853fc3a50ae821e37188650ad96871a3ade62b387"
     }
   ]
 }

@@ -27,7 +27,7 @@
         "runNumber": 6,
         "revision": 1
       },
-      "subject": {
+      "entity": {
         "type": "FinancialInstrument",
         "id": "equity_e012cdce-768d-50c7-bb25-1ff8a901546c",
         "name": "Alphabet Inc. Class C",
@@ -392,7 +392,7 @@
     "canonicalization": "RFC8785",
     "hashAlgorithm": "SHA-256",
     "digestScope": "receiptPayload",
-    "payloadDigestSha256": "4b9c51b68964c36a102b9188b0a6f3b7f45bbdead0853c552725c985ad923667",
+    "payloadDigestSha256": "45bbbef92bc9e24fb6fcf69519e713dbb3010cb840026cb0675753c67aa22189",
     "proofs": []
   }
 }

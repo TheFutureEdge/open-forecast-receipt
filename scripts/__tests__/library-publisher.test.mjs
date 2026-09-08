@@ -34,6 +34,13 @@ function bundleEntry() {
     sortOrder: 0,
     entitySortOrder: 0,
     requestBlockchainProof: true,
+    originalSource: {
+      publisherName: "iPulse AI",
+      label: "View the original historical forecast",
+      url: "https://ipulseai.com/stocks/pepsi-pep/forecast-history/2026-07-05-sb6/ai-forecasts",
+      publicationId: "2026-07-05-sb6",
+      publicationDate: "2026-07-05",
+    },
     entityPresentation: {
       routeSlug: "pepsi",
       aliases: ["pep"],
@@ -85,10 +92,23 @@ describe("OFL publication bundle planner", () => {
     expect(forecast.value.forecaster.displayName).toBe("Ray Dalio AI on Gemini 3.1 Pro");
     expect(forecast.value.forecaster.description).toBe("The Strategist · RESEARCHER");
     expect(forecast.value.chainStatus).toBe("not_issued");
+    expect(forecast.value.originalSource.url).toBe("https://ipulseai.com/stocks/pepsi-pep/forecast-history/2026-07-05-sb6/ai-forecasts");
     const entity = plan.documents.find((document) => document.collectionName === "public_collection_entities");
     expect(entity.value.loadedCount).toBe(1);
     expect(entity.writeMode).toBe("mutable_current");
     expect(plan.documents.some((document) => document.collectionName === "public_entities")).toBe(false);
+    const collectionCatalog = plan.documents.find((document) => document.collectionName === "public_collection_catalogs");
+    expect(collectionCatalog.value.manifest.entities).toHaveLength(1);
+    expect(collectionCatalog.value.manifest.entities[0].entityId).toBe(receipt.receiptPayload.forecast.entity.id);
+    const forecastCatalog = plan.documents.find((document) => document.collectionName === "public_entity_forecast_catalogs");
+    expect(forecastCatalog.value.forecasts).toHaveLength(1);
+    expect(forecastCatalog.value.forecasts[0].forecastId).toBe(receipt.receiptPayload.forecast.forecastId);
+  });
+
+  it("rejects unsafe original-source links", () => {
+    const bundle = publicationBundle();
+    bundle.entries[0].originalSource.url = "javascript:alert(1)";
+    expect(() => planPublicationBundle(bundle, validateReceipt)).toThrow("credential-free HTTPS URL");
   });
 
   it("rejects a changed forecast value whose sealed digest was not updated", () => {

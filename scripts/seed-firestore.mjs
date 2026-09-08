@@ -1,9 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import process from "node:process";
-import { applicationDefault, getApps, initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
 import { canonicalize } from "json-canonicalize";
+import { getServerFirestore } from "./lib/firestore-client.mjs";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const MAX_SAFE_DOCUMENT_BYTES = 900_000;
@@ -296,6 +295,7 @@ for (const [sortOrder, entry] of catalog.entries.entries()) {
     targetName: forecast.target.name,
     subjectCategory,
     forecastCreatedAt: forecast.temporal.forecastCreatedAt,
+    horizonStartAt: forecast.temporal.anchorAt,
     horizonEndAt: forecast.temporal.horizonEndAt,
     sortOrder,
     chainStatus: entry.chainStatus,
@@ -379,10 +379,7 @@ assert(
   process.env.OFR_CONFIRM_FIRESTORE_PROJECT === projectId,
   "Set OFR_CONFIRM_FIRESTORE_PROJECT to the exact target project ID before a cloud import.",
 );
-if (getApps().length === 0) {
-  initializeApp({ projectId, credential: applicationDefault() });
-}
-const db = getFirestore();
+const db = getServerFirestore(projectId);
 
 // The semantic entity catalog is governed separately. This collection publisher
 // may reference its IDs, but must never replace the richer entity master records.

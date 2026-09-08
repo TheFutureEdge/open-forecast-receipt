@@ -2,10 +2,11 @@ import { CaretRight, CheckCircle, LinkSimple } from "@phosphor-icons/react";
 import { Link } from "../../lib/router";
 import type { BatchManifestEntity } from "../../types/manifest";
 import { StatusBadge } from "../common/StatusBadge";
+import { EntityLogo } from "../entities/EntityLogo";
+import { publicEntityForecastLedgerPath } from "../../lib/library/entityRoutes";
 
 interface AssetRowProps {
   asset: BatchManifestEntity;
-  batchId: string;
 }
 
 export function AssetRow({ asset }: AssetRowProps) {
@@ -15,14 +16,14 @@ export function AssetRow({ asset }: AssetRowProps) {
   };
   return (
     <Link
-      to={`/showcase/${encodeURIComponent(asset.slug)}`}
+      to={publicEntityForecastLedgerPath(asset.slug)}
       className="group grid gap-3 px-5 py-4 transition-colors hover:bg-blue-50/50 active:bg-blue-50 md:grid-cols-[minmax(240px,1.5fr)_0.7fr_0.75fr_1fr_32px] md:items-center dark:hover:bg-blue-950/20"
     >
       <div className="flex min-w-0 items-center gap-3">
-        <img
-          src={`/assets/brands/${asset.slug}.png`}
-          alt=""
-          className="size-10 shrink-0 rounded-xl border border-slate-200 bg-white object-contain p-1.5 shadow-sm"
+        <EntityLogo
+          src={asset.logoUrl}
+          alt={asset.logoAlt || `${asset.name} logo`}
+          className="size-10"
         />
         <div className="min-w-0">
           <div className="flex items-baseline gap-2">

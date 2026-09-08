@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { ArrowRight, Fingerprint, ShieldCheck } from "@phosphor-icons/react";
 import { Link } from "../../lib/router";

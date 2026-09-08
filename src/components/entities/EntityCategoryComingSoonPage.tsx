@@ -1,3 +1,5 @@
+"use client";
+
 import { ArrowLeft, Clock, Database, GitBranch } from "@phosphor-icons/react";
 import { Link } from "../../lib/router";
 

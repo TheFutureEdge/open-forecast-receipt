@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
@@ -13,15 +15,35 @@ import {
 import { KnowledgeGraphExamples } from "../knowledge/KnowledgeGraphArchitecture";
 import {
   listPublicForecastableEntities,
-  listPublicForecastCountsByEntity,
+  listPublicForecastStatsByEntity,
   listPublicOrganizations,
 } from "../../lib/library/repository";
-import type { PublicEntityRecord } from "../../lib/library/types";
-import { Link } from "../../lib/router";
+import type { PublicEntityDirectoryItem } from "../../lib/library/types";
+import type { PublicForecastEntityStats } from "../../lib/library/repository";
+import { Link, navigate } from "../../lib/router";
+import { publicEntityPath } from "../../lib/library/entityRoutes";
 
 const PAGE_SIZE = 30;
 const FORECAST_TARGET_QUESTION = "What is a forecast target?";
 const FORECAST_TARGET_ANSWER = "A forecast target is the exact measurable outcome predicted for a governed entity. It defines the dimension, unit, cadence, and horizon—such as the percentage return of a listed security, a country's real GDP growth, or a central bank's policy rate.";
+
+const SUBJECT_CATEGORY_ROUTES: Record<string, string> = {
+  listed_security: "/entities/subjects/listed-securities",
+  listed_fund_share: "/entities/subjects/funds-etfs",
+  cryptoasset: "/entities/subjects/cryptoassets",
+  commodity_spot: "/entities/subjects/commodities",
+  currency_pair: "/entities/subjects/currency-pairs",
+  market_index: "/entities/subjects/market-indices",
+};
+
+const SUBJECT_CATEGORY_LABELS: Record<string, string> = {
+  listed_security: "Listed securities",
+  listed_fund_share: "Funds & ETFs",
+  cryptoasset: "Cryptoassets",
+  commodity_spot: "Commodities",
+  currency_pair: "Currency pairs",
+  market_index: "Market indices",
+};
 
 export interface EntityCatalogPreset {
   key: string;
@@ -122,27 +144,15 @@ export const ENTITY_CATALOG_PRESETS: Record<string, EntityCatalogPreset> = {
   },
 };
 
-function displayIdentifier(entity: PublicEntityRecord): string {
-  if (entity.entityClasses?.includes("organization")) {
-    const listings = (entity.relatedEntities || [])
-      .filter((related) => related.predicate === "has_market_representation")
-      .map((related) => related.displayIdentifier)
-      .filter((value): value is string => Boolean(value));
-    if (listings.length > 0) return `${listings.slice(0, 2).join(" · ")}${listings.length > 2 ? ` · +${listings.length - 2}` : ""}`;
-  }
-  const preferred = ["ticker_venue", "ipulse_symbol", "isin"];
-  for (const scheme of preferred) {
-    const match = (entity.externalIdentifiers || []).find((identifier) => identifier.scheme === scheme);
-    if (match) return match.value;
-  }
-  return entity.entityId;
+function displayIdentifier(entity: PublicEntityDirectoryItem): string {
+  return entity.displayIdentifier || entity.entityId;
 }
 
 function entityTypeLabel(value: string): string {
   return value.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
 }
 
-function EntityGlyph({ entity }: { entity: PublicEntityRecord }) {
+function EntityGlyph({ entity }: { entity: PublicEntityDirectoryItem }) {
   const type = entity.entityType;
   const Icon = type === "listed_security"
     ? Buildings
@@ -168,16 +178,29 @@ function EntityGlyph({ entity }: { entity: PublicEntityRecord }) {
   );
 }
 
-export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
-  const [entities, setEntities] = useState<PublicEntityRecord[]>([]);
-  const [forecastCounts, setForecastCounts] = useState<Map<string, number>>(new Map());
+export interface EntityCatalogInitialData {
+  entities: PublicEntityDirectoryItem[];
+  forecastStats: Array<[string, PublicForecastEntityStats]>;
+}
+
+export function EntityCatalogPage({ preset, initialData }: { preset: EntityCatalogPreset; initialData?: EntityCatalogInitialData }) {
+  const [entities, setEntities] = useState<PublicEntityDirectoryItem[]>(initialData?.entities || []);
+  const [forecastStats, setForecastStats] = useState<Map<string, PublicForecastEntityStats>>(new Map(initialData?.forecastStats || []));
   const [queryText, setQueryText] = useState("");
   const [hasActiveForecastsOnly, setHasActiveForecastsOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<"name_asc" | "forecasts_desc" | "activity_desc">("name_asc");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialData) {
+      setEntities(initialData.entities);
+      setForecastStats(new Map(initialData.forecastStats));
+      setLoading(false);
+      setError(null);
+      return undefined;
+    }
     let active = true;
     setLoading(true);
     setError(null);
@@ -186,11 +209,11 @@ export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
       : preset.view === "context"
         ? listPublicOrganizations()
         : Promise.all([listPublicForecastableEntities(), listPublicOrganizations()]).then(([forecastable, context]) => [...forecastable, ...context]);
-    Promise.all([load, listPublicForecastCountsByEntity()])
-      .then(([records, counts]) => {
+    Promise.all([load, listPublicForecastStatsByEntity()])
+      .then(([records, stats]) => {
         if (active) {
           setEntities(records);
-          setForecastCounts(counts);
+          setForecastStats(stats);
         }
       })
       .catch((reason: unknown) => {
@@ -200,34 +223,14 @@ export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
         if (active) setLoading(false);
       });
     return () => { active = false; };
-  }, [preset.view]);
+  }, [initialData, preset.view]);
 
   useEffect(() => {
     setHasActiveForecastsOnly(false);
+    setSortBy("name_asc");
     setQueryText("");
     setVisibleCount(PAGE_SIZE);
   }, [preset.key]);
-
-  useEffect(() => {
-    if (preset.view !== "forecastable") return undefined;
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.dataset.oflFaq = "forecast-target";
-    script.text = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      mainEntity: [{
-        "@type": "Question",
-        name: FORECAST_TARGET_QUESTION,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: FORECAST_TARGET_ANSWER,
-        },
-      }],
-    });
-    document.head.appendChild(script);
-    return () => script.remove();
-  }, [preset.view]);
 
   const scopedEntities = useMemo(
     () => preset.entityTypes?.length
@@ -236,21 +239,53 @@ export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
     [entities, preset.entityTypes],
   );
 
+  const categoryOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const entity of entities) {
+      if (SUBJECT_CATEGORY_ROUTES[entity.entityType]) {
+        counts.set(entity.entityType, (counts.get(entity.entityType) || 0) + 1);
+      }
+    }
+    return [...counts.entries()].sort((left, right) => entityTypeLabel(left[0]).localeCompare(entityTypeLabel(right[0])));
+  }, [entities]);
+
+  function forecastCount(entityId: string): number {
+    return forecastStats.get(entityId)?.forecastCount || 0;
+  }
+
+  function latestActivityAt(entity: PublicEntityDirectoryItem): string {
+    return forecastStats.get(entity.entityId)?.latestActivityAt
+      || entity.latestActivityAt
+      || "";
+  }
+
   const filtered = useMemo(() => {
     const normalized = queryText.trim().toLowerCase();
-    return scopedEntities.filter((entity) => {
-      if (hasActiveForecastsOnly && (forecastCounts.get(entity.entityId) || 0) === 0) return false;
-      if (!normalized) return true;
-      return [
-        entity.canonicalName,
-        entity.stableSlug,
-        ...(entity.aliases || []),
-        ...(entity.externalIdentifiers || []).flatMap((identifier) => [identifier.scheme, identifier.value]),
-      ].some((value) => value.toLowerCase().includes(normalized));
-    });
-  }, [forecastCounts, hasActiveForecastsOnly, queryText, scopedEntities]);
+    return scopedEntities
+      .filter((entity) => {
+        if (hasActiveForecastsOnly && forecastCount(entity.entityId) === 0) return false;
+        if (!normalized) return true;
+        return [
+          entity.canonicalName,
+          entity.stableSlug,
+          ...(entity.aliases || []),
+          ...(entity.searchTerms || []),
+        ].some((value) => value.toLowerCase().includes(normalized));
+      })
+      .sort((left, right) => {
+        if (sortBy === "forecasts_desc") {
+          return forecastCount(right.entityId) - forecastCount(left.entityId)
+            || left.canonicalName.localeCompare(right.canonicalName);
+        }
+        if (sortBy === "activity_desc") {
+          return latestActivityAt(right).localeCompare(latestActivityAt(left))
+            || left.canonicalName.localeCompare(right.canonicalName);
+        }
+        return left.canonicalName.localeCompare(right.canonicalName);
+      });
+  }, [forecastStats, hasActiveForecastsOnly, queryText, scopedEntities, sortBy]);
 
-  useEffect(() => setVisibleCount(PAGE_SIZE), [hasActiveForecastsOnly, queryText]);
+  useEffect(() => setVisibleCount(PAGE_SIZE), [hasActiveForecastsOnly, queryText, sortBy]);
 
   if (loading) {
     return <div className="py-20 text-center text-sm text-slate-500">Loading the governed entity catalog…</div>;
@@ -264,9 +299,25 @@ export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
   const heroTitle = isAllForecastSubjects
     ? "Semantic Entity Catalog for Verifiable Forecasts"
     : preset.title;
+  const activeCategory = preset.entityTypes?.length === 1 ? preset.entityTypes[0] : "all";
 
   return (
     <div className="space-y-5">
+      {preset.view === "forecastable" && (
+        <script
+          type="application/ld+json"
+          data-ofl-faq="forecast-target"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [{
+              "@type": "Question",
+              name: FORECAST_TARGET_QUESTION,
+              acceptedAnswer: { "@type": "Answer", text: FORECAST_TARGET_ANSWER },
+            }],
+          }) }}
+        />
+      )}
       <section className="overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 px-6 py-8 shadow-sm dark:border-blue-950 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/40 sm:px-9">
         <div className="flex flex-col gap-7 xl:flex-row xl:items-end xl:justify-between">
           <div className="min-w-0 max-w-3xl xl:flex-1">
@@ -282,9 +333,9 @@ export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
           </div>
           <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4 xl:w-[28rem] xl:shrink-0">
             <CatalogMetric value={scopedEntities.length} label={preset.metricLabel} />
-            <CatalogMetric value={scopedEntities.filter((entity) => (entity.relatedEntities || []).length > 0).length} label={preset.view === "forecastable" ? "Linked to context" : "With relationships"} />
+            <CatalogMetric value={scopedEntities.filter((entity) => entity.relatedEntityCount > 0).length} label={preset.view === "forecastable" ? "Linked to context" : "With relationships"} />
             <CatalogMetric value={scopedEntities.filter((entity) => Boolean(entity.logo?.url)).length} label="With logos" />
-            <CatalogMetric value={scopedEntities.filter((entity) => (entity.sameAs || []).length > 0).length} label="Verified sameAs" />
+            <CatalogMetric value={scopedEntities.filter((entity) => entity.sameAsCount > 0).length} label="Verified sameAs" />
           </div>
         </div>
       </section>
@@ -292,15 +343,15 @@ export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
       {isAllForecastSubjects && <ForecastableEntityExplainer />}
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        {isAllForecastSubjects && (
+        {preset.view === "forecastable" && (
           <div className="border-b border-slate-200 px-5 py-5 dark:border-slate-800 sm:px-6">
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-blue-600">Forecast subjects</div>
-            <h2 className="mt-1 text-xl font-black tracking-tight text-slate-950 dark:text-white">Browse all forecast subjects</h2>
-            <p className="mt-1 text-xs leading-5 text-slate-500">Search the governed instruments and other subjects that can receive explicit forecast-target bindings.</p>
+            <h2 className="mt-1 text-xl font-black tracking-tight text-slate-950 dark:text-white">Browse {preset.categoryLabel?.toLowerCase() || "all forecast subjects"}</h2>
+            <p className="mt-1 text-xs leading-5 text-slate-500">The same directory, search, and filters power every forecast-subject category.</p>
           </div>
         )}
-        <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row dark:border-slate-800">
-          <label className="relative block flex-1">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-4 lg:flex-row lg:flex-wrap dark:border-slate-800">
+          <label className="relative block flex-none" style={{ minWidth: "24rem", flexBasis: "24rem" }}>
             <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} aria-hidden="true" />
             <input
               value={queryText}
@@ -309,19 +360,48 @@ export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
               className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none focus:border-blue-400 focus:bg-white dark:border-slate-700 dark:bg-slate-800"
             />
           </label>
-          {isAllForecastSubjects ? (
-            <label className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border px-3 text-xs font-semibold transition-colors ${hasActiveForecastsOnly
-              ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-300"
-              : "border-slate-200 bg-slate-50 text-slate-600 hover:border-blue-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-            }`}>
-              <input
-                type="checkbox"
-                checked={hasActiveForecastsOnly}
-                onChange={(event) => setHasActiveForecastsOnly(event.target.checked)}
-                className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-              />
-              Has Active Forecasts
-            </label>
+          {preset.view === "forecastable" ? (
+            <>
+              <label className="relative min-w-48">
+                <span className="sr-only">Filter by entity category</span>
+                <select
+                  value={activeCategory}
+                  onChange={(event) => navigate(event.target.value === "all" ? "/entities" : SUBJECT_CATEGORY_ROUTES[event.target.value])}
+                  className="h-10 w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 pl-3 pr-9 text-xs font-semibold text-slate-700 outline-none focus:border-blue-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  <option value="all">All categories ({entities.length})</option>
+                  {categoryOptions.map(([entityType, count]) => (
+                    <option key={entityType} value={entityType}>{SUBJECT_CATEGORY_LABELS[entityType] || entityTypeLabel(entityType)} ({count})</option>
+                  ))}
+                </select>
+                <CaretDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} aria-hidden="true" />
+              </label>
+              <label className="relative min-w-48">
+                <span className="sr-only">Sort entities</span>
+                <select
+                  value={sortBy}
+                  onChange={(event) => setSortBy(event.target.value as typeof sortBy)}
+                  className="h-10 w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 pl-3 pr-9 text-xs font-semibold text-slate-700 outline-none focus:border-blue-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  <option value="name_asc">Name: A to Z</option>
+                  <option value="forecasts_desc">Most forecasts</option>
+                  <option value="activity_desc">Latest forecast activity</option>
+                </select>
+                <CaretDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} aria-hidden="true" />
+              </label>
+              <label className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border px-3 text-xs font-semibold transition-colors ${hasActiveForecastsOnly
+                ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-300"
+                : "border-slate-200 bg-slate-50 text-slate-600 hover:border-blue-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              }`}>
+                <input
+                  type="checkbox"
+                  checked={hasActiveForecastsOnly}
+                  onChange={(event) => setHasActiveForecastsOnly(event.target.checked)}
+                  className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                Has Active Forecasts
+              </label>
+            </>
           ) : preset.categoryLabel ? (
             <div className="inline-flex h-10 items-center rounded-lg border border-blue-100 bg-blue-50 px-3 text-xs font-semibold text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
               Viewing: {preset.categoryLabel} ({scopedEntities.length})
@@ -337,7 +417,7 @@ export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
           {filtered.slice(0, visibleCount).map((entity, index) => (
             <Link
               key={entity.entityId}
-              to={`/entities/${encodeURIComponent(entity.stableSlug)}`}
+              to={publicEntityPath(entity)}
               className={`flex min-w-0 items-center gap-3 px-5 py-4 hover:bg-blue-50/60 dark:hover:bg-blue-950/20 ${index % 2 === 0 ? "lg:border-r lg:border-slate-100 dark:lg:border-slate-800" : ""} lg:border-b lg:border-slate-100 dark:lg:border-slate-800`}
             >
               <EntityGlyph entity={entity} />
@@ -348,18 +428,18 @@ export function EntityCatalogPage({ preset }: { preset: EntityCatalogPreset }) {
                   <span className="rounded bg-slate-100 px-1.5 py-0.5 dark:bg-slate-800">{entityTypeLabel(entity.entityType)}</span>
                   <span>{entity.entityClasses?.includes("forecastable_entity")
                     ? "Forecastable entity"
-                    : `${(entity.relatedEntities || []).filter((related) => related.predicate === "has_market_representation").length} market listing${(entity.relatedEntities || []).filter((related) => related.predicate === "has_market_representation").length === 1 ? "" : "s"}`}</span>
+                    : `${entity.relatedEntityCount} market listing${entity.relatedEntityCount === 1 ? "" : "s"}`}</span>
                 </div>
               </div>
               <span
-                className={`grid size-8 shrink-0 place-items-center rounded-lg border text-xs font-bold tabular-nums ${(forecastCounts.get(entity.entityId) || 0) > 0
+                className={`grid size-8 shrink-0 place-items-center rounded-lg border text-xs font-bold tabular-nums ${forecastCount(entity.entityId) > 0
                   ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-300"
                   : "border-slate-200 bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
                 }`}
-                title={`${forecastCounts.get(entity.entityId) || 0} active forecasts`}
-                aria-label={`${forecastCounts.get(entity.entityId) || 0} active forecasts`}
+                title={`${forecastCount(entity.entityId)} active forecasts`}
+                aria-label={`${forecastCount(entity.entityId)} active forecasts`}
               >
-                {forecastCounts.get(entity.entityId) || 0}
+                {forecastCount(entity.entityId)}
               </span>
               <ArrowRight className="shrink-0 text-slate-300" size={16} aria-hidden="true" />
             </Link>

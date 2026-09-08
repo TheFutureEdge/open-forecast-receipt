@@ -1,3 +1,5 @@
+"use client";
+
 import { lazy, Suspense, useEffect, useState } from "react";
 import {
   ArrowDown,
@@ -53,7 +55,7 @@ export function StandardsPage() {
       <section className="overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 px-6 py-9 shadow-sm dark:border-blue-950 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/40 sm:px-9">
         <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-600">Concept · Architecture · Standard</div>
         <h1 className="mt-3 max-w-4xl text-3xl font-black tracking-tight text-slate-950 dark:text-white sm:text-5xl">
-          How Open Forecast Library works
+          How Forecast Library works
         </h1>
         <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base sm:leading-7">
           The Knowledge Graph identifies what a forecast is about. The target defines exactly what is being predicted. The Open Forecast Receipt preserves the forecast, its forecaster, timing, context, and evidence as one verifiable record.

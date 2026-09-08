@@ -1,0 +1,11 @@
+env:
+  - variable: NEXT_PUBLIC_OFL_ENVIRONMENT
+    value: production
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_SITE_ORIGIN
+    value: https://forecastlibrary.com
+    availability:
+      - BUILD
+      - RUNTIME

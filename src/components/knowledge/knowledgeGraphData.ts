@@ -19,8 +19,12 @@ export interface KnowledgeGraphViewNode {
   schemaOrgType?: string;
   dimension?: string;
   unit?: string;
+  imageUrl?: string;
+  imageAlt?: string;
   position: { x: number; y: number };
 }
+
+export const ALIBABA_LOGO_URL = "https://ipulseai.com/static/icons/assets/equity/baba_nyse.png";
 
 export interface KnowledgeGraphViewEdge {
   id: string;
@@ -39,6 +43,8 @@ export const knowledgeGraphViewNodes: KnowledgeGraphViewNode[] = [
     subtitle: "Issuer organization",
     description: "The issuer organization supplies real-world context but remains a separate identity from each listed security.",
     schemaOrgType: "Corporation",
+    imageUrl: ALIBABA_LOGO_URL,
+    imageAlt: "Alibaba Group logo",
     position: { x: 0, y: 20 },
   },
   {
@@ -49,6 +55,8 @@ export const knowledgeGraphViewNodes: KnowledgeGraphViewNode[] = [
     subtitle: "Listed Security",
     description: "The stable market-instrument entity that the forecast is about. Its ticker may change without changing this identity.",
     schemaOrgType: "Thing",
+    imageUrl: ALIBABA_LOGO_URL,
+    imageAlt: "BABA listed security logo",
     position: { x: 230, y: 20 },
   },
   {
@@ -105,7 +113,7 @@ export const knowledgeGraphViewNodes: KnowledgeGraphViewNode[] = [
     title: "Blockchain attestation",
     subtitle: "Integrity and timing",
     description: "An optional onchain anchor for the receipt digest. It does not prove the forecast is true or accurate.",
-    position: { x: 460, y: 30 },
+    position: { x: 710, y: 300 },
   },
   {
     id: "evaluation",

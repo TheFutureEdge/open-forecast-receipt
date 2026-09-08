@@ -5,9 +5,8 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import process from "node:process";
-import { applicationDefault, getApps, initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
 import { canonicalize } from "json-canonicalize";
+import { getServerFirestore } from "./lib/firestore-client.mjs";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const DEFAULT_SOURCE_PROJECT = "data-platform-436809";
@@ -16,6 +15,7 @@ const ENTITY_VERSION_NAMESPACE = "cef63097-4d84-5018-9778-d4be189e320f";
 const RELATIONSHIP_NAMESPACE = "b2cc5767-24c5-5971-aa70-5b1648004cbe";
 const CATALOG_POLICY_VERSION = "ofl-ipulse-import-0.5";
 const MAX_BATCH_WRITES = 400;
+const MAX_PUBLIC_CATALOG_BYTES = 650 * 1024;
 const UNIQUE_IDENTIFIER_SCHEMES = new Set([
   "ipulse_asset_id",
   "ipulse_entity_id",
@@ -178,6 +178,17 @@ function stableFundamentalSlug(entityId) {
   return `entity-${entityId.replace(/^fundsubj_/, "")}`;
 }
 
+function publicEntitySlug(value) {
+  return String(value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/&/g, " and ")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-+/g, "-");
+}
+
 function legacyLogoForAsset(asset) {
   const folder = asset.subject_category;
   if (!folder || !asset.asset_symbol_pulse) return undefined;
@@ -241,6 +252,7 @@ function publicEntityProjection(entity, identifiers) {
     canonicalName: entity.canonicalName,
     description: entity.description,
     stableSlug: entity.stableSlug,
+    publicSlug: entity.publicSlug,
     aliases: entity.aliases,
     classifications: entity.classifications,
     schemaOrgTypes: entity.schemaOrgTypes,
@@ -261,6 +273,46 @@ function publicEntityProjection(entity, identifiers) {
     publicationStatus: "published",
     visibility: "public",
   });
+}
+
+function publicEntityDirectoryProjection(entity) {
+  const preferredIdentifier = ["ticker_venue", "ipulse_symbol", "isin"]
+    .map((scheme) => (entity.externalIdentifiers || []).find((identifier) => identifier.scheme === scheme)?.value)
+    .find(Boolean);
+  const relatedIdentifiers = (entity.relatedEntities || [])
+    .filter((related) => related.predicate === "has_market_representation")
+    .map((related) => related.displayIdentifier)
+    .filter(Boolean);
+  return compact({
+    entityId: entity.entityId,
+    entityType: entity.entityType,
+    entityClasses: entity.entityClasses,
+    canonicalName: entity.canonicalName,
+    stableSlug: entity.stableSlug,
+    publicSlug: entity.publicSlug,
+    aliases: entity.aliases,
+    displayIdentifier: relatedIdentifiers.length > 0
+      ? `${relatedIdentifiers.slice(0, 2).join(" · ")}${relatedIdentifiers.length > 2 ? ` · +${relatedIdentifiers.length - 2}` : ""}`
+      : preferredIdentifier || entity.entityId,
+    searchTerms: [...new Set((entity.externalIdentifiers || []).flatMap(({ scheme, value }) => [scheme, value]))],
+    sameAsCount: (entity.sameAs || []).length,
+    relatedEntityCount: (entity.relatedEntities || []).length,
+    latestActivityAt: entity.lifecycle?.sourceUpdatedAt
+      || entity.profile?.observedAt
+      || entity.profile?.sourceUpdatedAt
+      || entity.source?.sourceUpdatedAt,
+    logo: entity.logo ? {
+      mediaAssetId: entity.logo.mediaAssetId,
+      role: entity.logo.role,
+      url: entity.logo.url,
+      alt: entity.logo.alt,
+    } : undefined,
+  });
+}
+
+function assertPublicCatalogSize(catalogId, value) {
+  const bytes = Buffer.byteLength(JSON.stringify(value), "utf8");
+  assert(bytes <= MAX_PUBLIC_CATALOG_BYTES, `${catalogId} is ${bytes} bytes; split it before publishing beyond ${MAX_PUBLIC_CATALOG_BYTES} bytes`);
 }
 
 function addDocument(plan, collectionName, documentId, value, mode = "immutable") {
@@ -309,6 +361,8 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
   const profileByEntityId = new Map(profileRows.map((row) => [row.fundamental_subject_id, row]));
   const entitySummaries = [];
   const fundamentalSummaries = [];
+  const forecastSubjectDirectory = [];
+  const organizationDirectory = [];
 
   function addIdentifierDocuments(entity, identifiers) {
     for (const identifier of identifiers) {
@@ -354,6 +408,7 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
       entityId: asset.asset_id,
       canonicalName: asset.name,
       stableSlug: assetTags.url_slug,
+      publicSlug: assetTags.url_slug,
       entityType: assetSemantic?.entity_type || entityType(asset),
       displayIdentifier: asset.ticker_on_exchange
         ? `${asset.ticker_on_exchange}:${asset.exchange_code_pulse}`
@@ -376,6 +431,7 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
       entityId: fundamentalId,
       canonicalName: profile?.common_name || humanizeMachineName(fundamental.canonical_name) || fundamentalId,
       stableSlug: stableFundamentalSlug(fundamentalId),
+      publicSlug: publicEntitySlug(profile?.common_name || humanizeMachineName(fundamental.canonical_name) || fundamentalId),
       entityType: fundamental.entity_type || "entity",
       logoUrl: mediaByEntityId.get(fundamentalId)?.url,
     });
@@ -446,6 +502,7 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
       canonicalName: asset.name,
       description: asset.short_description,
       stableSlug: tags.url_slug,
+      publicSlug: tags.url_slug,
       aliases: aliases(asset, tags),
       classifications: [
         { scheme: "ofl-core", code: "asset" },
@@ -489,7 +546,9 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
       versionId: currentVersionId,
       externalIdentifiers: identifiers,
     }, "immutable");
-    addDocument(plan, "public_entities", entity.entityId, publicEntityProjection(entity, identifiers), "mutable_current");
+    const publicEntity = publicEntityProjection(entity, identifiers);
+    addDocument(plan, "public_entities", entity.entityId, publicEntity, "mutable_current");
+    forecastSubjectDirectory.push(publicEntityDirectoryProjection(publicEntity));
 
     addIdentifierDocuments(entity, identifiers);
     addAliases(entity, sourceVersion);
@@ -537,6 +596,8 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
       entityType: type,
       canonicalName: entity.canonicalName,
       stableSlug: entity.stableSlug,
+      publicSlug: entity.publicSlug,
+      logo: entity.logo,
       classifications: entity.classifications,
       exchangeEntityId: asset.exchange_id,
       identifiers: identifiers.map(({ sourceSystem: _sourceSystem, normalizedValue: _normalizedValue, ...identifier }) => identifier),
@@ -587,6 +648,7 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
       canonicalName,
       description: snapshot?.common_description || semantic.description,
       stableSlug: stableFundamentalSlug(semantic.entity_id),
+      publicSlug: publicEntitySlug(canonicalName),
       aliases: aliasesForEntity,
       classifications: [
         { scheme: "ofl-core", code: "fundamental_entity" },
@@ -614,7 +676,9 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
 
     addDocument(plan, "entities", entity.entityId, { ...entity, externalIdentifiers: identifiers }, "mutable_current");
     addDocument(plan, "entity_versions", currentVersionId, { ...entity, versionId: currentVersionId, externalIdentifiers: identifiers }, "immutable");
-    addDocument(plan, "public_entities", entity.entityId, publicEntityProjection(entity, identifiers), "mutable_current");
+    const publicEntity = publicEntityProjection(entity, identifiers);
+    addDocument(plan, "public_entities", entity.entityId, publicEntity, "mutable_current");
+    if (organizational) organizationDirectory.push(publicEntityDirectoryProjection(publicEntity));
     addIdentifierDocuments(entity, identifiers);
     addAliases(entity, sourceVersion);
 
@@ -624,18 +688,46 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
       entityType: entity.entityType,
       canonicalName: entity.canonicalName,
       stableSlug: entity.stableSlug,
+      publicSlug: entity.publicSlug,
       schemaOrgTypes: entity.schemaOrgTypes,
       sameAs: entity.sameAs,
       relatedEntityIds: relatedAssets.map((related) => related.entityId),
     });
   }
 
+  const generatedAt = [...forecastSubjectDirectory, ...organizationDirectory]
+    .map((entity) => entity.latestActivityAt)
+    .filter(Boolean)
+    .sort()
+    .at(-1) || "1970-01-01T00:00:00.000Z";
+  const forecastSubjectCatalog = {
+    catalogVersion: "ofl-public-entity-directory-v0.1.0",
+    catalogId: "forecast-subjects",
+    generatedAt,
+    entityCount: forecastSubjectDirectory.length,
+    entities: forecastSubjectDirectory.sort((left, right) => left.canonicalName.localeCompare(right.canonicalName)),
+    publicationStatus: "published",
+    visibility: "public",
+  };
+  const organizationCatalog = {
+    catalogVersion: "ofl-public-entity-directory-v0.1.0",
+    catalogId: "organizations",
+    generatedAt,
+    entityCount: organizationDirectory.length,
+    entities: organizationDirectory.sort((left, right) => left.canonicalName.localeCompare(right.canonicalName)),
+    publicationStatus: "published",
+    visibility: "public",
+  };
+  assertPublicCatalogSize("public_entity_directory_catalogs/forecast-subjects", forecastSubjectCatalog);
+  assertPublicCatalogSize("public_entity_directory_catalogs/organizations", organizationCatalog);
+  addDocument(plan, "public_entity_directory_catalogs", "forecast-subjects", forecastSubjectCatalog, "mutable_current");
+  addDocument(plan, "public_entity_directory_catalogs", "organizations", organizationCatalog, "mutable_current");
+
   return { plan, entitySummaries, fundamentalSummaries };
 }
 
 async function applyPlan(plan, targetProject) {
-  if (getApps().length === 0) initializeApp({ projectId: targetProject, credential: applicationDefault() });
-  const db = getFirestore();
+  const db = getServerFirestore(targetProject);
   const items = [...plan.values()];
   const missing = [];
   let unchanged = 0;
@@ -676,8 +768,7 @@ async function applyPlan(plan, targetProject) {
 
 async function applyInactiveAssetLifecycle(inactiveAssets, targetProject) {
   if (inactiveAssets.length === 0) return { updated: 0, unchanged: 0, missing: 0 };
-  if (getApps().length === 0) initializeApp({ projectId: targetProject, credential: applicationDefault() });
-  const db = getFirestore();
+  const db = getServerFirestore(targetProject);
   let updated = 0;
   let unchanged = 0;
   let missing = 0;
@@ -1010,10 +1101,12 @@ const catalog = {
 };
 const catalogJson = `${JSON.stringify(catalog, null, 2)}\n`;
 const catalogDigest = sha256(canonicalize(catalog));
-const outputDir = resolve(ROOT, "data/ipulse");
+const outputDir = resolve(argumentValue("--output-dir") || resolve(ROOT, "data/ipulse"));
 await mkdir(outputDir, { recursive: true });
 await writeFile(resolve(outputDir, `scoring-batch-${scoringBatch}-entity-catalog.json`), catalogJson);
 await writeFile(resolve(outputDir, `scoring-batch-${scoringBatch}-entity-catalog.sha256`), `${catalogDigest}\n`);
+const planOutput = argumentValue("--plan-output");
+if (planOutput) await writeFile(resolve(planOutput), `${JSON.stringify({ targetProject, catalogDigest, documents: [...plan.values()] }, null, 2)}\n`);
 
 let applyResult;
 let lifecycleResult;
@@ -1053,7 +1146,7 @@ console.log(JSON.stringify({
   supportingVenueEntities: exchangeRows.length,
   plannedDocuments: plan.size,
   catalogDigest,
-  output: `data/ipulse/scoring-batch-${scoringBatch}-entity-catalog.json`,
+  output: resolve(outputDir, `scoring-batch-${scoringBatch}-entity-catalog.json`),
   applyResult,
   lifecycleResult,
 }, null, 2));

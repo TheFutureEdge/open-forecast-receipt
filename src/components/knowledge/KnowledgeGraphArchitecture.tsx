@@ -17,6 +17,8 @@ import { Link } from "../../lib/router";
 import { KnowledgeGraphLegend } from "./KnowledgeGraphLegend";
 import { KnowledgeGraphTag } from "./KnowledgeGraphTag";
 import { SchemaOrgTypeTag } from "./SchemaOrgTypeTag";
+import { EntityLogo } from "../entities/EntityLogo";
+import { ALIBABA_LOGO_URL } from "./knowledgeGraphData";
 
 export function KnowledgeGraphConceptDiagram() {
   return (
@@ -37,8 +39,8 @@ export function KnowledgeGraphConceptDiagram() {
           title="Knowledge Graph"
           description="Stable identities and typed relationships"
           nodes={[
-            { Icon: Buildings, eyebrow: "Context entity", title: "Alibaba Group", meta: "Issuer organization", schemaOrgType: "Corporation" },
-            { Icon: TrendUp, eyebrow: "Subject entity", title: "BABA ADR", meta: "Listed Security", schemaOrgType: "Thing" },
+            { Icon: Buildings, imageUrl: ALIBABA_LOGO_URL, imageAlt: "Alibaba Group logo", eyebrow: "Context entity", title: "Alibaba Group", meta: "Issuer organization", schemaOrgType: "Corporation" },
+            { Icon: TrendUp, imageUrl: ALIBABA_LOGO_URL, imageAlt: "BABA listed security logo", eyebrow: "Subject entity", title: "BABA ADR", meta: "Listed Security", schemaOrgType: "Thing" },
           ]}
           relationships={["issues"]}
         />
@@ -84,6 +86,8 @@ interface ArchitectureNode {
   schemaOrgType?: string;
   dimension?: string;
   unit?: string;
+  imageUrl?: string;
+  imageAlt?: string;
 }
 
 function ArchitectureStage({
@@ -109,7 +113,7 @@ function ArchitectureStage({
         </div>
       </div>
       <div className="mt-4 space-y-2">
-        {nodes.map(({ Icon, eyebrow, title: nodeTitle, meta, schemaOrgType, dimension, unit }, index) => (
+        {nodes.map(({ Icon, imageUrl, imageAlt, eyebrow, title: nodeTitle, meta, schemaOrgType, dimension, unit }, index) => (
           <div key={`${eyebrow}-${nodeTitle}`}>
             {index > 0 && (
               <div className="flex h-7 items-center justify-center gap-1.5 text-[8px] font-bold uppercase tracking-[0.12em] text-slate-400">
@@ -117,7 +121,11 @@ function ArchitectureStage({
               </div>
             )}
             <div className="flex items-start gap-2.5 rounded-xl border border-blue-100 bg-blue-50/70 p-3 dark:border-blue-900 dark:bg-blue-950/25">
-              <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-white text-blue-700 shadow-sm dark:bg-slate-900 dark:text-blue-300"><Icon size={17} weight="duotone" /></div>
+              {imageUrl ? (
+                <EntityLogo src={imageUrl} alt={imageAlt || `${nodeTitle} logo`} className="size-8 rounded-lg" imageClassName="p-1" />
+              ) : (
+                <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-white text-blue-700 shadow-sm dark:bg-slate-900 dark:text-blue-300"><Icon size={17} weight="duotone" /></div>
+              )}
               <div className="min-w-0">
                 <div className="text-[8px] font-bold uppercase tracking-[0.12em] text-blue-500">{eyebrow}</div>
                 <div className="mt-0.5 text-xs font-bold text-slate-950 dark:text-white">{nodeTitle}</div>
@@ -167,10 +175,12 @@ export function KnowledgeGraphExamples() {
         <RelationshipExample
         eyebrow="Live catalog example"
         icon={<Buildings size={20} weight="duotone" />}
+        parentImageUrl={ALIBABA_LOGO_URL}
+        parentImageAlt="Alibaba Group Holding Ltd logo"
         parentLabel="Issuer organization"
         parentName="Alibaba Group Holding Ltd"
         parentSchemaOrgType="Corporation"
-        parentHref="/entities/entity-5d88041e-30a3-5218-af25-9e66758f71c9"
+        parentHref="/entities/organizations/entity-5d88041e-30a3-5218-af25-9e66758f71c9"
         description="One corporation issues two separately identifiable securities. Both can use the same target definition, but each subject-target binding keeps its own forecast history."
         children={[
           {
@@ -182,8 +192,10 @@ export function KnowledgeGraphExamples() {
             targetName: "Adjusted end-of-day close return",
             dimension: "Step-over-step percentage change",
             unit: "%",
-            href: "/entities/alibaba-9988-hong-kong",
+            href: "/entities/listed-securities/alibaba-9988-hong-kong",
             Icon: TrendUp,
+            imageUrl: ALIBABA_LOGO_URL,
+            imageAlt: "Alibaba ordinary shares logo",
           },
           {
             entityName: "Alibaba ADR",
@@ -194,8 +206,10 @@ export function KnowledgeGraphExamples() {
             targetName: "Adjusted end-of-day close return",
             dimension: "Step-over-step percentage change",
             unit: "%",
-            href: "/entities/alibaba-baba",
+            href: "/entities/listed-securities/alibaba-baba",
             Icon: TrendUp,
+            imageUrl: ALIBABA_LOGO_URL,
+            imageAlt: "BABA listed security logo",
           },
         ]}
       />
@@ -247,11 +261,15 @@ interface RelationshipChild {
   unit: string;
   href?: string;
   Icon: typeof TrendUp;
+  imageUrl?: string;
+  imageAlt?: string;
 }
 
 function RelationshipExample({
   eyebrow,
   icon,
+  parentImageUrl,
+  parentImageAlt,
   parentLabel,
   parentName,
   parentSchemaOrgType,
@@ -261,6 +279,8 @@ function RelationshipExample({
 }: {
   eyebrow: string;
   icon: ReactNode;
+  parentImageUrl?: string;
+  parentImageAlt?: string;
   parentLabel: string;
   parentName: string;
   parentSchemaOrgType: string;
@@ -270,7 +290,11 @@ function RelationshipExample({
 }) {
   const parentContent = (
     <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3.5 text-left dark:border-blue-900 dark:bg-blue-950/30">
-      <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-white text-blue-700 shadow-sm dark:bg-slate-900 dark:text-blue-300">{icon}</div>
+      {parentImageUrl ? (
+        <EntityLogo src={parentImageUrl} alt={parentImageAlt || `${parentName} logo`} className="size-10 rounded-lg" imageClassName="p-1.5" />
+      ) : (
+        <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-white text-blue-700 shadow-sm dark:bg-slate-900 dark:text-blue-300">{icon}</div>
+      )}
       <div className="min-w-0">
         <div className="text-[9px] font-bold uppercase tracking-[0.12em] text-blue-500">{parentLabel}</div>
         <div className="mt-0.5 truncate text-sm font-bold text-slate-950 dark:text-white">{parentName}</div>
@@ -286,13 +310,17 @@ function RelationshipExample({
       <div className="mt-3">{parentHref ? <Link to={parentHref}>{parentContent}</Link> : parentContent}</div>
       <div className="mx-auto h-5 w-px bg-blue-200 dark:bg-blue-900" aria-hidden="true" />
       <div className="relative grid gap-2 sm:grid-cols-2 before:absolute before:-top-5 before:left-1/4 before:right-1/4 before:hidden before:h-5 before:rounded-t-xl before:border-x before:border-t before:border-blue-200 sm:before:block dark:before:border-blue-900">
-        {children.map(({ entityName, entityCode, entityType, schemaOrgType, relationship, targetName, dimension, unit, href, Icon }) => {
+        {children.map(({ entityName, entityCode, entityType, schemaOrgType, relationship, targetName, dimension, unit, href, Icon, imageUrl, imageAlt }) => {
           const content = (
             <div className="relative h-full overflow-hidden rounded-xl border border-emerald-200 bg-white transition-colors hover:border-emerald-400 dark:border-emerald-900 dark:bg-slate-900">
               <div className="flex min-h-[9.25rem] flex-col bg-emerald-50/70 p-3.5 dark:bg-emerald-950/20">
                 <div className="mb-2 text-[8px] font-bold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300">Subject entity</div>
                 <div className="flex items-start gap-2.5">
-                  <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"><Icon size={17} weight="duotone" /></div>
+                  {imageUrl ? (
+                    <EntityLogo src={imageUrl} alt={imageAlt || `${entityName} logo`} className="size-8 rounded-lg" imageClassName="p-1" />
+                  ) : (
+                    <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"><Icon size={17} weight="duotone" /></div>
+                  )}
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-slate-950 dark:text-white">{entityName}</div>
                     <div className="mt-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-300">{entityCode}</div>
@@ -304,8 +332,7 @@ function RelationshipExample({
                 </div>
               </div>
               <div className="border-t border-emerald-200/70 p-3.5 dark:border-emerald-900">
-                <KnowledgeGraphTag kind="target">Forecast target</KnowledgeGraphTag>
-                <div className="mt-1 text-[11px] font-bold leading-4 text-slate-900 dark:text-white">{targetName}</div>
+                <KnowledgeGraphTag kind="target" title={`Forecast target: ${targetName}`}>{targetName}</KnowledgeGraphTag>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   <KnowledgeGraphTag kind="dimension" title={`Dimension: ${dimension}`}>Dim.: {dimension}</KnowledgeGraphTag>
                   <KnowledgeGraphTag kind="unit">Unit: {unit}</KnowledgeGraphTag>

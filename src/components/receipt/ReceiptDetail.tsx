@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { ArrowSquareOut, FileText } from "@phosphor-icons/react";
 import { Link } from "../../lib/router";
@@ -15,12 +17,18 @@ import { getLibraryReceipt } from "../../lib/library/repository";
 
 type Tab = "summary" | "json";
 
-export function ReceiptDetail({ receiptDigest }: { receiptDigest: string }) {
-  const [fixture, setFixture] = useState<{ document: OfrDocument; projection: CompactEasProjection } | null>(null);
+export function ReceiptDetail({ receiptDigest, initialFixture }: { receiptDigest: string; initialFixture?: { document: OfrDocument; projection: CompactEasProjection } | null }) {
+  const [fixture, setFixture] = useState<{ document: OfrDocument; projection: CompactEasProjection } | null>(initialFixture || null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialFixture === undefined);
 
   useEffect(() => {
+    if (initialFixture !== undefined) {
+      setFixture(initialFixture);
+      setLoading(false);
+      setLoadError(null);
+      return undefined;
+    }
     let active = true;
     setFixture(null);
     setLoadError(null);
@@ -38,7 +46,7 @@ export function ReceiptDetail({ receiptDigest }: { receiptDigest: string }) {
         if (active) setLoading(false);
       });
     return () => { active = false; };
-  }, [receiptDigest]);
+  }, [initialFixture, receiptDigest]);
 
   if (loading) {
     return <div className="p-8 text-sm text-gray-500 dark:text-gray-400">Loading receipt…</div>;
@@ -51,8 +59,8 @@ export function ReceiptDetail({ receiptDigest }: { receiptDigest: string }) {
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           {loadError || <>No receipt with digest <code className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">{receiptDigest}</code></>}
         </p>
-        <Link to="/showcase" className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
-          Back to iPulse AI showcase
+        <Link to="/forecasts" className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
+          Back to public forecasts
         </Link>
       </div>
     );

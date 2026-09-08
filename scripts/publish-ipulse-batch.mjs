@@ -95,6 +95,42 @@ function compact(values) {
   return [...new Set(values.filter(Boolean).map((value) => String(value).trim()).filter(Boolean))];
 }
 
+function originalSourceForReceipt(routeSlug, scoringBatch, receipt) {
+  const forecastCreatedAt = receipt.receiptPayload.forecast.temporal.forecastCreatedAt;
+  const publicationDate = String(forecastCreatedAt).slice(0, 10);
+  assert(/^\d{4}-\d{2}-\d{2}$/.test(publicationDate), `Forecast ${receipt.receiptPayload.forecast.forecastId} has no public generation date`);
+  const publicationId = `${publicationDate}-sb${scoringBatch}`;
+  return {
+    publisherName: "iPulse AI",
+    label: "View the original historical forecast",
+    url: `https://ipulseai.com/stocks/${encodeURIComponent(routeSlug)}/forecast-history/${publicationId}/ai-forecasts`,
+    publicationId,
+    publicationDate,
+  };
+}
+
+/**
+ * Backfillable run metadata. Retrieval/search are context-acquisition channels,
+ * not a separate control-flow class. Batch 6 used one model invocation per
+ * task; the source receipt records whether fresh search was configured and
+ * what supplied evidence was sealed.
+ */
+function executionProvenanceForReceipt(receipt) {
+  const provenance = receipt.receiptPayload?.provenance || {};
+  const channels = new Set();
+  if (provenance.temporal?.suppliedContext || provenance.evidence?.length) channels.add("provided_context");
+  const webSearch = provenance.temporal?.acquiredEvidence?.webSearch;
+  if (webSearch?.configured || provenance.generationConfiguration?.tools?.some((tool) => tool.name === "web_search")) {
+    channels.add("web_search");
+  }
+  return {
+    controlFlow: "single_model_invocation",
+    contextAcquisition: [...channels],
+    observedAt: provenance.temporal?.generation?.responseGeneratedAt,
+    provenanceStatus: "reconstructed",
+  };
+}
+
 function identifierValue(entity, scheme) {
   return entity?.identifiers?.find((identifier) => identifier.scheme === scheme)?.value;
 }
@@ -201,7 +237,7 @@ const scoringBatch = Number(argumentValue("--scoring-batch") || DEFAULT_BATCH);
 const issuedAt = argumentValue("--issued-at") || DEFAULT_ISSUED_AT;
 const resumeFrom = Number(argumentValue("--resume-from") || 0);
 const apply = process.argv.includes("--apply");
-assert(Number.isInteger(scoringBatch) && scoringBatch > 0, "--scoring-batch must be a positive integer");
+assert(Number.isInteger(scoringBatch) && scoringBatch >= 6, "OFL iPulse AI publication starts at scoring Batch 6; earlier batches are intentionally excluded");
 assert(Number.isInteger(resumeFrom) && resumeFrom >= 0, "--resume-from must be a non-negative integer");
 
 const [schema, entityCatalog, showcaseSelection, manifest, fixtureCatalog] = await Promise.all([
@@ -342,7 +378,17 @@ for (const [entitySortOrder, rawSource] of sources.entries()) {
         entitySortOrder,
         requestBlockchainProof: selectedDigests.has(fixture.receiptDigest),
         forecasterLabel: fixture.forecasterLabel,
-        entityPresentation: { routeSlug, aliases, displaySymbol, marketIdentifier, iconKey: catalogEntity?.logo?.mediaAssetId || catalogEntity?.stableSlug || routeSlug },
+        originalSource: originalSourceForReceipt(routeSlug, scoringBatch, receipt),
+        executionProvenance: executionProvenanceForReceipt(receipt),
+        entityPresentation: {
+          routeSlug,
+          aliases,
+          displaySymbol,
+          marketIdentifier,
+          iconKey: catalogEntity?.logo?.mediaAssetId || catalogEntity?.stableSlug || routeSlug,
+          logoUrl: catalogEntity?.logo?.url,
+          logoAlt: catalogEntity?.logo?.alt,
+        },
         receipt,
         projection,
       });
@@ -374,12 +420,16 @@ for (const [entitySortOrder, rawSource] of sources.entries()) {
       entitySortOrder,
       requestBlockchainProof: selectedDigests.has(built.payloadDigest),
       forecasterLabel: `${advisor.persona_display_name} / ${advisor.persona_archetype_display_name} / ${advisor.advisor_mode}`,
+      originalSource: originalSourceForReceipt(routeSlug, scoringBatch, built.document),
+      executionProvenance: executionProvenanceForReceipt(built.document),
       entityPresentation: {
         routeSlug,
         aliases,
         displaySymbol,
         marketIdentifier,
         iconKey: catalogEntity?.logo?.mediaAssetId || catalogEntity?.stableSlug || routeSlug,
+        logoUrl: catalogEntity?.logo?.url,
+        logoAlt: catalogEntity?.logo?.alt,
       },
       receipt: built.document,
       projection,

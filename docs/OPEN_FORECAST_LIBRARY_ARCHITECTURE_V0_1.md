@@ -38,14 +38,15 @@ multi-tenant product.
 ## 3. Current implementation
 
 The local application now reads Firestore through
-`src/lib/library/repository.ts`. The reviewed Batch 6 sources are imported by
-`scripts/seed-firestore.mjs` into:
-
-- 5 stable subjects;
-- 8 public AI forecasters/personas;
-- 60 forecast index records;
-- 60 full Open Forecast Receipt records;
-- 6 private proof jobs chosen by the declared showcase selection rule.
+`src/lib/library/repository.ts`. The complete reviewed iPulse AI publication
+generated on 2026-07-05 currently contains 376 forecast subjects, 4,511
+individual forecast indexes and receipts, and 6 receipts preselected for
+independent proof issuance. `batch-6` remains the publisher's stable internal
+collection ID and `SB6` is an optional public source tag; neither identifies an
+individual forecast.
+`scripts/publish-ipulse-batch.mjs` publishes the authoritative records.
+`scripts/materialize-public-catalogs.mjs` creates compact, read-optimized
+projections for directory and collection pages.
 
 The controlled staging import requires `--apply` and
 `OFR_CONFIRM_FIRESTORE_PROJECT=<exact-project-id>`. It creates documents
@@ -116,17 +117,92 @@ filters.
 
 | Collection | Document ID | Purpose |
 |---|---|---|
-| `public_collections` | stable collection ID, for example `batch-6` | Publication metadata and aggregate counts |
-| `public_collection_subjects` | `{collectionId}__{stableSlug}` | Subject membership, display snapshot, ordering, and proof counts |
-| `public_subjects` | stable subject ID | Enduring subject identity, aliases, and current identifiers |
+| `public_collections` | stable collection ID, for example `batch-6` | Authoritative publication metadata and aggregate counts |
+| `public_collection_entities` | `{collectionId}__{stableSlug}` | Authoritative entity membership, display snapshot, ordering, and proof counts |
+| `public_entities` | stable entity ID | Enduring entity identity, aliases, current identifiers, and governed relationships |
 | `public_forecasters` | stable forecaster ID | Human, AI model, algorithm, ensemble, hybrid, or organization identity |
 | `public_forecasts` | stable forecast ID | Lightweight searchable index pointing to a receipt digest |
 | `public_receipts` | lowercase SHA-256 payload digest | Full immutable OFR document and compact proof projection |
 | `public_proofs` | `{caip2}__{attestationUid}` | Verified proof metadata and receipt pointer |
+| `public_entity_directory_catalogs` | `forecast-subjects` or `organizations` | Compact entity directory materialized views |
+| `public_collection_catalogs` | stable collection ID | One read-optimized collection manifest |
+| `public_entity_forecast_ledgers` | stable `entityId` | Small per-entity ledger manifest with part counts and latest-part metadata |
+| `public_entity_forecast_ledgers/{entityId}/parts` | `part-000001`, `part-000002`, ... | Deterministic oldest-to-newest forecast-summary parts, each capped below 700 KiB |
+| `public_entity_forecast_catalogs` | `{collectionId}__{entityId}` | Transitional read compatibility for the first collection-scoped catalog format |
+
+### Materialized catalog read path
+
+The browser is catalog-first; individual documents remain authoritative:
+
+1. `/entities` and every `/entities/subjects/*` category route read the same
+   `forecast-subjects` directory catalog. Category URLs are stable, indexable
+   preset views—not separate catalogs. They share search, category,
+   forecast-availability, and sorting controls. The screen also reads the small set of
+   collection catalogs used to derive forecast counts and latest activity.
+2. `/forecasts` reads `public_collection_catalogs/batch-6`.
+3. A listed-security ledger queries the two highest numbered documents under
+   `public_entity_forecast_ledgers/{entityId}/parts`. This deliberately reads
+   both a newly opened sparse part and the preceding populated part. Optional
+   publication-set memberships are a second, small query used only to build set
+   shortcuts.
+4. The ledger paginates the loaded summaries in 25-row UI pages. When a user
+   requests older history, a Firestore cursor loads the next two lower-numbered
+   catalog parts and merges them into the browser's in-memory ledger.
+5. Selecting an individual forecast gets one `public_receipts/{digest}`
+   document after resolving its compact ledger entry.
+6. Entity profile pages directly get one `public_entities/{entityId}` document.
+
+The earlier non-catalog `/forecasts` fallback performed about 753 billable
+document reads: 1 collection document + 376 collection-entity documents + 376
+forecast-subject entity documents used to join logos. That number was not a
+count of securities. The catalog-first path replaces those 753 returned
+documents with one collection-catalog document for the same screen.
+
+The browser temporarily falls back to authoritative queries when catalog
+documents have not yet been promoted. This keeps staging functional during a
+catalog migration but is not the intended steady-state path.
+
+The 2026-08-14 staging plan measured:
+
+| Catalog | Documents | Largest document | Current content |
+|---|---:|---:|---:|
+| Entity directories | 2 | 305,223 bytes | 376 forecast subjects plus 364 organizations |
+| Batch 6 collection manifest | 1 | 187,172 bytes | 376 entity rows |
+| Per-entity forecast ledgers | 376 manifests + 376 initial parts | about 17,009 bytes per current part | 4,511 forecast summaries total across all publishers and optional sets |
+
+Catalogs have a 700 KiB publisher limit, below Firestore's 1 MiB hard limit.
+At the current compact-record average, the forecast-subject directory fits
+about 883 forecast subjects in one document (roughly 507 more than the current
+376), the
+Batch 6 manifest fits about 1,439 rows at its current average record size, and a
+per-entity forecast-ledger part fits about 500 forecast summaries at the
+measured largest-document average. The materializer automatically opens the
+next numbered part before a document would exceed 700 KiB. Parts are ordered
+oldest to newest, while the UI initially reads the newest two and paginates
+backward in two-part windows. The authoritative `public_forecasts` and
+`public_receipts` records remain separate from these replaceable read models.
+
+### Public forecast routes and identity
+
+The public hierarchy deliberately separates the governed security, its full
+forecast ledger, optional publisher sets, and individual forecasts:
+
+| Purpose | Example public route |
+|---|---|
+| Listed security | `/entities/listed-securities/3m-mmm` |
+| All forecasts for that security | `/entities/listed-securities/3m-mmm/forecasts` |
+| Optional date-led publication set | `/entities/listed-securities/3m-mmm/forecast-sets/2026-07-05-sb6` |
+| One forecast | `/entities/listed-securities/3m-mmm/forecasts/2026-07-05t14-56-47z/elon-musk-ai-on-gemini-3-1-pro/d6904de5a801` |
+
+The individual forecast locator combines the generation timestamp, a readable
+forecaster slug, and a stable receipt-digest prefix. The governed `entityId`,
+full `forecastId`, and full receipt digest remain the authoritative machine
+identifiers. A future individual submission can appear in the same security
+ledger without a source-set or batch tag.
 
 `public_receipts` permits direct `get` only, not collection scans. Discovery
-uses `public_forecasts`; a receipt opens by its digest. This reduces accidental
-bulk transfer of the large receipt documents.
+uses the materialized catalogs backed by `public_forecasts`; a receipt opens by
+its digest. This reduces accidental bulk transfer of the large receipt documents.
 
 ### Private operator collections
 
@@ -148,8 +224,9 @@ least-privilege Google IAM identities through server libraries.
 - A correction creates a new receipt with an explicit lineage reference.
 - Stable subject IDs are never tickers. Ticker, MIC, ISIN, and other identifiers
   are point-in-time attributes and aliases.
-- Firestore's 1 MiB document limit is enforced with a 900,000-byte publisher
-  guard. Current OFR documents are far below it.
+- Firestore's 1 MiB document limit is enforced with a 900,000-byte receipt
+  publisher guard and a stricter 700 KiB materialized-catalog guard. Current OFR
+  documents are far below the receipt limit.
 
 ## 7. Firestore access control
 

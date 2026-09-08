@@ -7,14 +7,15 @@ import { basename, relative, resolve } from "node:path";
 const ROOT = resolve(import.meta.dirname, "..");
 const TARGET = resolve(ROOT, "native-builder/upload-ready");
 const SOURCE_PATHS = [
-  "index.html",
   "LICENSE",
   "README.md",
+  "app",
+  "next-env.d.ts",
+  "next.config.ts",
   "package.json",
   "package-lock.json",
+  "postcss.config.mjs",
   "tsconfig.json",
-  "vite.config.ts",
-  "vite-env.d.ts",
   "public",
   "src",
 ];

@@ -1,15 +1,23 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { BatchManifestComponent } from "./BatchManifest";
 import { getLibraryManifest } from "../../lib/library/repository";
 import type { LibraryManifest } from "../../lib/library/types";
 import { PageSeo } from "../seo/PageSeo";
 
-export function ManifestPage({ batchId }: { batchId: string }) {
-  const [manifest, setManifest] = useState<LibraryManifest | null>(null);
-  const [loading, setLoading] = useState(true);
+export function ManifestPage({ batchId, initialManifest, canonicalPath = "/forecasts" }: { batchId: string; initialManifest?: LibraryManifest | null; canonicalPath?: string }) {
+  const [manifest, setManifest] = useState<LibraryManifest | null>(initialManifest || null);
+  const [loading, setLoading] = useState(initialManifest === undefined);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialManifest !== undefined) {
+      setManifest(initialManifest);
+      setLoading(false);
+      setError(null);
+      return undefined;
+    }
     let active = true;
     setLoading(true);
     setError(null);
@@ -24,7 +32,7 @@ export function ManifestPage({ batchId }: { batchId: string }) {
         if (active) setLoading(false);
       });
     return () => { active = false; };
-  }, [batchId]);
+  }, [batchId, initialManifest]);
 
   if (loading) {
     return <div className="py-20 text-center text-sm text-slate-500">Loading the public forecast Library…</div>;
@@ -46,9 +54,9 @@ export function ManifestPage({ batchId }: { batchId: string }) {
   return (
     <>
       <PageSeo
-        title="iPulse AI Public Market Forecasts | Open Forecast Library"
+        title="iPulse AI Public Market Forecasts | Forecast Library"
         description="Browse individual iPulse AI market forecasts, inspect their Open Forecast Receipts, and check optional per-receipt blockchain proof status."
-        canonicalPath="/forecasts"
+        canonicalPath={canonicalPath}
       />
       <BatchManifestComponent manifest={manifest} />
     </>

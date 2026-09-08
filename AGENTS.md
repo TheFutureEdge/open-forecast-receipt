@@ -29,3 +29,13 @@ This project is the engineering and open-source home for the Open Forecast Recei
 - Verify JSON Schema, digests, EAS encoding/decoding, path reconstruction, tamper failure, and fee/gas preflight before calling a release ready.
 - Treat the downloaded Native Builder application as the hackathon implementation origin. Local work may audit, test, and prepare corrections, but every material application change must be uploaded back into the same Native project, rechecked by Native QA, and reflected in the final Native-hosted application. Do not grant the Native GitHub App organization-wide repository access merely to transport code; use the reviewed upload-folder workflow in `docs/NATIVE_BUILDER_PROVENANCE_AND_SYNC.md`.
 - Do not commit, push, publish, deploy, register an EAS schema, or issue attestations without the user's explicit approval for that action.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

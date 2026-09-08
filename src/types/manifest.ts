@@ -12,6 +12,8 @@ export interface BatchManifestEntity {
   loadedCount: number;
   showcaseSelectionCount?: number;
   proofCount?: number;
+  logoUrl?: string;
+  logoAlt?: string;
 }
 
 export interface BatchManifest {

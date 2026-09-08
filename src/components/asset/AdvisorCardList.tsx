@@ -1,16 +1,17 @@
 import { useMemo, useState } from "react";
 import { CheckCircle, LinkSimple, MagnifyingGlass } from "@phosphor-icons/react";
 import type { PublicForecastRecord } from "../../lib/library/types";
-import { getForecasterAvatar } from "../../lib/forecasters/avatar";
+import { ForecasterIdentityMark } from "../forecasters/ForecasterIdentityMark";
 
 interface AdvisorCardListProps {
   fixtures: PublicForecastRecord[];
   advisorCount: number;
   selectedDigest?: string;
   onSelect?: (fixture: PublicForecastRecord) => void;
+  isComplete?: boolean;
 }
 
-export function AdvisorCardList({ fixtures, advisorCount, selectedDigest, onSelect }: AdvisorCardListProps) {
+export function AdvisorCardList({ fixtures, advisorCount, selectedDigest, onSelect, isComplete = true }: AdvisorCardListProps) {
   const [query, setQuery] = useState("");
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -33,7 +34,7 @@ export function AdvisorCardList({ fixtures, advisorCount, selectedDigest, onSele
             <h2 className="text-sm font-semibold text-slate-950 dark:text-white">Forecasters</h2>
             <p className="text-[11px] text-slate-500">{fixtures.length} of {advisorCount} receipts loaded</p>
           </div>
-          <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Complete</span>
+          <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${isComplete ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"}`}>{isComplete ? "Complete" : "Recent"}</span>
         </div>
         <label className="relative block">
           <MagnifyingGlass className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} aria-hidden="true" />
@@ -62,7 +63,7 @@ export function AdvisorCardList({ fixtures, advisorCount, selectedDigest, onSele
               }`}
               aria-pressed={selected}
             >
-              <img src={getForecasterAvatar(fixture.forecaster.sourceName)} alt="" className="size-10 shrink-0 rounded-full object-cover ring-2 ring-white dark:ring-slate-800" />
+              <ForecasterIdentityMark type={fixture.forecaster.type} label={fixture.forecaster.displayName} className="size-10" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-xs font-semibold text-slate-900 dark:text-white">{fixture.forecaster.displayName}</span>
                 <span className="mt-0.5 block truncate text-[10px] text-slate-500">{fixture.forecaster.description}</span>

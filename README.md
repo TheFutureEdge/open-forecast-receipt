@@ -6,37 +6,45 @@ Open Forecast Receipt (OFR) is an open standard and verification toolkit for por
 
 ## Current phase: Firestore-backed iPulse AI public Library
 
-The project now operates as a Firestore-backed, openly browsable Library of five already-public iPulse AI Batch 6 assets: PepsiCo, NVIDIA, Bitcoin, Alphabet Class C, and SPY. Outside public-submission requests are reviewed manually through `support@ipulseai.com`; there are no customer accounts, payments, private storage, or automated public uploads.
+The project now operates as a Firestore-backed, openly browsable Library of the complete public iPulse AI Batch 6 cohort: 376 governed forecast subjects and 4,511 individual forecast receipts. Batch 6 is the historical starting boundary; no earlier iPulse AI predictions are stored. Outside public-submission requests are reviewed manually through `support@ipulseai.com`; there are no customer accounts, payments, private storage, or automated public uploads.
 
-The dedicated staging environment is live at
-[`https://oflapp-staging.web.app`](https://oflapp-staging.web.app) on project
-`oflapp-staging` with Firestore Standard in `us-central1`. The production GCP
-boundary `oflapp-prod` exists as an empty, unbilled project: Firebase, Firestore,
-data, and deployment are not enabled there. Neither environment is shared with
-an iPulse/PAPP Firebase project.
+The dedicated SSR staging environment is live at
+[`https://ofl-staging--oflapp-staging.us-central1.hosted.app`](https://ofl-staging--oflapp-staging.us-central1.hosted.app) on project
+`oflapp-staging` with Firestore Standard in `us-central1`. The 2026-09-08 live
+audit found that `oflapp-prod` already has a Firestore database and the older
+5-subject/60-receipt pilot, but billing is disabled and App Hosting is not ready.
+Neither environment is shared with an iPulse/PAPP Firebase project. The new
+catalogs, resolvers, and complete Batch 6 production publication still require
+promotion. See `docs/FORECAST_LIBRARY_LAUNCH_AUDIT_2026-09-08.md` for current
+evidence and `docs/FORECAST_LIBRARY_FIRESTORE_STRUCTURE.md` for the storage map.
 
-Local UI development reads the real staging Firestore with the anonymous,
-read-only Firebase Web SDK. Put the public Firebase Web configuration in
-`.env.staging.local`, then run:
+The application now uses the Next.js 16 App Router on Node.js 22 or newer.
+Initial public page content is server-rendered from staging Firestore through
+the focused Google Cloud Firestore client and Application Default Credentials.
+Public directories and ledgers use bounded materialized catalogs; full receipts
+are fetched only by digest. The browser SDK is limited to point reads and
+two-part ledger pagination. Put the public
+Firebase Web configuration in `.env.staging.local`, authenticate ADC locally,
+then run:
 
 ```bash
-npm run dev -- --host 127.0.0.1
+npm run dev -- --hostname 127.0.0.1 --port 4178
 ```
 
-Open `http://127.0.0.1:5173/showcase` or the fast integrity test at
-`http://127.0.0.1:5173/test`.
+Open `http://127.0.0.1:4178/entities` or the fast integrity test at
+`http://127.0.0.1:4178/integrity-test`.
 
-The staging Firestore Library contains all 60 sanitized receipts after the
-controlled initial import:
-12 individual forecaster receipts for each of the five assets. These forecasters
-are the AI advisor personas used inside iPulse AI. The running UI reads each
-receipt and projection on demand from Firestore. The JSON files in
-`src/data/fixtures/` are test/import inputs, not runtime storage.
+The staging Firestore Library contains 4,511 public Batch 6 receipts across 376
+active forecast subjects. Each listed-security ledger reads its newest two
+bounded catalog parts, while individual receipt pages point-read the relevant
+sealed receipt and compact projection. The JSON files in `src/data/fixtures/`
+are test/import inputs, not runtime storage.
 
 - One individual forecast is one OFR JSON document.
 - One individual forecast is one EAS attestation UID.
 - The 12 receipts for one asset may travel in one EAS `multiAttest` transaction without becoming one batch entity.
 - Batch 6 is a clearly labeled retrospective pilot on Base Sepolia.
+- iPulse AI ingestion starts at Batch 6. Pre-Batch-6 predictions are intentionally excluded; only Batch 6 and later public publications are eligible for OFL.
 - Future eligible receipts are intended to be issued asynchronously after iPulse AI's immutable public publication gate.
 
 The initial declared onchain showcase contains six receipts: one
@@ -52,7 +60,8 @@ No EAS schema or forecast attestation has been issued from this directory yet. T
 
 - `schema/` - canonical versioned OFR JSON Schema.
 - `examples/ipulse/` - canonical public-safe iPulse AI receipt and compact onchain projection examples.
-- `src/` - Native Builder-origin React application, deterministic verifier, Firestore Library client, explorer, and test fixtures.
+- `app/` - Next.js App Router, server-rendered routes, metadata, robots, and sitemap.
+- `src/` - Native Builder-origin React components, deterministic verifier, typed Firestore repositories, explorer, and test fixtures.
 - `public/` - static application assets.
 - `docs/` - current design, hackathon scope, and submission material.
 - `native-builder/` - the original Product Architect prompt, Native project
@@ -90,7 +99,8 @@ Native project, and then rechecked by Native Builder and QA.
 
 ```bash
 npm test
-npm run build
+npm run build:staging
+npm run readiness:check
 npm audit --omit=dev
 npm run eas:preflight
 ```

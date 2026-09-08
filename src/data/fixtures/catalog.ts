@@ -1,5 +1,6 @@
 import catalogData from "./batch6-catalog.json";
 import showcaseSelectionData from "./batch6-showcase-selection.json";
+import { readFile } from "node:fs/promises";
 import type { CompactEasProjection, OfrDocument, OfrFixture } from "../../types/ofr";
 import type { ChainStatus } from "../../types/verification";
 
@@ -49,9 +50,6 @@ const showcaseSelection = showcaseSelectionData as ShowcaseSelection;
 const showcaseDigestSet = new Set(
   showcaseSelection.receipts.map((entry) => entry.receiptDigest),
 );
-const documentLoaders = import.meta.glob("./*/*-ofr.json", { import: "default" });
-const projectionLoaders = import.meta.glob("./*/*-projection.json", { import: "default" });
-
 export const fixtureCatalog = catalog;
 export const phase1ShowcaseSelection = showcaseSelection;
 
@@ -82,17 +80,15 @@ export function findFixtureEntry(receiptDigest: string): FixtureCatalogEntry | u
 }
 
 export async function loadFixture(entry: FixtureCatalogEntry): Promise<OfrFixture> {
-  const documentLoader = documentLoaders[entry.documentPath];
-  const projectionLoader = projectionLoaders[entry.projectionPath];
-  if (!documentLoader || !projectionLoader) {
-    throw new Error(`Fixture files are missing for ${entry.forecastId}`);
-  }
-  const [document, projection] = await Promise.all([documentLoader(), projectionLoader()]);
+  const [documentText, projectionText] = await Promise.all([
+    readFile(new URL(entry.documentPath, import.meta.url), "utf8"),
+    readFile(new URL(entry.projectionPath, import.meta.url), "utf8"),
+  ]);
   return {
     assetSlug: entry.assetSlug,
     forecasterLabel: entry.forecasterLabel,
     dataStatus: "loaded",
-    document: document as OfrDocument,
-    projection: projection as CompactEasProjection,
+    document: JSON.parse(documentText) as OfrDocument,
+    projection: JSON.parse(projectionText) as CompactEasProjection,
   };
 }

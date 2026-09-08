@@ -45,13 +45,13 @@ export function BatchManifestComponent({ manifest }: BatchManifestProps) {
             </p>
             <div className="mt-5 flex flex-wrap gap-2.5">
               <Link
-                to="/showcase/pepsi"
+                to="/forecasts#collection-entities"
                 className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
               >
-                Explore PepsiCo forecasts <ArrowRight size={15} weight="bold" />
+                Browse all forecasts <ArrowRight size={15} weight="bold" />
               </Link>
               <Link
-                to="/test"
+                to="/integrity-test"
                 className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
               >
                 <Fingerprint size={16} weight="duotone" /> Try the integrity test
@@ -70,7 +70,7 @@ export function BatchManifestComponent({ manifest }: BatchManifestProps) {
         <div className="flex items-start gap-2.5">
           <CheckCircle className="mt-0.5 shrink-0" size={18} weight="fill" aria-hidden="true" />
           <div>
-            <span className="font-semibold">The complete public Batch 6 collection is loaded.</span> Each asset row shows its individual AI-forecaster receipt count. {proofCounts.selected} receipts were selected in advance for separate Base Sepolia proofs; {proofCounts.verified} are currently verified onchain.
+            <span className="font-semibold">The complete iPulse AI forecast publication generated 5 July 2026 is loaded.</span> Each asset row opens the security-wide forecast ledger rather than an internal publisher batch. Source tag SB6 remains optional metadata; {proofCounts.selected} receipts were selected in advance for separate Base Sepolia proofs and {proofCounts.verified} are currently verified onchain.
           </div>
         </div>
       </div>
@@ -79,12 +79,12 @@ export function BatchManifestComponent({ manifest }: BatchManifestProps) {
         <div className="md:col-span-3">
           <h2 id="test-the-showcase" className="text-sm font-semibold text-slate-950 dark:text-white">Test it in three simple steps</h2>
         </div>
-        <TestStep number="1" title="Choose an asset" description="Open any asset in the public Batch 6 collection below." />
+        <TestStep number="1" title="Choose a listed security" description="Open its complete forecast ledger from the public collection below." />
         <TestStep number="2" title="Choose a forecaster" description="Inspect the prediction path, timing, model boundary, and receipt JSON." />
         <TestStep number="3" title="Change one value" description="In the tamper test, edit a percentage and watch integrity change from PASS to FAIL." />
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/40 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+      <section id="collection-entities" className="scroll-mt-24 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/40 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
         <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
           <div>
             <h2 className="text-base font-semibold text-slate-950 dark:text-white">Entities in this collection</h2>
@@ -110,7 +110,7 @@ export function BatchManifestComponent({ manifest }: BatchManifestProps) {
         </div>
         <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {assets.map((asset) => (
-            <AssetRow key={asset.slug} asset={asset} batchId={manifest.batchId} />
+            <AssetRow key={asset.slug} asset={asset} />
           ))}
           {assets.length === 0 && (
             <div className="px-5 py-12 text-center text-sm text-slate-500">No assets match “{query}”.</div>

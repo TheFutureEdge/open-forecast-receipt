@@ -1,7 +1,28 @@
 # Open Forecast Library Next.js SSR migration plan
 
-Status: proposed for approval. No migration or App Hosting backend creation has
-started.
+Status: local migration implemented and verified on 2026-08-14. No App Hosting
+backend has been created, no cloud rollout has been deployed, and the existing
+Firebase Hosting sites remain unchanged.
+
+## Implemented local result
+
+- Next.js 16.3.1 App Router with React 19.2 replaces the Vite runtime. The
+  release is pinned because it contains the current upstream security fixes;
+  Firebase App Hosting treats framework versions newer than its active support
+  line as preview until its support table catches up.
+- Public routes render meaningful initial HTML from server-only Firestore reads.
+- Existing search, filtering, charts, graphs, receipt tabs, theme controls, and
+  integrity testing remain Client Component interactions.
+- Titles, descriptions, canonicals, Open Graph data, robots, sitemap entries,
+  entity JSON-LD, and forecast-target FAQ JSON-LD render through Next.js.
+- Directory, collection, entity-ledger, and forecaster pages use materialized
+  read models. The forecaster catalog has a legacy fallback until its compact
+  catalog document is published through the controlled materializer.
+- App Hosting runtime defaults are defined in `apphosting.yaml` with zero minimum
+  instances and a two-instance cap.
+- `npm test` passes all 45 tests and `npm run build:staging` completes.
+- Local preview runs at `http://127.0.0.1:4178` with staging Application Default
+  Credentials; no Firestore emulator is used.
 
 ## Decision
 
@@ -55,43 +76,36 @@ invalidation later if publication frequency warrants it.
 ## Target application structure
 
 ```text
+app/
+  layout.tsx
+  [[...slug]]/page.tsx
+  sitemap.ts
+  robots.ts
+  not-found.tsx
 src/
-  app/
-    layout.tsx
-    page.tsx
-    entities/
-      page.tsx
-      [stableSlug]/page.tsx
-    forecasts/page.tsx
-    forecasters/page.tsx
-    showcase/[assetSlug]/page.tsx
-    receipts/[digest]/page.tsx
-    manifest/[collectionId]/page.tsx
-    manifest/[collectionId]/assets/[assetSlug]/page.tsx
-    standards/page.tsx
-    test/page.tsx
-    sitemap.ts
-    robots.ts
-    not-found.tsx
   components/
     server/
     client/
   lib/
-    firebase/admin.ts
+    firestore/server.ts
     firebase/client.ts
     library/server-repository.ts
     library/types.ts
-    seo/json-ld.ts
+apphosting.yaml
 ```
 
-The existing URLs remain valid. Compatibility routes such as `/assets/[slug]`,
-`/showcase`, and `/receipts` will use explicit permanent or temporary redirects
+The catch-all route is an intentional compatibility layer for the existing URL
+surface. It resolves an allowlisted set of typed routes on the server; arbitrary
+Firestore paths or collection names never come from URL input.
+
+The existing URLs remain valid. Compatibility routes such as `/assets/[slug]`
+and `/receipts` will use explicit permanent or temporary redirects
 only where they are aliases. Published receipt URLs will not change.
 
 ## Firestore access and security
 
-1. Create a server-only Firebase Admin initializer using Application Default
-   Credentials. No service-account JSON key is committed or uploaded.
+1. Create a server-only Google Cloud Firestore initializer using Application
+   Default Credentials. No service-account JSON key is committed or uploaded.
 2. Put public read queries in `server-repository.ts` and mark the module as
    server-only so it cannot enter the browser bundle.
 3. Limit the App Hosting runtime service account to the minimum Firestore read
@@ -136,8 +150,10 @@ No existing components or routes are deleted in this gate.
 
 ### Gate 2 - move data access to the server
 
-1. Add `firebase-admin` as a runtime dependency and initialize it with App
-   Hosting Application Default Credentials.
+1. Add the focused `@google-cloud/firestore` server dependency and initialize it
+   with App Hosting Application Default Credentials. The broader Firebase Admin
+   package is intentionally unnecessary because the public SSR layer only reads
+   Firestore.
 2. Create typed server repository functions for entities, relationships,
    forecasters, forecast collections, forecasts, manifests, and receipts.
 3. Add deterministic serialization for Firestore timestamps and other values that

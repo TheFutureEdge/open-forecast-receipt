@@ -6,27 +6,103 @@ service cloud.firestore {
     // can read them anonymously, but no web or mobile client can create,
     // update, or delete them. Controlled publishers use the Admin SDK and IAM.
     match /public_collections/{documentId} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if false;
       allow write: if false;
     }
 
     match /public_collection_entities/{documentId} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if false;
       allow write: if false;
     }
 
+    match /public_collection_catalogs/{documentId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+    }
+
+    match /public_entity_directory_catalogs/{documentId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+    }
+
+    match /public_entity_forecast_catalogs/{documentId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+    }
+
+    match /public_entity_forecast_ledgers/{documentId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+
+      match /parts/{partId} {
+        allow get: if true;
+        // The ledger UI reads exactly the newest two bounded parts and then
+        // paginates two at a time. Reject unbounded client-side scans.
+        allow list: if request.query.limit != null && request.query.limit <= 2;
+        allow write: if false;
+      }
+    }
+
     match /public_entities/{documentId} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if false;
       allow write: if false;
     }
 
     match /public_forecasters/{documentId} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if false;
       allow write: if false;
     }
 
+    match /public_forecaster_catalogs/{documentId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+    }
+
+    match /public_publishers/{documentId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+    }
+
+    match /public_targets/{documentId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+    }
+
+    match /public_forecast_resolvers/{documentId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+    }
+
+    match /public_receipt_resolvers/{documentId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+    }
+
+    match /public_library_stats/{documentId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+    }
+
+    // Sitemap catalogs are server-rendering infrastructure. They are not a
+    // browser data API and remain protected by the default deny rule below.
+
     match /public_forecasts/{documentId} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if false;
       allow write: if false;
     }
 
@@ -37,7 +113,8 @@ service cloud.firestore {
     }
 
     match /public_proofs/{documentId} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if false;
       allow write: if false;
     }
 

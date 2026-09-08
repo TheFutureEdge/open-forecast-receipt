@@ -5,18 +5,19 @@ import { Link } from "../../lib/router";
 const internalLinks = [
   { label: "Entity directory", to: "/entities/directory" },
   { label: "Forecast subjects", to: "/entities" },
-  { label: "Forecast collections", to: "/forecasts" },
-  { label: "Forecasters", to: "/entities/forecasters" },
-  { label: "How it works", to: "/standards" },
-  { label: "Integrity test", to: "/test" },
+  { label: "Forecast collections", to: "/collections" },
+  { label: "Forecast targets", to: "/targets" },
+  { label: "Publishers", to: "/publishers" },
+  { label: "Forecasters", to: "/forecasters" },
+  { label: "How it works", to: "/how-it-works" },
+  { label: "Integrity test", to: "/integrity-test" },
 ] as const;
 
 const legalLinks = [
-  { label: "Privacy policy", href: "https://ipulseai.com/privacy" },
-  { label: "Terms of service", href: "https://ipulseai.com/terms" },
-  { label: "Disclaimer", href: "https://ipulseai.com/disclaimer" },
-  { label: "Trust center", href: "https://ipulseai.com/trust" },
-  { label: "Responsible AI", href: "https://ipulseai.com/ai-ethics" },
+  { label: "Privacy policy", href: "/privacy" },
+  { label: "Terms of service", href: "/terms" },
+  { label: "Disclaimer", href: "/disclaimer" },
+  { label: "Trust center", href: "/trust" },
 ] as const;
 
 const socialLinks = [
@@ -39,7 +40,7 @@ export function Footer() {
               <div className="flex items-center gap-3">
                 <img src="/open-forecast-receipt.svg" alt="Open Forecast Receipt" className="size-10 rounded-xl bg-white p-1.5" />
                 <div>
-                  <div className="text-base font-bold text-white">Open Forecast Library</div>
+                  <div className="text-base font-bold text-white">Forecast Library</div>
                   <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-blue-300">Built on Open Forecast Receipt</div>
                 </div>
               </div>
@@ -59,10 +60,24 @@ export function Footer() {
             </FooterSection>
 
             <FooterSection title="Legal & trust">
-              {legalLinks.map((item) => <a key={item.href} href={item.href} target="_blank" rel="noreferrer" className={linkClass}>{item.label}</a>)}
+              {legalLinks.map((item) => <a key={item.href} href={item.href} className={linkClass}>{item.label}</a>)}
             </FooterSection>
 
             <FooterSection title="Future Edge Group">
+              <a
+                href="https://ftredge.com"
+                target="_blank"
+                rel="noreferrer"
+                className="mb-3 inline-flex w-fit rounded-lg transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                aria-label="Visit the Future Edge Group website"
+              >
+                <img
+                  src="/future-edge-group.svg"
+                  alt="Future Edge Group"
+                  className="h-auto w-44 max-w-full"
+                  loading="lazy"
+                />
+              </a>
               {socialLinks.map(({ label, href, Icon }) => (
                 <a key={href} href={href} target="_blank" rel="noreferrer" className={`${linkClass} inline-flex items-center gap-2`}>
                   <Icon size={15} aria-hidden="true" /> {label}

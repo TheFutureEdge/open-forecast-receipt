@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useMemo, useState } from "react";
 import {
   Brain,
@@ -12,18 +14,12 @@ import {
   Stack,
   UsersThree,
 } from "@phosphor-icons/react";
-import { getForecasterAvatar } from "../../lib/forecasters/avatar";
+import { publicForecasterAnchorId, publicForecasterPath } from "../../lib/library/entityRoutes";
+import { Link } from "../../lib/router";
 import { listPublicForecasters, listPublicForecasts } from "../../lib/library/repository";
-import type { PublicForecasterRecord, PublicForecastRecord } from "../../lib/library/types";
-
-interface ForecasterCoverage {
-  forecasts: number;
-  entities: number;
-  modes: string[];
-  publishedSubjectCategories: string[];
-  proofSelected: number;
-  proofVerified: number;
-}
+import { buildForecasterCoverage, summarizeForecasts } from "../../lib/forecasters/coverage";
+import type { PublicForecasterCoverage, PublicForecasterRecord } from "../../lib/library/types";
+import { ForecasterIdentityMark } from "./ForecasterIdentityMark";
 
 function forecasterIdentityLabel(forecaster: PublicForecasterRecord): string {
   const displayName = forecaster.displayName.trim();
@@ -32,41 +28,36 @@ function forecasterIdentityLabel(forecaster: PublicForecasterRecord): string {
   return `${displayName} on ${modelName}`;
 }
 
-function modeFromDescription(description: string): string | null {
-  const mode = description.split("·").at(-1)?.trim().toUpperCase();
-  return mode === "RESEARCHER" || mode === "THINKER" ? mode : null;
+export interface ForecasterCatalogInitialData {
+  forecasters: PublicForecasterRecord[];
+  coverage: Array<[string, PublicForecasterCoverage]>;
+  totals: { forecasts: number; entities: number; proofVerified: number };
 }
 
-function buildCoverage(forecasters: PublicForecasterRecord[], forecasts: PublicForecastRecord[]): Map<string, ForecasterCoverage> {
-  const coverage = new Map<string, ForecasterCoverage>();
-  for (const forecaster of forecasters) {
-    const records = forecasts.filter((forecast) => forecast.forecasterId === forecaster.forecasterId);
-    coverage.set(forecaster.forecasterId, {
-      forecasts: records.length,
-      entities: new Set(records.map((record) => record.entityId)).size,
-      modes: [...new Set(records.map((record) => record.forecasterMode || modeFromDescription(record.forecaster.description)).filter((mode): mode is string => Boolean(mode)))].sort(),
-      publishedSubjectCategories: [...new Set(records.map((record) => record.subjectCategory).filter((value): value is string => Boolean(value)))].sort(),
-      proofSelected: records.filter((record) => record.showcaseSelected).length,
-      proofVerified: records.filter((record) => record.chainStatus === "verified").length,
-    });
-  }
-  return coverage;
-}
-
-export function ForecasterCatalogPage() {
-  const [forecasters, setForecasters] = useState<PublicForecasterRecord[]>([]);
-  const [forecasts, setForecasts] = useState<PublicForecastRecord[]>([]);
+export function ForecasterCatalogPage({ initialData }: { initialData?: ForecasterCatalogInitialData }) {
+  const [forecasters, setForecasters] = useState<PublicForecasterRecord[]>(initialData?.forecasters || []);
+  const [coverage, setCoverage] = useState<Map<string, PublicForecasterCoverage>>(new Map(initialData?.coverage || []));
+  const [totals, setTotals] = useState(initialData?.totals || { forecasts: 0, entities: 0, proofVerified: 0 });
   const [queryText, setQueryText] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialData) {
+      setForecasters(initialData.forecasters);
+      setCoverage(new Map(initialData.coverage));
+      setTotals(initialData.totals);
+      setLoading(false);
+      setError(null);
+      return undefined;
+    }
     let active = true;
     Promise.all([listPublicForecasters(), listPublicForecasts()])
       .then(([forecasterRecords, forecastRecords]) => {
         if (!active) return;
         setForecasters(forecasterRecords);
-        setForecasts(forecastRecords);
+        setCoverage(buildForecasterCoverage(forecasterRecords, forecastRecords));
+        setTotals(summarizeForecasts(forecastRecords));
       })
       .catch((reason: unknown) => {
         if (active) setError(reason instanceof Error ? reason.message : "Unable to load the public forecaster catalog");
@@ -75,9 +66,8 @@ export function ForecasterCatalogPage() {
         if (active) setLoading(false);
       });
     return () => { active = false; };
-  }, []);
+  }, [initialData]);
 
-  const coverage = useMemo(() => buildCoverage(forecasters, forecasts), [forecasters, forecasts]);
   const filtered = useMemo(() => {
     const normalized = queryText.trim().toLowerCase();
     if (!normalized) return forecasters;
@@ -96,9 +86,6 @@ export function ForecasterCatalogPage() {
   if (loading) return <div className="py-20 text-center text-sm text-slate-500">Loading public forecasters…</div>;
   if (error) return <div className="py-20 text-center text-sm text-rose-600">{error}</div>;
 
-  const entityCount = new Set(forecasts.map((forecast) => forecast.entityId)).size;
-  const verifiedCount = forecasts.filter((forecast) => forecast.chainStatus === "verified").length;
-
   return (
     <div className="space-y-5">
       <section className="overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-white to-violet-50 px-6 py-8 shadow-sm dark:border-blue-950 dark:from-slate-900 dark:via-slate-900 dark:to-violet-950/30 sm:px-9">
@@ -114,8 +101,8 @@ export function ForecasterCatalogPage() {
           </div>
           <div className="grid grid-cols-3 gap-2">
             <Metric value={forecasters.length} label="Forecasters" />
-            <Metric value={forecasts.length} label="Forecasts" />
-            <Metric value={entityCount} label="Entities" />
+            <Metric value={totals.forecasts} label="Forecasts" />
+            <Metric value={totals.entities} label="Entities" />
           </div>
         </div>
       </section>
@@ -161,23 +148,16 @@ export function ForecasterCatalogPage() {
         </div>
         <div className="grid gap-px bg-slate-100 p-px dark:bg-slate-800 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((forecaster) => {
-            const stats = coverage.get(forecaster.forecasterId) || { forecasts: 0, entities: 0, modes: [], publishedSubjectCategories: [], proofSelected: 0, proofVerified: 0 };
+            const stats = coverage.get(forecaster.forecasterId) || { forecasts: 0, entities: 0, modes: [], publishedSubjectCategories: [], proofSelected: 0, proofVerified: 0, taskConfigurations: 0, subjectAssignments: 0 };
             const publishedSubjectCategories = forecaster.publishedSubjectCategories?.length
               ? forecaster.publishedSubjectCategories
               : stats.publishedSubjectCategories;
-            const forecasterForecasts = forecasts.filter((forecast) => forecast.forecasterId === forecaster.forecasterId);
-            const taskConfigurationIds = forecaster.taskConfigurationIds || [...new Set(
-              forecasterForecasts.map((forecast) => forecast.taskConfigurationId).filter((value): value is string => Boolean(value)),
-            )].sort();
-            const subjectAssignmentIds = forecaster.subjectAssignmentIds || [...new Set(
-              forecasterForecasts.map((forecast) => forecast.subjectAssignmentId).filter((value): value is string => Boolean(value)),
-            )].sort();
             return (
-              <article key={forecaster.forecasterId} className="bg-white p-5 dark:bg-slate-900">
+              <article id={publicForecasterAnchorId(forecaster.forecasterId)} key={forecaster.forecasterId} className="scroll-mt-24 bg-white p-5 target:ring-2 target:ring-blue-500 target:ring-inset dark:bg-slate-900">
                 <div className="flex items-start gap-4">
-                  <img src={getForecasterAvatar(forecaster.name)} alt="" className="size-14 shrink-0 rounded-full object-cover ring-2 ring-slate-100 dark:ring-slate-800" />
+                  <ForecasterIdentityMark type={forecaster.type} label={forecasterIdentityLabel(forecaster)} className="size-14" />
                   <div className="min-w-0 flex-1">
-                    <h2 className="text-base font-bold leading-5 text-slate-950 dark:text-white">{forecasterIdentityLabel(forecaster)}</h2>
+                    <h2 className="text-base font-bold leading-5 text-slate-950 dark:text-white"><Link to={publicForecasterPath(forecaster.publicSlug || forecaster.displayName)} className="hover:text-blue-700 hover:underline dark:hover:text-blue-300">{forecasterIdentityLabel(forecaster)}</Link></h2>
                     <p className="mt-0.5 text-xs text-slate-500">{forecaster.description}</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">
@@ -221,33 +201,16 @@ export function ForecasterCatalogPage() {
                   </div>
                   <div className="flex items-center justify-between gap-3">
                     <span className="inline-flex items-center gap-1.5 text-slate-400"><Stack size={14} /> Task configurations</span>
-                    <span className="font-medium text-slate-700 dark:text-slate-200">{taskConfigurationIds.length || "Pending publication"}</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-200">{stats.taskConfigurations || "Pending publication"}</span>
                   </div>
                   <div className="flex items-center justify-between gap-3">
                     <span className="inline-flex items-center gap-1.5 text-slate-400"><GitBranch size={14} /> Subject assignments</span>
-                    <span className="font-medium text-slate-700 dark:text-slate-200">{subjectAssignmentIds.length || "Pending publication"}</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-200">{stats.subjectAssignments || "Pending publication"}</span>
                   </div>
                   <div className="flex items-center justify-between gap-3">
                     <span className="inline-flex items-center gap-1.5 text-slate-400"><CheckCircle size={14} /> Review</span>
                     <span className="font-medium text-slate-700 dark:text-slate-200">Not reviewed by the named person</span>
                   </div>
-                  {(taskConfigurationIds.length > 0 || subjectAssignmentIds.length > 0) && (
-                    <details className="rounded-lg bg-slate-50 px-2.5 py-2 dark:bg-slate-800/70">
-                      <summary className="cursor-pointer text-[10px] font-bold uppercase tracking-wide text-blue-700 dark:text-blue-300">Configuration identifiers</summary>
-                      {taskConfigurationIds.length > 0 && (
-                        <div className="mt-2">
-                          <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Task configuration IDs</div>
-                          {taskConfigurationIds.map((id) => <code key={id} className="mt-1 block break-all text-[9px] text-slate-600 dark:text-slate-300">{id}</code>)}
-                        </div>
-                      )}
-                      {subjectAssignmentIds.length > 0 && (
-                        <div className="mt-2">
-                          <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Subject assignment IDs</div>
-                          {subjectAssignmentIds.map((id) => <code key={id} className="mt-1 block break-all text-[9px] text-slate-600 dark:text-slate-300">{id}</code>)}
-                        </div>
-                      )}
-                    </details>
-                  )}
                 </div>
               </article>
             );
@@ -256,7 +219,7 @@ export function ForecasterCatalogPage() {
         {filtered.length === 0 && <div className="px-5 py-16 text-center text-sm text-slate-500">No forecasters match this search.</div>}
       </section>
 
-      <p className="text-xs leading-5 text-slate-500">{verifiedCount} of {forecasts.length} current showcase forecasts have a verified public blockchain proof. Proof establishes receipt integrity and timing, not forecast accuracy.</p>
+      <p className="text-xs leading-5 text-slate-500">{totals.proofVerified} of {totals.forecasts} current public forecasts have a verified public blockchain proof. Proof establishes receipt integrity and timing, not forecast accuracy.</p>
     </div>
   );
 }

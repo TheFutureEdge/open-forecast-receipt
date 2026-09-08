@@ -8,8 +8,8 @@ Status: requirements for the next version; v0.1.0 remains immutable
 Version 0.2 should generalize Open Forecast Receipt beyond AI-generated market
 price paths without breaking the published v0.1 receipts, digests, examples, or
 attestations. The standard remains an immutable forecast record. Public
-submission, payments, wallets, search, and moderation belong to the future Open
-Forecast Registry, not the receipt schema.
+submission, payments, wallets, search, and moderation belong to Forecast
+Library, not the receipt schema.
 
 ## Compatibility and migration
 
@@ -70,9 +70,12 @@ The sealed payload must include:
 
 ### Forecaster
 
-- stable forecaster ID;
-- type enum: `human`, `ai_model`, `algorithm`, `ensemble`, `hybrid`, or
-  `organization`;
+- stable forecaster ID and immutable forecaster-version ID;
+- forecaster-kind enum: `human`, `ai_system`, `quantitative_model`, `ensemble`,
+  `hybrid`, or `organization`;
+- implementation kind, such as `human_judgment`, `configured_llm_forecaster`,
+  `statistical_model`, `machine_learning_model`, `workflow_system`, `agent`,
+  `multi_agent_system`, `weighted_ensemble`, or `hybrid_human_ai`;
 - display name, free-text description, and issuer-scoped identity source;
 - non-human display names must identify their nature clearly (for example,
   `Ray Dalio AI` or `Demand Forecast Model`), rather than looking like an
@@ -85,9 +88,34 @@ The sealed payload must include:
   fields.
 
 Fields such as the iPulse AI persona archetype (`The Strategist`) and operating
-mode (`THINKER`) are source-specific description text. They are not universal
-core enums. A profile may preserve their source values, while generalized
-interfaces render them through `forecaster.description`.
+mode (`THINKER`) are source-specific. They are not universal forecaster-type
+enums. A profile may preserve the persona in its implementation metadata. The
+actual mode belongs to the run/execution projection because the same forecaster
+profile may execute in several modes.
+
+Open Forecast Receipt adopts the Forecast Library Forecaster Card vocabulary
+but does not embed a complete mutable Forecaster Card. The receipt freezes the
+compact identity, exact immutable forecaster version, actual control-flow
+classification, and any service invocation used for the forecast.
+
+An A2A Agent Card is an optional external service manifest, not a replacement
+for a Forecaster Card. It is referenced only when the forecast was produced by
+an actual A2A service invocation. A persona, model, human, or single-model-
+invocation run must not be labeled an A2A agent merely because it uses AI.
+
+Control flow and context acquisition are orthogonal. `controlFlowPattern`
+records application-visible orchestration; `contextChannels` records supplied
+snapshots, database inputs, web search, RAG retrieval, APIs, tools, or human
+evidence. Retrieval is never itself a control-flow type. Each channel must
+separate configured capability from actual execution and identify whether the
+context was acquired before or during the run.
+
+Forecaster portraits and logos are not receipt fields. A separate public
+forecaster profile may expose optional governed media with rights metadata, but
+receipt validity must never depend on an image. Platform AI personas inspired
+by real people must use neutral or publisher-owned marks rather than the real
+person's photograph. Forecast-specific charts or uploaded images belong in the
+evidence/attachment model and are referenced by digest and media metadata.
 
 ### Review
 
@@ -98,9 +126,9 @@ Review is attached to the specific forecast, not permanently to the forecaster.
 - structured `reviewers` array with at most 10 entries;
 - each reviewer records type, stable ID when available, name, organization,
   review type, review time, outcome, and optional public notes;
-- reviewer type is open to `human`, `ai_model`, `algorithm`, `hybrid`, or
-  `organization` so the receipt can distinguish human oversight from automated
-  review;
+- reviewer kind is open to `human`, `ai_system`, `quantitative_model`,
+  `hybrid`, or `organization` so the receipt can distinguish human oversight
+  from automated review;
 - no-review and unknown-review are different states; a missing name must never
   be presented as human review.
 
@@ -109,10 +137,12 @@ Draft generalized shape:
 ```json
 {
   "forecaster": {
-    "type": "ai_model",
+    "kind": "ai_system",
+    "implementationKind": "configured_llm_forecaster",
     "id": "issuer-stable-forecaster-id",
-    "name": "Ray Dalio AI",
-    "description": "Strategic macro persona operating in THINKER mode",
+    "versionId": "issuer-stable-forecaster-version-id",
+    "name": "Ray Dalio AI on Gemini 3.1 Pro",
+    "description": "Publisher-defined strategic macro AI forecaster",
     "architectureAuthors": [
       {
         "type": "organization",
@@ -128,6 +158,22 @@ Draft generalized shape:
       "versionId": "issuer-model-version-id"
     }
   },
+  "execution": {
+    "controlFlowPattern": "single_model_invocation",
+    "agentic": false,
+    "sourceMode": "THINKER",
+    "runId": "issuer-stable-run-id",
+    "modelInvocationCount": 1,
+    "contextChannels": [
+      {
+        "channel": "supplied_input_snapshot",
+        "configured": true,
+        "acquisitionStage": "pre_run",
+        "actualStatus": "executed"
+      }
+    ]
+  },
+  "service": null,
   "review": {
     "status": "unknown",
     "reviewers": []
@@ -214,8 +260,24 @@ AI-specific provenance belongs in a versioned optional profile:
 - inference parameters and run identifiers;
 - exact input snapshot and component digests at generation time.
 
+When a forecast is actually produced through A2A, the optional service
+invocation projection may include:
+
+- service ID and immutable service version;
+- A2A protocol version and interface binding;
+- Agent Card URL, advertised version, canonical snapshot digest, retrieval
+  time, archived snapshot URI, and signature-verification status;
+- invoked skill ID;
+- A2A task and context identifiers, or privacy-preserving digests when the raw
+  identifiers cannot be public.
+
+Never include API keys, OAuth tokens, private endpoints, or other service
+credentials in a receipt.
+
 Do not reconstruct these fields from a later model registry lookup without
-labeling them as later enrichment.
+labeling them as later enrichment. Evidence-supported historical enrichment is
+allowed, but it must carry capture mode, classification time, source references,
+and confidence, and it must never mutate an already sealed receipt payload.
 
 ## Context and evidence
 

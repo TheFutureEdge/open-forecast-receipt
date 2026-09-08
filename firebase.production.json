@@ -1,0 +1,11 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "apphosting": {
+    "backendId": "ofl-prod",
+    "rootDir": "/",
+    "ignore": ["node_modules", ".git", ".env", ".env.*", ".next", "firebase-debug.log", "firebase-debug.*.log", "functions"]
+  }
+}

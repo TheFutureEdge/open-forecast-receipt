@@ -1,0 +1,11 @@
+env:
+  - variable: NEXT_PUBLIC_OFL_ENVIRONMENT
+    value: staging
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_SITE_ORIGIN
+    value: https://ofl-staging--oflapp-staging.us-central1.hosted.app
+    availability:
+      - BUILD
+      - RUNTIME

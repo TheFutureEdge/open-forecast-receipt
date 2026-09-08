@@ -1,7 +1,10 @@
+"use client";
+
+import { usePathname, useSearchParams } from "next/navigation";
 import {
-  useSyncExternalStore,
+  useEffect,
+  useState,
   type AnchorHTMLAttributes,
-  type MouseEvent,
   type ReactNode,
 } from "react";
 
@@ -11,7 +14,7 @@ export function normalizeBasePath(value: string): string {
   return `/${trimmed.replace(/^\/+|\/+$/g, "")}`;
 }
 
-const APP_BASE_PATH = normalizeBasePath(import.meta.env.BASE_URL);
+const APP_BASE_PATH = normalizeBasePath(process.env.NEXT_PUBLIC_BASE_PATH || "");
 
 export function addBasePath(pathname: string, basePath = APP_BASE_PATH): string {
   const normalizedPath = pathname.startsWith("/") ? pathname : `/${pathname}`;
@@ -29,56 +32,30 @@ export function stripBasePath(pathname: string, basePath = APP_BASE_PATH): strin
   return pathname || "/";
 }
 
-function subscribeToLocation(onStoreChange: () => void): () => void {
-  window.addEventListener("popstate", onStoreChange);
-  window.addEventListener("hashchange", onStoreChange);
-  return () => {
-    window.removeEventListener("popstate", onStoreChange);
-    window.removeEventListener("hashchange", onStoreChange);
+export function useLocation(): { pathname: string; search: string; hash: string } {
+  const pathname = stripBasePath(usePathname() || "/");
+  const searchParams = useSearchParams();
+  const [hash, setHash] = useState("");
+
+  useEffect(() => {
+    const updateHash = () => setHash(window.location.hash);
+    updateHash();
+    window.addEventListener("hashchange", updateHash);
+    return () => window.removeEventListener("hashchange", updateHash);
+  }, [pathname]);
+
+  return {
+    pathname,
+    search: searchParams.size > 0 ? `?${searchParams.toString()}` : "",
+    hash,
   };
 }
 
-function getPathname(): string {
-  return stripBasePath(window.location.pathname);
-}
-
-function getSearch(): string {
-  return window.location.search;
-}
-
-function getHash(): string {
-  return window.location.hash;
-}
-
-export function useLocation(): { pathname: string; search: string; hash: string } {
-  const pathname = useSyncExternalStore(
-    subscribeToLocation,
-    getPathname,
-    () => "/"
-  );
-  const search = useSyncExternalStore(subscribeToLocation, getSearch, () => "");
-  const hash = useSyncExternalStore(subscribeToLocation, getHash, () => "");
-  return { pathname, search, hash };
-}
-
 export function navigate(to: string, options?: { replace?: boolean }): void {
+  if (typeof window === "undefined") return;
   const browserPath = addBasePath(to);
-  if (options?.replace) {
-    window.history.replaceState(null, "", browserPath);
-  } else {
-    window.history.pushState(null, "", browserPath);
-  }
-  window.dispatchEvent(new PopStateEvent("popstate"));
-  const hash = new URL(browserPath, window.location.origin).hash.slice(1);
-  if (hash) {
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        document.getElementById(decodeURIComponent(hash))?.scrollIntoView({ block: "start", behavior: "auto" });
-      });
-    });
-  } else {
-    window.scrollTo({ top: 0, behavior: "auto" });
-  }
+  if (options?.replace) window.location.replace(browserPath);
+  else window.location.assign(browserPath);
 }
 
 interface LinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> {
@@ -86,26 +63,9 @@ interface LinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"
   children: ReactNode;
 }
 
-export function Link({ to, children, onClick, ...props }: LinkProps) {
-  function handleClick(event: MouseEvent<HTMLAnchorElement>): void {
-    onClick?.(event);
-    if (
-      event.defaultPrevented ||
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-    navigate(to);
-  }
-
+export function Link({ to, children, ...props }: LinkProps) {
   return (
-    <a href={addBasePath(to)} onClick={handleClick} {...props}>
+    <a href={addBasePath(to)} {...props}>
       {children}
     </a>
   );

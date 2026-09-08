@@ -29,6 +29,7 @@ import {
   knowledgeGraphViewNodes,
   type KnowledgeNodeKind,
 } from "./knowledgeGraphData";
+import { EntityLogo } from "../entities/EntityLogo";
 import { KnowledgeGraphLegend } from "./KnowledgeGraphLegend";
 import { KnowledgeGraphTag } from "./KnowledgeGraphTag";
 import { SchemaOrgTypeTag } from "./SchemaOrgTypeTag";
@@ -42,6 +43,8 @@ type KnowledgeNodeData = Record<string, unknown> & {
   schemaOrgType?: string;
   dimension?: string;
   unit?: string;
+  imageUrl?: string;
+  imageAlt?: string;
 };
 
 type KnowledgeFlowNode = Node<KnowledgeNodeData, "knowledge">;
@@ -145,10 +148,10 @@ export function InteractiveKnowledgeGraph() {
             elementsSelectable
             deleteKeyCode={null}
             fitView
-            fitViewOptions={{ padding: 0.16, duration: 500 }}
+            fitViewOptions={{ padding: 0.08, duration: 500 }}
             minZoom={0.35}
             maxZoom={1.7}
-            aria-label="Interactive Open Forecast Library knowledge graph"
+            aria-label="Interactive Forecast Library knowledge graph"
           >
             <Background variant={BackgroundVariant.Dots} gap={22} size={1} color="#cbd5e1" />
             <MiniMap
@@ -190,7 +193,11 @@ function KnowledgeGraphNode({ data, selected }: NodeProps<KnowledgeFlowNode>) {
     <div className={`w-52 rounded-xl border bg-white p-3 shadow-sm transition-shadow dark:bg-slate-900 ${styles.border} ${selected ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-slate-50 shadow-lg dark:ring-offset-slate-950" : ""}`}>
       <Handle type="target" position={Position.Left} className="!size-2 !border-2 !border-white !bg-slate-400" isConnectable={false} />
       <div className="flex items-start gap-2.5">
-        <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${styles.surface} ${styles.accent}`}><Icon size={17} weight="duotone" /></div>
+        {data.imageUrl ? (
+          <EntityLogo src={data.imageUrl} alt={data.imageAlt || `${data.title} logo`} className="size-8 rounded-lg" imageClassName="p-1" />
+        ) : (
+          <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${styles.surface} ${styles.accent}`}><Icon size={17} weight="duotone" /></div>
+        )}
         <div className="min-w-0">
           <div className={`text-[8px] font-black uppercase tracking-[0.12em] ${styles.accent}`}>{data.eyebrow}</div>
           <div className="mt-0.5 text-xs font-bold leading-4 text-slate-950 dark:text-white">{data.title}</div>
@@ -214,7 +221,11 @@ function NodeDetails({ data }: { data: KnowledgeNodeData }) {
   const Icon = nodeIcons[data.kind];
   return (
     <div className="mt-3">
-      <div className={`grid size-10 place-items-center rounded-xl ${styles.surface} ${styles.accent}`}><Icon size={21} weight="duotone" /></div>
+      {data.imageUrl ? (
+        <EntityLogo src={data.imageUrl} alt={data.imageAlt || `${data.title} logo`} className="size-10" imageClassName="p-1.5" />
+      ) : (
+        <div className={`grid size-10 place-items-center rounded-xl ${styles.surface} ${styles.accent}`}><Icon size={21} weight="duotone" /></div>
+      )}
       <div className={`mt-4 text-[9px] font-black uppercase tracking-[0.12em] ${styles.accent}`}>{data.eyebrow}</div>
       <h4 className="mt-1 text-base font-bold text-slate-950 dark:text-white">{data.title}</h4>
       <div className="mt-1 text-[10px] font-semibold text-slate-500">{data.subtitle}</div>

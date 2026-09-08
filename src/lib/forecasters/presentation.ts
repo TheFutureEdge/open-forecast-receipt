@@ -15,6 +15,8 @@ export interface ForecasterPresentation {
   reviewers: OfrForecastReviewer[];
 }
 
+export type PublicForecasterClass = "Human" | "AI" | "Quant Model";
+
 const HUMAN_TYPES = new Set(["human", "person", "individual"]);
 
 function normalizedType(value: string): string {
@@ -23,6 +25,23 @@ function normalizedType(value: string): string {
 
 function isHumanForecaster(type: string): boolean {
   return HUMAN_TYPES.has(normalizedType(type));
+}
+
+/**
+ * Three-value public classification used in forecast ledgers. The receipt keeps
+ * the more detailed source type; publisher/team identity is modeled separately.
+ */
+export function publicForecasterClass(type: string): PublicForecasterClass {
+  const normalized = normalizedType(type);
+  if (isHumanForecaster(type)) return "Human";
+  if (
+    normalized.includes("algorithm")
+    || normalized.includes("quant")
+    || normalized.includes("statistical")
+    || normalized.includes("econometric")
+    || normalized === "model"
+  ) return "Quant Model";
+  return "AI";
 }
 
 function forecasterTypeLabel(type: string): string {

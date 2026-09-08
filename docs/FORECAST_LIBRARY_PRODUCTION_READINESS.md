@@ -1,21 +1,27 @@
 # Forecast Library production readiness
 
-**Status:** Local release candidate verified; cloud promotion and billing remain pending
+**Status:** Production application and full Batch 6 deployed; apex HTTPS verified; www/DNS propagation pending
 **Canonical origin:** `https://forecastlibrary.com`
 **Staging:** `oflapp-staging`, Firebase App Hosting, `us-central1`
 **Production:** `oflapp-prod`, dedicated Firebase/GCP boundary
 **Last verified:** 2026-09-08
 
-The live audit supersedes earlier assumptions that production was empty.
-`oflapp-prod` has 60 pilot forecasts/receipts and 759 public entities, but no
-new catalogs/resolvers and billing is disabled. Staging has all 4,511 current
-forecast receipts plus 60 historical receipt documents. The updated browser
-smoke test fails against the old deployed rules/read models, so staging is not
-yet validated for this release. See `FORECAST_LIBRARY_LAUNCH_AUDIT_2026-09-08.md`.
+The approved deployment upgraded production to Blaze and published all 4,511
+Batch 6 forecasts/receipts, 376 forecast subjects, 802 public entities and eight
+forecaster profiles. The 60 production pilot receipts are preserved unchanged.
+Staging retains 60 additional historical receipts and one deprecated entity.
+Both environments have the new rules and read models, and their anonymous
+Firestore smoke checks pass. See `FORECAST_LIBRARY_LAUNCH_AUDIT_2026-09-08.md`.
 
 ## Launch decision
 
-Forecast Library is structurally ready to enter the controlled staging-to-production promotion sequence. It is not yet publicly launched. The remaining work is environmental: materialize and verify the new staging read models, configure the isolated production backend and Firestore database, publish Batch 6 into production through the governed publisher, attach `forecastlibrary.com`, and complete smoke tests.
+The staging and production App Hosting rollouts succeeded. GoDaddy's apex and
+www records now point to Firebase and include the required ownership and
+certificate-verification records. Both managed certificates are active.
+Apex HTTPS serves the release at
+Firebase's published address. The remaining domain gate is expiration of old
+DNS records in recursive caches and Firebase's www ownership check. Until then,
+some browsers can see GoDaddy and www can show Firebase's setup page.
 
 No production write, deployment, DNS change, or public backlink should happen merely because this document exists. Each cloud mutation remains an explicit reviewed step.
 
@@ -70,26 +76,27 @@ Catalog documents use a **650 KiB safety ceiling**, below the agreed 700 KiB thr
 - `public_receipt_resolvers/{receiptDigest}` maps `/receipts/{sha256}` to the canonical forecast.
 - Corrections create a new receipt/revision and preserve append-only history; a correction does not silently rewrite a sealed receipt.
 
-## Verified staging capacity snapshot
+## Verified production capacity snapshot
 
-The read-only materialization plan against `oflapp-staging` reported:
+The completed materialization against `oflapp-prod` reported:
 
 | Measure | Observed |
 |---|---:|
-| Public entities | 760 |
+| Public entities | 802 |
 | Collection entities | 376 |
 | Public forecasts | 4,511 |
 | Public forecasters | 8 |
 | Full receipts read by materializer | **0** |
-| Lightweight source documents read | 5,656 |
-| Largest entity-directory catalog | 305,223 bytes |
-| Largest collection catalog | 187,172 bytes |
-| Largest collection/entity forecast catalog | 22,072 bytes |
-| Largest entity-ledger part | 22,091 bytes |
-| Largest sitemap part (under the 650 KiB builder ceiling) | 665,529 bytes |
-| Planned documents for the one-time identity/catalog backfill | 14,680 |
+| Lightweight source documents read | 5,700 |
+| Largest entity-directory catalog | 328,683 bytes |
+| Largest collection catalog | 187,058 bytes |
+| Largest collection/entity forecast catalog | 26,399 bytes |
+| Largest entity-ledger part | 26,418 bytes |
+| Largest sitemap part (under the 650 KiB builder ceiling) | 665,427 bytes |
+| Applied documents for the identity/catalog backfill | 14,679 |
 
-The plan made no writes. The earlier version that read every full receipt was rejected and replaced with the lightweight-index-only design.
+The apply made no receipt writes and no deletes. The materializer only reads
+lightweight indexes and preserves existing publisher and target definitions.
 
 ## Security and cost controls
 
@@ -128,10 +135,15 @@ npm audit --omit=dev
 
 Current result:
 
-- 47 tests pass across 6 test files.
+- 57 tests pass across 9 test files, including preservation of legacy receipts.
 - TypeScript and the optimized Next.js build pass.
 - The automated production-readiness contract passes all 28 checks.
 - npm reports zero known dependency vulnerabilities after the clean install.
+- Final release `d3ff24f` passed GitHub CI and completed App Hosting rollout
+  `build-2026-09-08-004` in both environments.
+- All 15 apex HTTP checks pass using valid custom-domain TLS at Firebase's IP,
+  including 5,696 sitemap URLs, receipt SHA-256/ETag, canonical HTTP 308s and
+  real HTTP 404s. Ordinary DNS and www activation remain the external gate.
 
 ## Controlled promotion sequence
 
@@ -205,12 +217,11 @@ Only after the certificate, redirects, canonical tags, sitemap, and core forecas
 4. Verify each Forecast Library forecast links back to its original iPulse AI publication.
 5. Monitor indexing, 404s, redirects, structured data, and App Hosting/Firestore costs.
 
-## Launch blockers still requiring an owner decision or cloud action
+## Remaining launch and distribution work
 
-- The new staging catalogs and restrictive Firestore rules have not yet been applied.
-- The production Firebase/App Hosting/Firestore environment has not yet been populated and verified.
-- `forecastlibrary.com` has not yet been attached and certificate/DNS status has not been verified.
-- Legal pages are product-grade drafts but have not been reviewed by legal counsel.
+- Confirm ordinary recursive DNS resolves the new Firebase address and www
+  returns the canonical path-preserving HTTP 308. The managed certificates are
+  active; DNS cache expiry and www ownership reconciliation remain pending.
 - Base/EAS proofs are optional and currently display as not issued; blockchain issuance is not a launch dependency.
 - Production iPulse AI backlinks must wait for the canonical custom domain to pass smoke tests.
 
@@ -225,4 +236,9 @@ Only after the certificate, redirects, canonical tags, sitemap, and core forecas
 
 ## Definition of production-ready
 
-Production-ready means all five gates pass on `https://forecastlibrary.com`, not merely that the application compiles. Until then, the correct public status is **staging validated, production pending**.
+Production web readiness requires the infrastructure, data, security and
+custom-domain checks in gates 1-4 to pass on `https://forecastlibrary.com`.
+Gate 5 records the subsequent indexing and cross-repository distribution work;
+those actions must be reported separately rather than implied by deployment.
+Until DNS and www checks pass, the accurate status is **production deployed,
+apex HTTPS verified, www/DNS propagation pending**.

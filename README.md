@@ -10,16 +10,17 @@ The project now operates as a Firestore-backed, openly browsable Library of the 
 
 The dedicated SSR staging environment is live at
 [`https://ofl-staging--oflapp-staging.us-central1.hosted.app`](https://ofl-staging--oflapp-staging.us-central1.hosted.app) on project
-`oflapp-staging` with Firestore Standard in `us-central1`. The 2026-09-08 live
-audit found that `oflapp-prod` already has a Firestore database and the older
-5-subject/60-receipt pilot, but billing is disabled and App Hosting is not ready.
-Neither environment is shared with an iPulse/PAPP Firebase project. The new
-catalogs, resolvers, and complete Batch 6 production publication still require
-promotion. See `docs/FORECAST_LIBRARY_LAUNCH_AUDIT_2026-09-08.md` for current
+`oflapp-staging` with Firestore Standard in `us-central1`. On 2026-09-08,
+`oflapp-prod` was upgraded to Blaze and received the production App Hosting
+application, complete Batch 6, rules, catalogs and resolvers. Its 60 pilot
+receipts were preserved unchanged. The canonical production domain is
+[`forecastlibrary.com`](https://forecastlibrary.com).
+Neither environment is shared with an iPulse/PAPP Firebase project.
+See `docs/FORECAST_LIBRARY_LAUNCH_AUDIT_2026-09-08.md` for current
 evidence and `docs/FORECAST_LIBRARY_FIRESTORE_STRUCTURE.md` for the storage map.
 
 The application now uses the Next.js 16 App Router on Node.js 22 or newer.
-Initial public page content is server-rendered from staging Firestore through
+Initial public page content is server-rendered from its environment's Firestore through
 the focused Google Cloud Firestore client and Application Default Credentials.
 Public directories and ledgers use bounded materialized catalogs; full receipts
 are fetched only by digest. The browser SDK is limited to point reads and

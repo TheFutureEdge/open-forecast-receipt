@@ -2,13 +2,17 @@
 
 ## Decision
 
-The updated local candidate is verified. The website is not yet launched on
-`https://forecastlibrary.com`. Cloud promotion remains pending the requested
-explicit repository/branch and billing approval.
+The user approved promotion and enabled Blaze. The application, complete Batch
+6, governed entities, restrictive rules and bounded read models are deployed
+to production. GoDaddy DNS is configured for `https://forecastlibrary.com` and
+`www.forecastlibrary.com`. Both managed certificates are active. The apex
+serves the production application over valid HTTPS at Firebase's published IP.
+Recursive DNS caches still return the old GoDaddy destination, and Firebase's
+www ownership check still sees the old CNAME; www routing remains pending.
 
 Repository: `TheFutureEdge/open-forecast-receipt`, branch `main`.
-Local HEAD and remote main both resolve to
-`31e338aa0f079e38628b9cf4f0434a87bf8b0248` before this release.
+The pre-release baseline was
+`31e338aa0f079e38628b9cf4f0434a87bf8b0248`.
 The working tree already contained the prior task's uncommitted Next.js
 migration, canonical routes, Firestore read models and production hardening.
 This release must include that migration, not just the landing-page patch.
@@ -65,7 +69,7 @@ the active forecast index, with zero missing receipt documents. Staging stores
 4,571 receipts in total: the current 4,511 plus 60 historical receipts outside
 the active index. Preserve those historical records.
 
-## Live cloud evidence
+## Cloud baseline before the approved deployment
 
 | Surface | Observed state |
 | --- | --- |
@@ -86,18 +90,79 @@ The largest sitemap part is 665,529 bytes; entity-ledger parts are at most
 
 ## Verification
 
-- 47 tests across 6 files pass, including schema/integrity/tamper, publisher,
+- 57 tests across 9 files pass, including schema/integrity/tamper, publisher,
   identity/route, forecaster and ledger checks.
 - All 28 static production-readiness checks pass.
 - Staging and production builds pass, including TypeScript.
 - Production dependency audit reports zero vulnerabilities after the patch.
 - Desktop and 390px mobile browser inspections show the correct video, name,
   live cohort totals and vision copy. The mobile page has no horizontal overflow.
-- The updated live staging browser-data smoke test currently fails with
-  `permission-denied` against undeployed read-model rules. This is a real
-  promotion blocker, not a passing test or evidence of production readiness.
+- The updated live staging browser-data smoke test passes after deploying the
+  read models and rules, including resolver agreement, bounded pagination,
+  direct receipt reads and denial of anonymous writes and unbounded scans.
+- The same checks pass against production using its public Firebase web config.
 
-## Remaining controlled launch actions
+## Final custom-domain HTTP evidence
+
+At `2026-09-08T18:02:24Z`, direct HTTPS requests to Firebase's published IP
+with the real `forecastlibrary.com` hostname and normal certificate validation
+passed all 15 page/API/robots/sitemap checks. The sitemap contains 5,696
+canonical URLs. The receipt API payload reproduces its SHA-256 digest and
+returns an ETag. Receipt aliases, historical entity aliases and the provider
+host return HTTP 308; unknown routes return HTTP 404.
+
+GoDaddy authoritative DNS and Google/Cloudflare recursive resolvers return
+`35.219.200.13` for apex and www. The local resolver still returns the previous
+GoDaddy address. Firebase reports both certificates active but its ownership
+check still sees the previous www CNAME. Direct www HTTPS currently returns
+Firebase's HTTP 404 setup page. The final status is therefore
+`PASS_APEX_WWW_DNS_PENDING`, not an unconditional global launch pass.
+
+## Approved deployment results
+
+- Web release `9f688618b8ed43ed485a5bc89a138008fe70ad65` passed clean-archive
+  tests/build and GitHub CI. Both App Hosting rollouts `build-2026-09-08-001`
+  succeeded. The production provider URL redirects with HTTP 308 to the
+  canonical origin, preserving path and query.
+- Import safeguards `9d64976d52d4aea8badef759701f3bda7a02f817` passed 48 tests,
+  TypeScript, 28 readiness checks and GitHub CI.
+- Follow-up releases `d85d9c5` and `6c38dcb` corrected App Hosting forwarded-host
+  handling, historical entity aliases and digest receipt redirects. Both
+  environments completed rollout `build-2026-09-08-003`. All 4,511 forecast
+  resolvers and 4,511 receipt resolvers match their governed canonical identity.
+- Final web release `d3ff24f` resolves routes before streaming, so missing pages
+  return HTTP 404 and legacy entity URLs return HTTP 308. This removes the
+  global loading skeleton; first content waits for the bounded server reads.
+  Local production HTTP checks, 57 tests, build/TypeScript and all 28 readiness
+  checks and GitHub CI pass. Both environments completed rollout
+  `build-2026-09-08-004`; production completed at `2026-09-08T18:01:21Z`.
+- Production runtime is `ofl-prod`, `us-central1`, Node.js 22, environment
+  `production`, with canonical origin `https://forecastlibrary.com`. Its web
+  service identity has read-only Firestore access. The effective build retains
+  one CPU, 512 MiB memory, concurrency 80 and 0-2 instances.
+- The reviewed entity catalog uses forward import policy `0.6`, preserving
+  historical `0.5` snapshots. Both environments passed immutable preflight.
+  Staging created 3,840 records and updated 2,941 current projections;
+  production created 5,771 and updated 2,939. There were no historical deletes.
+- The initial production publisher stopped on 60 legacy receipt wrappers that
+  lacked the new browse-only source link. All 60 sealed documents matched
+  exactly. The publisher now preflights immutable records before any writes and
+  preserves these wrappers verbatim; the resumed full import completed at
+  `2026-09-08T17:27:43.942Z` with the reviewed bundle digest above.
+- Independent production coverage confirms 4,511 forecast indexes, 4,511 unique
+  referenced receipts and zero missing receipt documents. Staging retains its
+  additional 60 historical receipts.
+- Final materialization applied 14,679 records in each environment, with zero
+  receipt writes and zero deletes. Production has 802 public entities; staging
+  has 803 because it preserves one deprecated historical entity. All documents
+  remain below 650 KiB; the largest production sitemap part is 665,427 bytes.
+- Both environments received the restrictive rules and configured indexes.
+  Two pre-existing obsolete indexes were preserved, not forcibly deleted.
+- Apex and www A records now use Firebase's `35.219.200.13`; ownership TXT
+  records and the shared certificate-validation CNAME are saved at GoDaddy.
+  No authenticator challenge was required in the existing signed-in session.
+
+## Original controlled launch sequence (steps 1-5 completed; step 6 DNS propagation pending)
 
 1. Commit/push the reviewed migration and this pass's changes on the existing
    `main` branch, excluding unrelated local artifacts and duplicates.
@@ -117,6 +182,6 @@ The largest sitemap part is 665,529 bytes; entity-ledger parts are at most
 7. Only after these gates pass, proceed with public indexing and iPulse AI
    backlinks under their applicable repository scope.
 
-The user's GoDaddy authenticator may be needed at the DNS step. It is not needed
-for the local video edit or Firestore architecture explanation. No blockchain
-issuance, receipt deletion, or silent historical rewrite belongs to this launch.
+GoDaddy accepted the DNS changes in the existing authenticated session; no
+authenticator prompt appeared. No blockchain issuance, receipt deletion, or
+silent historical rewrite was performed.

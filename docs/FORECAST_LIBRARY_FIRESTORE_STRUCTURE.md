@@ -13,8 +13,8 @@ Both dedicated projects use the `(default)` Firestore Standard database in
 
 | Project | Current records | Launch status |
 | --- | --- | --- |
-| `oflapp-staging` | 4,511 active forecasts, 4,571 stored receipts, 760 public entities, 8 forecasters | Complete current Batch 6; new read models/rules not yet applied |
-| `oflapp-prod` | 60 pilot forecasts/receipts, 759 public entities, 8 forecasters | Older pilot only; billing disabled; production launch pending |
+| `oflapp-staging` | 4,511 active forecasts, 4,571 stored receipts, 803 public entities, 8 forecasters | Complete Batch 6; new read models and rules deployed |
+| `oflapp-prod` | 4,511 forecasts/receipts, 802 public entities, 8 forecasters | Complete Batch 6; Blaze enabled; application, rules and read models deployed |
 
 The extra 60 staging receipts are historical records outside the current
 forecast index. All 4,511 current forecast digests have a stored receipt. They
@@ -63,9 +63,9 @@ projects/oflapp-{staging|prod}/databases/(default)/documents
 `-- proof_jobs/{receiptDigest}__{network}     private optional proof queue
 ```
 
-`public_publishers`, `public_targets`, both resolver namespaces, and the new
-catalog/ledger/stats/sitemap namespaces are implemented in code but were absent
-from both live databases at the audit. `public_proofs` is optional and currently
+`public_publishers`, `public_targets`, both resolver namespaces, and the
+catalog/ledger/stats/sitemap namespaces are deployed in both databases.
+`public_proofs` is optional and currently
 absent: six current receipts are selected for proof, zero are issued/verified.
 
 Staging also retains `public_subjects` and `public_collection_subjects` from the
@@ -123,7 +123,22 @@ Sitemap -> sitemap manifest and bounded parts (server only)
 Catalogs are rebuildable projections, not replacements for sealed receipts.
 The materializer reads lightweight indexes and never scans full receipt
 payloads. Its document ceiling is 650 KiB. The tested Batch 6 plan creates or
-updates 14,680 documents; it performs no receipt writes.
+updates 14,679 documents in each environment; it performs no receipt writes.
+The production plan reads 5,700 lightweight documents, has a largest ledger
+part of 26,418 bytes and a largest sitemap part of 665,427 bytes, and deletes
+no records.
+
+The current governed identity catalog contains 376 forecastable subjects,
+407 fundamental entities and 19 venues. Staging additionally preserves one
+deprecated historical entity. Import policy `ofl-ipulse-import-0.6` creates
+new version snapshots for the enriched representation while preserving the
+older `0.5` records. The exact reviewed catalog digest promoted to both projects
+is `e3dc00fdd66b8c11ade7696318f8aef272141e319753cadb18c63f1f047fa6fa`.
+
+Production's 60 pilot receipts already belonged to the complete 4,511 set.
+Their wrappers omit the newer browse-only `originalSource` field. The importer
+preserves them verbatim after verifying every other field, including the full
+sealed document. Source links remain available on the current forecast index.
 
 ## Access boundaries
 
@@ -131,8 +146,10 @@ The reviewed rules deny all browser writes and raw collection scans. Approved
 public records allow point reads; ledger queries allow a maximum of two parts.
 Internal entity governance, publisher runs, proof jobs, and sitemap catalogs
 have no direct browser access. Server code and controlled publishers use IAM
-credentials, with the production web service intended to receive read-only
-Firestore access. The new rules still need deployment and live verification.
+credentials. The production web service identity
+`forecast-library-web@oflapp-prod.iam.gserviceaccount.com` has
+`roles/datastore.viewer`; it is separate from the controlled publisher.
+The restrictive rules are deployed to both environments.
 
 ## Video storage
 

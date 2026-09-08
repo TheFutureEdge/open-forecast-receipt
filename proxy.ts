@@ -4,7 +4,12 @@ import { CANONICAL_PRODUCTION_ORIGIN } from "./src/lib/siteOrigin";
 export function proxy(request: NextRequest) {
   const production = process.env.NEXT_PUBLIC_OFL_ENVIRONMENT === "production"
     || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID === "oflapp-prod";
-  if (production && request.nextUrl.origin !== CANONICAL_PRODUCTION_ORIGIN) {
+  // App Hosting terminates HTTPS before forwarding to Next.js. Its trusted
+  // forwarded host carries the public domain; nextUrl.origin may be internal.
+  const publicHost = (request.headers.get("x-forwarded-host")
+    || request.headers.get("host")
+    || request.nextUrl.host).split(",")[0].trim().toLowerCase();
+  if (production && publicHost !== new URL(CANONICAL_PRODUCTION_ORIGIN).host) {
     const destination = new URL(`${request.nextUrl.pathname}${request.nextUrl.search}`, CANONICAL_PRODUCTION_ORIGIN);
     return NextResponse.redirect(destination, 308);
   }

@@ -13,7 +13,9 @@ const DEFAULT_SOURCE_PROJECT = "data-platform-436809";
 const DEFAULT_TARGET_PROJECT = "oflapp-staging";
 const ENTITY_VERSION_NAMESPACE = "cef63097-4d84-5018-9778-d4be189e320f";
 const RELATIONSHIP_NAMESPACE = "b2cc5767-24c5-5971-aa70-5b1648004cbe";
-const CATALOG_POLICY_VERSION = "ofl-ipulse-import-0.5";
+// Forward version for the enriched semantic registry, identifiers and media.
+// Never replace the historical 0.5 snapshots with the richer representation.
+const CATALOG_POLICY_VERSION = "ofl-ipulse-import-0.6";
 const MAX_BATCH_WRITES = 400;
 const MAX_PUBLIC_CATALOG_BYTES = 650 * 1024;
 const UNIQUE_IDENTIFIER_SCHEMES = new Set([

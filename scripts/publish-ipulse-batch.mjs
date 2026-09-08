@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import process from "node:process";
 import Ajv2020 from "ajv/dist/2020.js";
@@ -480,6 +480,8 @@ console.log(JSON.stringify({
   resumeFrom,
 }, null, 2));
 
+const planOutput = argumentValue("--plan-output");
+if (planOutput) await writeFile(resolve(planOutput), `${JSON.stringify(plan)}\n`);
 if (!apply) {
   console.log("Dry run complete. Source systems were read, but no target Firestore write was made.");
   process.exit(0);

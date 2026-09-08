@@ -10,6 +10,7 @@ import {
   orderBy,
   query,
   setDoc,
+  terminate,
 } from "firebase/firestore";
 
 function assert(condition, message) {
@@ -89,3 +90,4 @@ console.log(JSON.stringify({
   privateJobReadDenied: true,
   anonymousWriteDenied: true,
 }, null, 2));
+await terminate(db);

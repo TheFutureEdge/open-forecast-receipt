@@ -7,6 +7,7 @@ import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import {
   planPublicationBundle,
+  immutablePublicationMatches,
   PUBLICATION_BUNDLE_VERSION,
 } from "../lib/library-publisher.mjs";
 
@@ -77,6 +78,20 @@ function reseal(entry) {
 }
 
 describe("OFL publication bundle planner", () => {
+  it("preserves a legacy receipt missing only its browse source link", () => {
+    const plan = planPublicationBundle(publicationBundle(), validateReceipt);
+    const item = plan.documents.find((record) => record.collectionName === "public_receipts");
+    const { originalSource, ...legacy } = structuredClone(item.value);
+    expect(originalSource).toBeDefined();
+    expect(immutablePublicationMatches(item, legacy)).toBe(true);
+    expect(immutablePublicationMatches(item, item.value)).toBe(true);
+    const changedPayload = structuredClone(legacy);
+    changedPayload.document.receiptPayload.forecast.forecastId = "tampered";
+    expect(immutablePublicationMatches(item, changedPayload)).toBe(false);
+    expect(immutablePublicationMatches(item, { ...legacy, visibility: "private" })).toBe(false);
+    expect(immutablePublicationMatches(item, { ...legacy, originalSource: { url: "https://example.com" } })).toBe(false);
+    expect(immutablePublicationMatches({ ...item, collectionName: "public_targets" }, legacy)).toBe(false);
+  });
   it("plans immutable receipts, mutable collection indexes, and one private proof job", () => {
     const plan = planPublicationBundle(publicationBundle(), validateReceipt);
     expect(plan.counts).toEqual({

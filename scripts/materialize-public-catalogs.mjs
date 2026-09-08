@@ -166,13 +166,16 @@ const targetProject = argumentValue("--project") || DEFAULT_TARGET_PROJECT;
 const apply = process.argv.includes("--apply");
 const db = getServerFirestore(targetProject);
 
-const [entitySnapshot, collectionSnapshot, collectionEntitySnapshot, forecastSnapshot, forecasterSnapshot] = await Promise.all([
+const [entitySnapshot, collectionSnapshot, collectionEntitySnapshot, forecastSnapshot, forecasterSnapshot, publisherSnapshot, targetSnapshot] = await Promise.all([
   db.collection("public_entities").get(),
   db.collection("public_collections").get(),
   db.collection("public_collection_entities").get(),
   db.collection("public_forecasts").get(),
   db.collection("public_forecasters").get(),
+  db.collection("public_publishers").get(),
+  db.collection("public_targets").get(),
 ]);
+const existingTargets = new Map(targetSnapshot.docs.map((snapshot) => [snapshot.id, snapshot.data()]));
 
 const publicEntities = entitySnapshot.docs.map((snapshot) => snapshot.data());
 const publicEntitiesById = new Map(publicEntities.map((entity) => [entity.entityId, entity]));
@@ -223,7 +226,9 @@ const generatedAt = publicCollections.map((collection) => collection.publishedAt
 const planned = [];
 const targetsBySlug = new Map();
 
-planned.push({
+// Publisher and target definitions belong to publication, not to a read-model
+// rebuild. Only synthesize them for older imports that did not publish them.
+if (!publisherSnapshot.docs.some((snapshot) => snapshot.id === "publisher_future_edge_ipulse_ai")) planned.push({
   collectionName: "public_publishers",
   documentId: "publisher_future_edge_ipulse_ai",
   value: {
@@ -289,7 +294,8 @@ for (const [index, forecast] of forecasts.entries()) {
 }
 
 for (const [targetSlug, target] of targetsBySlug) {
-  planned.push({ collectionName: "public_targets", documentId: targetSlug, value: target, bytes: assertCatalogSize(`public_targets/${targetSlug}`, target) });
+  const authoritativeTarget = existingTargets.get(targetSlug) || target;
+  planned.push({ collectionName: "public_targets", documentId: targetSlug, value: authoritativeTarget, bytes: assertCatalogSize(`public_targets/${targetSlug}`, authoritativeTarget) });
 }
 
 for (const forecaster of forecasters) {
@@ -531,7 +537,8 @@ if (apply) {
     writeCount += 1;
   }
   const ledgerEntityIds = [...new Set(forecasts.map((forecast) => forecast.entityId))];
-  for (const entityId of ledgerEntityIds) {
+  for (let offset = 0; offset < ledgerEntityIds.length; offset += 8) {
+    await Promise.all(ledgerEntityIds.slice(offset, offset + 8).map(async (entityId) => {
     const collectionName = `public_entity_forecast_ledgers/${entityId}/parts`;
     const plannedPartIds = new Set(planned
       .filter((item) => item.collectionName === collectionName)
@@ -543,6 +550,7 @@ if (apply) {
         deleteCount += 1;
       }
     }
+    }));
   }
   const plannedSitemapPartIds = new Set(planned
     .filter((item) => item.collectionName === "public_sitemap_catalogs/site/parts")
@@ -577,7 +585,7 @@ const byCollection = Object.fromEntries(reportCollectionNames.map((collectionNam
 console.log(JSON.stringify({
   mode: apply ? "apply" : "plan-only",
   targetProject,
-  sourceDocumentsRead: entitySnapshot.size + collectionSnapshot.size + collectionEntitySnapshot.size + forecastSnapshot.size + forecasterSnapshot.size,
+  sourceDocumentsRead: entitySnapshot.size + collectionSnapshot.size + collectionEntitySnapshot.size + forecastSnapshot.size + forecasterSnapshot.size + publisherSnapshot.size + targetSnapshot.size,
   sourceCounts: {
     publicEntities: entitySnapshot.size,
     publicCollections: collectionSnapshot.size,
@@ -586,6 +594,8 @@ console.log(JSON.stringify({
     publicReceipts: 0,
     receiptReadPolicy: "point-read-only; catalog materialization never lists full receipts",
     publicForecasters: forecasterSnapshot.size,
+    publicPublishers: publisherSnapshot.size,
+    publicTargets: targetSnapshot.size,
   },
   plannedCatalogDocuments: planned.length,
   safeDocumentLimitBytes: MAX_PUBLIC_CATALOG_BYTES,

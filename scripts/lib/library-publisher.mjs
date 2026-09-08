@@ -605,18 +605,43 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
   };
 }
 
-/** Apply immutable records with create-or-verify semantics and refresh mutable collection indexes with Firestore BulkWriter. */
+/** Older pilot wrappers omitted this browse-only link. Preserve them verbatim. */
+export function immutablePublicationMatches(item, existing) {
+  if (canonicalize(existing) === canonicalize(item.value)) return true;
+  if (item.collectionName !== "public_receipts" || existing.originalSource !== undefined) return false;
+  const { originalSource: _originalSource, ...withoutSourceLink } = item.value;
+  return canonicalize(existing) === canonicalize(withoutSourceLink);
+}
+
+/** Preflight all immutable records before any writes; never rewrite legacy receipts. */
 export async function publishPlan(plan, projectId, { startIndex = 0 } = {}) {
   const db = getServerFirestore(projectId);
   let created = 0;
   let updated = 0;
   let unchanged = 0;
   let completed = 0;
-  const writer = db.bulkWriter();
-  writer.onWriteError((error) => [4, 8, 10, 13, 14].includes(error.code) && error.failedAttempts < 4);
   assert(Number.isInteger(startIndex) && startIndex >= 0 && startIndex <= plan.documents.length, "Invalid publisher resume index");
   const pendingDocuments = plan.documents.slice(startIndex);
-  const operations = pendingDocuments.map(async (item) => {
+  const existingImmutablePaths = new Set();
+  const immutableDocuments = pendingDocuments.filter((item) => item.writeMode !== "mutable_current");
+  for (let offset = 0; offset < immutableDocuments.length; offset += 800) {
+    await Promise.all([0, 200, 400, 600].map(async (start) => {
+      const chunk = immutableDocuments.slice(offset + start, Math.min(offset + start + 200, offset + 800));
+      if (!chunk.length) return;
+      const snapshots = await db.getAll(...chunk.map((item) => db.collection(item.collectionName).doc(item.documentId)));
+      snapshots.forEach((snapshot, index) => {
+        if (!snapshot.exists) return;
+        assert(immutablePublicationMatches(chunk[index], snapshot.data()), `Immutable public document differs: ${snapshot.ref.path}`);
+        existingImmutablePaths.add(snapshot.ref.path);
+      });
+    }));
+  }
+  unchanged = existingImmutablePaths.size;
+  completed = unchanged;
+  console.log(`Immutable preflight passed; preserving ${unchanged} existing records.`);
+  const writer = db.bulkWriter();
+  writer.onWriteError((error) => [4, 8, 10, 13, 14].includes(error.code) && error.failedAttempts < 4);
+  const operations = pendingDocuments.filter((item) => !existingImmutablePaths.has(`${item.collectionName}/${item.documentId}`)).map(async (item) => {
     const reference = db.collection(item.collectionName).doc(item.documentId);
     if (item.writeMode === "mutable_current") {
       await writer.set(reference, item.value);
@@ -628,7 +653,7 @@ export async function publishPlan(plan, projectId, { startIndex = 0 } = {}) {
       } catch (error) {
         if (error?.code !== 6 && error?.code !== "already-exists") throw error;
         const snapshot = await reference.get();
-        assert(snapshot.exists && canonicalize(snapshot.data()) === canonicalize(item.value), `Immutable public document differs: ${reference.path}`);
+        assert(snapshot.exists && immutablePublicationMatches(item, snapshot.data()), `Immutable public document differs: ${reference.path}`);
         unchanged += 1;
       }
     }
@@ -637,9 +662,11 @@ export async function publishPlan(plan, projectId, { startIndex = 0 } = {}) {
       console.log(`Published or verified ${completed} of ${pendingDocuments.length} pending Firestore documents...`);
     }
   });
-  const operationResults = Promise.all(operations);
+  const operationResults = Promise.allSettled(operations);
   await writer.close();
-  await operationResults;
+  const results = await operationResults;
+  const failure = results.find((result) => result.status === "rejected");
+  if (failure) throw failure.reason;
   const completedAt = new Date().toISOString();
   await db.collection("publisher_runs").doc(plan.bundleDigest).set({
     bundleDigest: plan.bundleDigest,

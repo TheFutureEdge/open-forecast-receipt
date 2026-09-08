@@ -223,6 +223,7 @@ async function entityCatalog(presetKey: string): Promise<ReactNode> {
 async function entityDetail(routeKey: string, routeKind?: Parameters<typeof getPublicEntityServer>[1]): Promise<ReactNode> {
   const entity = await getPublicEntityCached(routeKey, routeKind);
   if (!entity) return null;
+  if (routeKey !== publicEntitySlug(entity)) permanentRedirect(publicEntityPath(entity));
   const related = (entity.relatedEntities || []).filter((record) => record.predicate === "has_market_representation");
   const [collections, relatedCollections] = await Promise.all([
     listEntityCollectionsServer(entity.entityId),
@@ -386,6 +387,7 @@ async function resolveRoute(pathname: string): Promise<ReactNode> {
   if (ledgerMatch) {
     const entity = await getPublicEntityCached(ledgerMatch.routeSlug, "listed-securities");
     if (!entity) return null;
+    if (ledgerMatch.routeSlug !== publicEntitySlug(entity)) permanentRedirect(publicEntityForecastLedgerPath(publicEntitySlug(entity)));
     const [memberships, ledger] = await Promise.all([
       listEntityCollectionsServer(entity.entityId),
       listLibraryForecastLedgerPageServer(entity.entityId),

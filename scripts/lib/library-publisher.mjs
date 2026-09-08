@@ -391,7 +391,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
       canonicalPath,
       publicationStatus: "published",
       visibility: "public",
-    });
+    }, "mutable_current");
     addPlannedDocument(planned, "public_forecast_resolvers", publicForecastRecord.forecastPublicId, {
       forecastPublicId: publicForecastRecord.forecastPublicId,
       forecastId: forecast.forecastId,
@@ -400,7 +400,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
       canonicalPath,
       publicationStatus: "published",
       visibility: "public",
-    });
+    }, "mutable_current");
     addPlannedDocument(planned, "public_targets", publicForecastRecord.targetSlug, {
       targetId: `target_${publicForecastRecord.targetSlug.replaceAll("-", "_")}`,
       publicSlug: publicForecastRecord.targetSlug,

@@ -188,12 +188,17 @@ const publicCollections = collectionSnapshot.docs.map((snapshot) => ({
 const collectionEntities = collectionEntitySnapshot.docs.map((snapshot) => snapshot.data());
 const forecasts = forecastSnapshot.docs.map((snapshot) => {
   const forecast = snapshot.data();
+  const entity = publicEntitiesById.get(forecast.entityId);
+  assert(entity, `Missing governed entity for forecast ${snapshot.id}`);
   // Public catalogs are derived exclusively from lightweight forecast index
   // records. Full receipts can be large and remain point-read artifacts; a
   // catalog rebuild must never list and download every sealed receipt.
   const revision = forecast.sourceRevisionId ?? forecast.revisionNumber ?? 1;
   return compact({
     ...forecast,
+    // Collection membership keeps its original label; public forecast URLs
+    // use the governed entity locator, not the original publisher route alias.
+    entitySlug: entity.publicSlug || entity.stableSlug || forecast.entitySlug,
     forecastPublicId: forecast.forecastPublicId || deriveForecastPublicId({
       publisherId: forecast.publisherId || "publisher_future_edge_ipulse_ai",
       sourceForecastId: forecast.forecastId,

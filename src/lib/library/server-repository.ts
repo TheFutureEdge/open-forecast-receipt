@@ -343,6 +343,16 @@ export async function getPublicEntityServer(routeKey: string, routeKind?: Public
   if (!publicSlug.empty) return publicSlug.docs[0].data() as PublicEntityRecord;
   if (!stableSlug.empty) return stableSlug.docs[0].data() as PublicEntityRecord;
 
+  // The initial Batch 6 publication used aliases such as "pepsi" while the
+  // governed identity uses "pepsico-pep". Resolve that historical membership
+  // by exact document ID, without opening a production collection scan.
+  const legacyMember = await db.collection("public_collection_entities").doc(`batch-6__${routeKey}`).get();
+  const legacyEntityId = legacyMember.exists ? legacyMember.data()?.entityId : undefined;
+  if (legacyEntityId) {
+    const legacyEntity = await db.collection("public_entities").doc(legacyEntityId).get();
+    if (legacyEntity.exists) return legacyEntity.data() as PublicEntityRecord;
+  }
+
   if (isProductionDeployment()) return null;
 
   if (routeKind === "listed-securities") return null;

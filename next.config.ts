@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Resolve metadata before streaming so public redirects and missing routes
+  // retain their real HTTP status instead of an already-sent 200 response.
+  htmlLimitedBots: /.*/,
   experimental: {
     optimizePackageImports: ["@phosphor-icons/react"],
   },

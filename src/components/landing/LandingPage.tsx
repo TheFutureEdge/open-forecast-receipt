@@ -299,7 +299,7 @@ export function LandingPage({ metrics }: { metrics: PublicLibraryLandingMetrics 
           <div>
             <div className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">Open-source origins. A shared research record.</div>
             <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 dark:text-white">Forecast evidence that can travel between agents.</h2>
-            <p className="mt-4 text-base leading-7 text-slate-600 dark:text-slate-300">Forecast Library grew out of Open Forecast Receipt, an open-source initiative to make a prediction portable, inspectable, and independently verifiable. The Library gives those receipts a public home, with iPulse AI as its first publisher.</p>
+            <p className="mt-4 text-base leading-7 text-slate-600 dark:text-slate-300">Forecast Library grew out of Open Forecast Receipt, an open-source initiative to make a prediction portable, inspectable, and independently verifiable. Its scope is forecasting science across domains, from markets and weather to demand and scientific research, including human, quantitative, and AI forecasts. iPulse AI is a separate financial-market research product and our first live publisher. Other domains will need their own reviewed receipt profiles.</p>
           </div>
           <div>
             <p className="text-base leading-7 text-slate-600 dark:text-slate-300">Our ambition is for a research agent to hand a forecast to another agent with its source, timing, assumptions, and integrity evidence intact. A reviewer can check the record, a downstream workflow can reference it, and an evaluator can append the outcome without rewriting the original prediction.</p>

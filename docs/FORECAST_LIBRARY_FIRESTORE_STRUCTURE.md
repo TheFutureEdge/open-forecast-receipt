@@ -123,19 +123,21 @@ Entity directory -> one public_entity_directory_catalogs document
 Batch 6 page -> public_collection_catalogs/batch-6
 Collection/subject page -> one public_entity_forecast_catalogs document
 Subject history -> latest two ledger parts, then two more per older page
-Forecast URL -> forecast resolver -> forecast index -> receipt point read
-Receipt URL -> receipt resolver -> permanent canonical forecast redirect
+Forecast URL -> immutable revision -> receipt point read
+Legacy forecast URL -> matching frozen original path -> same immutable revision
+Receipt URL -> receipt point read -> direct receipt page (no redirect)
 Receipt JSON API -> public_receipts/{digest}.document
 Sitemap -> sitemap manifest and bounded parts (server only)
 ```
 
 Catalogs are rebuildable projections, not replacements for sealed receipts.
-The materializer reads lightweight indexes and never scans full receipt
-payloads. Its document ceiling is 650 KiB. The tested Batch 6 plan creates or
-updates 14,679 documents in each environment; it performs no receipt writes.
-The production plan reads 5,700 lightweight documents, has a largest ledger
-part of 26,418 bytes and a largest sitemap part of 665,427 bytes, and deletes
-no records.
+The materializer reads immutable revision snapshots and identity projections;
+it never scans full receipt payloads or rewrites permanent resolvers. Its
+document ceiling is 650 KiB. The September 9 rebuild wrote 1,146 bounded
+catalog/profile documents in each environment, with no receipt writes or
+deletions. The earlier 14,679-write plan included index/resolver updates that
+have now been removed. Legacy fallback reads remain available for records
+without a revision snapshot, with explicit identity and digest checks.
 
 The current governed identity catalog contains 376 forecastable subjects,
 407 fundamental entities and 19 venues. Staging additionally preserves one
@@ -147,7 +149,9 @@ is `e3dc00fdd66b8c11ade7696318f8aef272141e319753cadb18c63f1f047fa6fa`.
 Production's 60 pilot receipts already belonged to the complete 4,511 set.
 Their wrappers omit the newer browse-only `originalSource` field. The importer
 preserves them verbatim after verifying every other field, including the full
-sealed document. Source links remain available on the current forecast index.
+sealed document. Source links remain available on immutable forecast revisions;
+receipt-only pages recover iPulse ownership from the explicit sealed issuer
+through the iPulse publisher adapter, without rewriting historical receipts.
 
 ## Access boundaries
 

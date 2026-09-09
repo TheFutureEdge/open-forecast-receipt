@@ -17,6 +17,7 @@ export function normalizeBasePath(value: string): string {
 const APP_BASE_PATH = normalizeBasePath(process.env.NEXT_PUBLIC_BASE_PATH || "");
 
 export function addBasePath(pathname: string, basePath = APP_BASE_PATH): string {
+  if (pathname.startsWith("#")) return pathname;
   const normalizedPath = pathname.startsWith("/") ? pathname : `/${pathname}`;
   const normalizedBase = normalizeBasePath(basePath);
   return `${normalizedBase}${normalizedPath}` || "/";

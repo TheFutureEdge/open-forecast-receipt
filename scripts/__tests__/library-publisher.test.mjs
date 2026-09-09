@@ -78,6 +78,32 @@ function reseal(entry) {
 }
 
 describe("OFL publication bundle planner", () => {
+  it("never treats a caller-supplied attestation UID as verified proof", () => {
+    const bundle = publicationBundle();
+    bundle.entries[0].projection.protocolSuppliedAfterIssuance = { attestationUID: `0x${"1".repeat(64)}` };
+    const plan = planPublicationBundle(bundle, validateReceipt);
+    expect(plan.counts.verifiedProofs).toBe(0);
+    expect(plan.documents.find((item) => item.collectionName === "public_forecasts").value.chainStatus).toBe("pending");
+    expect(plan.documents.find((item) => item.collectionName === "public_proofs").value.state).toBe("pending");
+  });
+  it.each(["private", "restricted"])("rejects %s receipt disclosure before public projection", (visibility) => {
+    const bundle = publicationBundle();
+    bundle.entries[0].receipt.receiptPayload.disclosure.visibility = visibility;
+    reseal(bundle.entries[0]);
+    expect(() => planPublicationBundle(bundle, validateReceipt)).toThrow(/explicitly public/);
+  });
+  it.each(["draft", "withdrawn"])("rejects %s receipts before public projection", (status) => {
+    const bundle = publicationBundle();
+    bundle.entries[0].receipt.receiptPayload.receipt.status = status;
+    reseal(bundle.entries[0]);
+    expect(() => planPublicationBundle(bundle, validateReceipt)).toThrow(/not eligible/);
+  });
+  it("does not attribute another issuer to iPulse AI", () => {
+    const bundle = publicationBundle();
+    bundle.entries[0].receipt.receiptPayload.issuer = { id: "https://independent.example", name: "Independent Lab" };
+    reseal(bundle.entries[0]);
+    expect(() => planPublicationBundle(bundle, validateReceipt)).toThrow(/issuer does not match/);
+  });
   it("preserves a legacy receipt missing only its browse source link", () => {
     const plan = planPublicationBundle(publicationBundle(), validateReceipt);
     const item = plan.documents.find((record) => record.collectionName === "public_receipts");

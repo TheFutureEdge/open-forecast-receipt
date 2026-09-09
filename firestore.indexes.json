@@ -4,18 +4,81 @@
       "collectionGroup": "public_forecasts",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "collectionId", "order": "ASCENDING" },
-        { "fieldPath": "entityId", "order": "ASCENDING" }
+        {
+          "fieldPath": "collectionId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "entityId",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "public_collection_entities",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "collectionId", "order": "ASCENDING" },
-        { "fieldPath": "aliases", "arrayConfig": "CONTAINS" }
+        {
+          "fieldPath": "collectionId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "aliases",
+          "arrayConfig": "CONTAINS"
+        }
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "public_receipts",
+      "fieldPath": "document",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "public_receipts",
+      "fieldPath": "projection",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "public_entity_directory_catalogs",
+      "fieldPath": "entities",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "public_collection_catalogs",
+      "fieldPath": "manifest",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "public_entity_forecast_catalogs",
+      "fieldPath": "forecasts",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "public_forecaster_catalogs",
+      "fieldPath": "forecasters",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "public_forecaster_catalogs",
+      "fieldPath": "coverage",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "public_entity_forecast_ledgers",
+      "fieldPath": "forecasts",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "parts",
+      "fieldPath": "forecasts",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "parts",
+      "fieldPath": "entries",
+      "indexes": []
+    }
+  ]
 }

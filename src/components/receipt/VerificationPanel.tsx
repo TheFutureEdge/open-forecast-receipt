@@ -66,7 +66,7 @@ export function VerificationPanel({
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-800 dark:text-slate-100">
               <LinkSimple size={16} className={showPublicProof ? "text-blue-600" : "text-slate-400"} />
-              {showPublicProof ? "Independent blockchain proof available" : "No blockchain proof published for this receipt"}
+              {showPublicProof ? result.chainStatus === "verified" ? "Independent blockchain proof verified" : "Blockchain attestation reference; verification not confirmed" : "No blockchain proof published for this receipt"}
             </div>
             <p className="mt-1 text-[11px] leading-4 text-slate-500">
               {showPublicProof
@@ -97,7 +97,7 @@ export function VerificationPanel({
         )}
 
         {result.isRetrospective && (
-          <p className="mt-3 text-[11px] leading-4 text-amber-700 dark:text-amber-300">This proof was issued after the underlying forecast was originally published; the dates remain separately visible.</p>
+          <p className="mt-3 text-[11px] leading-4 text-amber-700 dark:text-amber-300">This receipt was created after the underlying forecast. Its creation time does not establish that the forecast was sealed at the original forecast date.</p>
         )}
 
         {result.failureReason && result.failureDetails && (

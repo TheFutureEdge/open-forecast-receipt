@@ -1,0 +1,42 @@
+{
+  "01-landing.png": {
+    "bytes": 82645,
+    "sha256": "8ae19be96834187c03d3d6a9867d088e19d17b8eb19fa96e22afc4d8e753c5ef"
+  },
+  "02-forecast-directory.png": {
+    "bytes": 75856,
+    "sha256": "0274f6af3182c4accc73dad6483e91548694c570bc7c2481a1fcbcfde6eb8401"
+  },
+  "03-collection.png": {
+    "bytes": 88574,
+    "sha256": "90f16ecae7821f099c30cfccba045f83e5f17f9fb096e32a3e065c45bac84f82"
+  },
+  "04-ledger.png": {
+    "bytes": 82616,
+    "sha256": "473a5ed958938fc4f520b91d597ea722cabebe95bd4e1d01a687b7e6440203a7"
+  },
+  "05-forecast.png": {
+    "bytes": 90842,
+    "sha256": "79cd1781098ca5de1905d93d8fbfae5a15aa8b565365ed9bfa39ec73dfa04840"
+  },
+  "06-tamper-test.png": {
+    "bytes": 83770,
+    "sha256": "0ec83724fb8d04e290d70ad9b68171d6748118ac35af3b8e101038a472bac029"
+  },
+  "07-submission.png": {
+    "bytes": 80675,
+    "sha256": "342d4b9b8f32e7a49923820b21c0e22c6d6d5ccd20547a59c00de5d899f9e098"
+  },
+  "08-directory-fixed-local.png": {
+    "bytes": 76605,
+    "sha256": "a1907ecb19b523187a49edb68e453a6e82d827182abd54ef77adbe9a0211fb4e"
+  },
+  "09-collection-jump-fixed-local.png": {
+    "bytes": 76364,
+    "sha256": "d111485ce8841daa46a655a53b06e5dec541a757de2738a053d1be1f73d97964"
+  },
+  "10-video-poster-fixed-local.png": {
+    "bytes": 95933,
+    "sha256": "15b6085f0e6a8e35c246d0cb9be5955cf8c9fb48c043ee53403e7f6bf488f66a"
+  }
+}

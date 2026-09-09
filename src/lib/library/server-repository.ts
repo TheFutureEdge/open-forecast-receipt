@@ -249,13 +249,16 @@ export async function getPublicCollectionServer(publisherSlug: string, collectio
 
 export async function getPublicForecastByPublicIdServer(forecastPublicId: string): Promise<PublicForecastRecord | null> {
   const db = getLibraryServerFirestore();
-  const resolver = await db.collection("public_forecast_resolvers").doc(forecastPublicId).get().catch(() => null);
+  const resolver = await db.collection("public_forecast_resolvers").doc(forecastPublicId).get();
   if (resolver?.exists) {
     const record = resolver.data() as PublicForecastResolverRecord;
     const forecast = await db.collection("public_forecasts").doc(record.forecastId).get();
-    return forecast.exists ? forecast.data() as PublicForecastRecord : null;
+    if (!forecast.exists) return null;
+    const resolved = forecast.data() as PublicForecastRecord;
+    if (resolved.forecastPublicId !== forecastPublicId || resolved.receiptDigest !== record.receiptDigest) return null;
+    return resolved;
   }
-  if (isProductionDeployment()) throw new Error(`Required production forecast resolver ${forecastPublicId} is missing`);
+  if (isProductionDeployment()) return null;
   const fallback = await db.collection("public_forecasts").where("forecastPublicId", "==", forecastPublicId).limit(1).get();
   if (!fallback.empty) return fallback.docs[0].data() as PublicForecastRecord;
   // Temporary pre-production compatibility. The production launch gate requires
@@ -269,9 +272,9 @@ export async function getPublicForecastByPublicIdServer(forecastPublicId: string
 }
 
 export async function getPublicReceiptResolverServer(receiptDigest: string): Promise<PublicReceiptResolverRecord | null> {
-  const snapshot = await getLibraryServerFirestore().collection("public_receipt_resolvers").doc(receiptDigest).get().catch(() => null);
+  const snapshot = await getLibraryServerFirestore().collection("public_receipt_resolvers").doc(receiptDigest).get();
   if (snapshot?.exists) return snapshot.data() as PublicReceiptResolverRecord;
-  if (isProductionDeployment()) throw new Error(`Required production receipt resolver ${receiptDigest} is missing`);
+  if (isProductionDeployment()) return null;
   const forecast = await getLibraryServerFirestore().collection("public_forecasts")
     .where("receiptDigest", "==", receiptDigest)
     .limit(1)

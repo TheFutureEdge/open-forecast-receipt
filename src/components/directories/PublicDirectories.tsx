@@ -13,12 +13,12 @@ function Hero({ eyebrow, title, description, metrics = [] }: { eyebrow: string; 
   return (
     <header className="overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 p-7 shadow-sm dark:border-blue-950 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/30 sm:p-9">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div className="max-w-3xl">
+        <div className="min-w-0 max-w-3xl flex-1">
           <div className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-600">{eyebrow}</div>
           <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl dark:text-white">{title}</h1>
           <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">{description}</p>
         </div>
-        {metrics.length > 0 && <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{metrics.map(([value, label]) => <div key={label} className="min-w-24 rounded-xl border border-white bg-white px-4 py-3 text-center shadow-sm dark:border-slate-800 dark:bg-slate-950"><div className="text-xl font-black">{value}</div><div className="mt-1 text-[8px] font-black uppercase tracking-wider text-slate-400">{label}</div></div>)}</div>}
+        {metrics.length > 0 && <div className="grid shrink-0 grid-cols-2 gap-2 sm:grid-cols-3">{metrics.map(([value, label]) => <div key={label} className="min-w-24 rounded-xl border border-white bg-white px-4 py-3 text-center shadow-sm dark:border-slate-800 dark:bg-slate-950"><div className="text-xl font-black">{value}</div><div className="mt-1 text-[8px] font-black uppercase tracking-wider text-slate-400">{label}</div></div>)}</div>}
       </div>
     </header>
   );

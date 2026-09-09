@@ -80,7 +80,7 @@ contract. Current rules do not grant them browser access.
 | `public_forecasters/{forecasterId}` | Stable ID, display name, public slug, model/persona, forecaster and implementation kinds, version pointer, publisher organization/team, modes, task-configuration and subject-assignment references |
 | `public_publishers/publisher_future_edge_ipulse_ai` | Publisher ID, public slug `ipulse-ai`, name, organization reference, website, public status |
 | `public_targets/adjusted-end-of-day-close-return` | Target ID, public slug, name, observation description, dimension/transformation, unit |
-| `public_collections/batch-6` | Collection ID, batch label, publisher, public slug `2026-07-05-sb6`, publication time, subject/receipt/proof totals |
+| `public_collections/batch-6` | Collection ID, batch label, publisher, public slug `2026-08-06-sb6`, publication time, subject/receipt/proof totals |
 | `public_forecasts/{sourceForecastId}` | Source forecast ID and revision, stable `forecastPublicId`, entity, forecaster, publisher, target, collection, receipt digest, creation/horizon times, run provenance, original iPulse AI URL, proof status |
 | `public_receipts/{digest}` | Receipt digest, IDs linking back to forecast/entity/forecaster/collection, timestamps, specification/profile versions, complete `document`, compact `projection`, original source reference |
 | `public_forecast_resolvers/{forecastPublicId}` | Public forecast ID, source forecast ID, entity ID, receipt digest, canonical path |

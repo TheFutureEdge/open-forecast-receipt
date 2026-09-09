@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   ArrowRight,
   CheckCircle,
@@ -11,6 +12,7 @@ import {
   GlobeHemisphereWest,
   IdentificationCard,
   MagnifyingGlass,
+  Play,
   SealCheck,
   ShieldCheck,
   UsersThree,
@@ -167,6 +169,7 @@ function buildStructuredData(metrics: PublicLibraryLandingMetrics) {
 }
 
 export function LandingPage({ metrics }: { metrics: PublicLibraryLandingMetrics }) {
+  const [videoRequested, setVideoRequested] = useState(false);
   const evidence = [
     [formatted(metrics.forecastSubjectCount), "forecast subjects"],
     [formatted(metrics.receiptCount), "public receipts"],
@@ -211,6 +214,7 @@ export function LandingPage({ metrics }: { metrics: PublicLibraryLandingMetrics 
 
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-2xl shadow-slate-300/50 dark:border-slate-700 dark:shadow-none">
             {video ? (
+              videoRequested ? (
               <iframe
                 className="aspect-video w-full"
                 src={video.embedUrl}
@@ -220,6 +224,21 @@ export function LandingPage({ metrics }: { metrics: PublicLibraryLandingMetrics 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setVideoRequested(true)}
+                  aria-label="Play the Open Forecast Receipt origins video"
+                  className="group relative grid aspect-video w-full place-items-center overflow-hidden bg-slate-900 text-white focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-blue-400"
+                >
+                  <img src={video.thumbnailUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-55 transition-opacity group-hover:opacity-75" />
+                  <span className="relative flex flex-col items-center gap-3 p-6 text-center">
+                    <span className="grid size-14 place-items-center rounded-full bg-blue-600 shadow-lg"><Play size={26} weight="fill" /></span>
+                    <span className="text-base font-bold">Can AI prove what it predicted?</span>
+                    <span className="text-xs text-slate-200">Watch the original Open Forecast Receipt demo</span>
+                  </span>
+                </button>
+              )
             ) : (
               <div className="bg-[radial-gradient(circle_at_75%_25%,#1e40af_0,#020617_65%)] p-7 text-white sm:p-9">
                 <div className="flex items-center justify-between gap-4">

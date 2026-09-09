@@ -4,6 +4,7 @@ import process from "node:process";
 import { buildForecastLedgerCatalogParts } from "./lib/forecast-ledger-catalog.mjs";
 import { getServerFirestore } from "./lib/firestore-client.mjs";
 import { deriveForecastPublicId } from "./lib/library-publisher.mjs";
+import { checkedBulkWrite } from "./lib/checked-bulk-write.mjs";
 
 const DEFAULT_TARGET_PROJECT = "oflapp-staging";
 // Stay below the agreed 700 KiB ceiling with enough room for Firestore field
@@ -536,11 +537,12 @@ let writeCount = 0;
 let deleteCount = 0;
 if (apply) {
   assert(process.env.OFR_CONFIRM_FIRESTORE_PROJECT === targetProject, "Set OFR_CONFIRM_FIRESTORE_PROJECT to the exact target project before --apply");
-  const writer = db.bulkWriter();
-  for (const item of planned) {
-    writer.set(db.collection(item.collectionName).doc(item.documentId), item.value);
-    writeCount += 1;
-  }
+  await checkedBulkWrite(db, planned.map((item) => ({
+    kind: "set", reference: db.collection(item.collectionName).doc(item.documentId), value: item.value,
+  })));
+  writeCount = planned.length;
+  // Never remove old parts until every replacement write has succeeded.
+  const obsoleteParts = [];
   const ledgerEntityIds = [...new Set(forecasts.map((forecast) => forecast.entityId))];
   for (let offset = 0; offset < ledgerEntityIds.length; offset += 8) {
     await Promise.all(ledgerEntityIds.slice(offset, offset + 8).map(async (entityId) => {
@@ -551,8 +553,7 @@ if (apply) {
     const existingParts = await db.collection(collectionName).get();
     for (const existingPart of existingParts.docs) {
       if (!plannedPartIds.has(existingPart.id)) {
-        writer.delete(existingPart.ref);
-        deleteCount += 1;
+        obsoleteParts.push({ kind: "delete", reference: existingPart.ref });
       }
     }
     }));
@@ -563,11 +564,11 @@ if (apply) {
   const existingSitemapParts = await db.collection("public_sitemap_catalogs/site/parts").get();
   for (const existingPart of existingSitemapParts.docs) {
     if (!plannedSitemapPartIds.has(existingPart.id)) {
-      writer.delete(existingPart.ref);
-      deleteCount += 1;
+      obsoleteParts.push({ kind: "delete", reference: existingPart.ref });
     }
   }
-  await writer.close();
+  await checkedBulkWrite(db, obsoleteParts);
+  deleteCount = obsoleteParts.length;
 }
 
 function reportCollectionName(collectionName) {

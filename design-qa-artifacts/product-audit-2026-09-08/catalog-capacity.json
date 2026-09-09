@@ -1,0 +1,97 @@
+{
+  "mode": "plan-only",
+  "targetProject": "oflapp-prod",
+  "sourceDocumentsRead": 5700,
+  "sourceCounts": {
+    "publicEntities": 802,
+    "publicCollections": 1,
+    "publicCollectionEntities": 376,
+    "publicForecasts": 4511,
+    "publicReceipts": 0,
+    "receiptReadPolicy": "point-read-only; catalog materialization never lists full receipts",
+    "publicForecasters": 8,
+    "publicPublishers": 1,
+    "publicTargets": 1
+  },
+  "plannedCatalogDocuments": 14679,
+  "safeDocumentLimitBytes": 665600,
+  "byCollection": {
+    "public_forecasts": {
+      "documents": 4511,
+      "totalBytes": 9416333,
+      "largestDocumentBytes": 2202
+    },
+    "public_receipt_resolvers": {
+      "documents": 4511,
+      "totalBytes": 1665410,
+      "largestDocumentBytes": 414
+    },
+    "public_forecast_resolvers": {
+      "documents": 4511,
+      "totalBytes": 2418749,
+      "largestDocumentBytes": 581
+    },
+    "public_targets": {
+      "documents": 1,
+      "totalBytes": 517,
+      "largestDocumentBytes": 517
+    },
+    "public_forecasters": {
+      "documents": 8,
+      "totalBytes": 263459,
+      "largestDocumentBytes": 43429
+    },
+    "public_collections": {
+      "documents": 1,
+      "totalBytes": 574,
+      "largestDocumentBytes": 574
+    },
+    "public_forecaster_catalogs": {
+      "documents": 1,
+      "totalBytes": 14390,
+      "largestDocumentBytes": 14390
+    },
+    "public_entity_directory_catalogs": {
+      "documents": 2,
+      "totalBytes": 656766,
+      "largestDocumentBytes": 328683
+    },
+    "public_collection_catalogs": {
+      "documents": 1,
+      "totalBytes": 187058,
+      "largestDocumentBytes": 187058
+    },
+    "public_entity_forecast_catalogs": {
+      "documents": 376,
+      "totalBytes": 9558938,
+      "largestDocumentBytes": 26399
+    },
+    "public_entity_forecast_ledgers": {
+      "documents": 376,
+      "totalBytes": 140248,
+      "largestDocumentBytes": 376
+    },
+    "public_entity_forecast_ledgers/{entityId}/parts": {
+      "documents": 376,
+      "totalBytes": 9580644,
+      "largestDocumentBytes": 26418
+    },
+    "public_library_stats": {
+      "documents": 1,
+      "totalBytes": 346,
+      "largestDocumentBytes": 346
+    },
+    "public_sitemap_catalogs": {
+      "documents": 1,
+      "totalBytes": 196,
+      "largestDocumentBytes": 196
+    },
+    "public_sitemap_catalogs/site/parts": {
+      "documents": 2,
+      "totalBytes": 1108083,
+      "largestDocumentBytes": 665427
+    }
+  },
+  "writeCount": 0,
+  "deleteCount": 0
+}

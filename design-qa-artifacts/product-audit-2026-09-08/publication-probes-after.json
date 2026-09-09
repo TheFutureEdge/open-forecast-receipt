@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-09-08T18:15:35.545Z",
+  "scope": "Synthetic in-memory planner probes only; no cloud writes",
+  "privateDisclosure": {
+    "accepted": false,
+    "error": "Public publication requires an explicitly public receipt; private/restricted payloads must never enter public namespaces"
+  },
+  "draftReceipt": {
+    "accepted": false,
+    "error": "Receipt status draft is not eligible for public forecast publication"
+  },
+  "foreignIssuer": {
+    "accepted": false,
+    "error": "Receipt issuer does not match this publisher adapter; use a separately governed publisher mapping"
+  },
+  "unverifiedProof": {
+    "accepted": true,
+    "publisherId": "publisher_future_edge_ipulse_ai",
+    "chainStatus": "pending"
+  },
+  "revisionStorage": {
+    "sameStorageDocument": true,
+    "differentPublicId": true,
+    "writeMode": "mutable_current"
+  }
+}

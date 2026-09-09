@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { addBasePath, normalizeBasePath, stripBasePath } from "../../lib/router";
 
 describe("application base-path routing", () => {
+  it("keeps collection fragment links on the current page", () => {
+    expect(addBasePath("#collection-entities", "")).toBe("#collection-entities");
+    expect(addBasePath("#collection-entities", "/tools/open-forecast-receipt")).toBe("#collection-entities");
+  });
+
   it("keeps Native root-hosted routes unchanged", () => {
     expect(normalizeBasePath("/")).toBe("");
     expect(addBasePath("/manifest/batch-6", "/")).toBe("/manifest/batch-6");

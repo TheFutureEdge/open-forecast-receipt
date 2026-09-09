@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { canonicalize } from "json-canonicalize";
 import { getServerFirestore } from "./firestore-client.mjs";
+import { assertPublicReceiptAdmission, assertForecastIdentityPreserved } from "./publication-policy.mjs";
 
 export const PUBLICATION_BUNDLE_VERSION = "ofl-publication-bundle-v0.1.0";
 export const MAX_SAFE_DOCUMENT_BYTES = 900_000;
@@ -279,7 +280,9 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
   const receiptDigests = new Set();
   const forecastIds = new Set();
   let selectedProofCount = 0;
-  let verifiedProofCount = 0;
+  // A supplied UID is a claim, not a chain-verification result. A separate
+  // verifier must validate the network, schema, digest, attester and revocation.
+  const verifiedProofCount = 0;
 
   for (const [entryIndex, entry] of bundle.entries.entries()) {
     const document = entry.receipt;
@@ -290,6 +293,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
     assert(validation.valid, `Receipt schema validation failed for entry ${entryIndex}: ${validation.errors?.join("; ") || "unknown error"}`);
 
     const payload = document.receiptPayload;
+    assertPublicReceiptAdmission(payload, PUBLIC_PUBLISHER.websiteUrl);
     const forecast = payload.forecast;
     const digest = document.proofEnvelope.payloadDigestSha256;
     const recomputedDigest = sha256Canonical(payload);
@@ -317,7 +321,6 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
     const protocol = proofMetadata(projection);
     const proofRequested = Boolean(entry.requestBlockchainProof);
     if (proofRequested) selectedProofCount += 1;
-    if (protocol.attestationUID) verifiedProofCount += 1;
 
     const forecasterGroup = forecasterGroups.get(forecast.forecaster.id) || {
       forecast,
@@ -367,7 +370,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
       executionProvenance: entry.executionProvenance || undefined,
       originalSource,
       sortOrder: entry.sortOrder ?? entryIndex,
-      chainStatus: protocol.attestationUID ? "verified" : "not_issued",
+      chainStatus: protocol.attestationUID ? "pending" : "not_issued",
       showcaseSelected: proofRequested,
       schemaUID: protocol.schemaUID || undefined,
       attestationUID: protocol.attestationUID || undefined,
@@ -437,7 +440,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
     if (protocol.attestationUID) {
       addPlannedDocument(planned, "public_proofs", `${projection.chain.hackathonTarget.caip2}__${protocol.attestationUID}`, {
         receiptDigest: digest,
-        state: "verified",
+        state: "pending",
         network: projection.chain.hackathonTarget,
         schemaUID: protocol.schemaUID,
         attestationUID: protocol.attestationUID,
@@ -505,7 +508,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
   const collectionCatalogEntities = [];
   for (const [entityIndex, [entityId, group]] of [...entityGroups.entries()].entries()) {
     const proofSelected = group.entries.filter(({ entry }) => entry.requestBlockchainProof).length;
-    const proofVerified = group.entries.filter(({ projection }) => proofMetadata(projection).attestationUID).length;
+    const proofVerified = 0;
     const collectionEntityRecord = {
       slug: group.presentation.routeSlug,
       aliases: group.presentation.aliases,
@@ -638,14 +641,37 @@ export async function publishPlan(plan, projectId, { startIndex = 0 } = {}) {
   }
   unchanged = existingImmutablePaths.size;
   completed = unchanged;
+  // A current index must not bind an older public ID to a replacement receipt.
+  // Write preconditions also protect against concurrent publishers.
+  const forecastSnapshots = new Map();
+  const forecastDocuments = pendingDocuments.filter((item) => item.collectionName === "public_forecasts");
+  for (let offset = 0; offset < forecastDocuments.length; offset += 200) {
+    const chunk = forecastDocuments.slice(offset, offset + 200);
+    const snapshots = await db.getAll(...chunk.map((item) => db.collection(item.collectionName).doc(item.documentId)));
+    snapshots.forEach((snapshot, index) => {
+      assertForecastIdentityPreserved(snapshot.exists ? snapshot.data() : null, chunk[index].value);
+      forecastSnapshots.set(chunk[index].documentId, snapshot);
+    });
+  }
   console.log(`Immutable preflight passed; preserving ${unchanged} existing records.`);
   const writer = db.bulkWriter();
   writer.onWriteError((error) => [4, 8, 10, 13, 14].includes(error.code) && error.failedAttempts < 4);
   const operations = pendingDocuments.filter((item) => !existingImmutablePaths.has(`${item.collectionName}/${item.documentId}`)).map(async (item) => {
     const reference = db.collection(item.collectionName).doc(item.documentId);
     if (item.writeMode === "mutable_current") {
-      await writer.set(reference, item.value);
-      updated += 1;
+      const forecastSnapshot = item.collectionName === "public_forecasts" ? forecastSnapshots.get(item.documentId) : null;
+      if (forecastSnapshot) {
+        if (forecastSnapshot.exists) {
+          await writer.update(reference, item.value, { lastUpdateTime: forecastSnapshot.updateTime });
+          updated += 1;
+        } else {
+          await writer.create(reference, item.value);
+          created += 1;
+        }
+      } else {
+        await writer.set(reference, item.value);
+        updated += 1;
+      }
     } else {
       try {
         await writer.create(reference, item.value);

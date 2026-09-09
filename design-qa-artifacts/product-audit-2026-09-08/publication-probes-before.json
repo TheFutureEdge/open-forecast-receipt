@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-09-08T18:08:39.568Z",
+  "scope": "Synthetic in-memory planner probes only; no cloud writes",
+  "privateDisclosure": {
+    "accepted": true,
+    "publisherId": "publisher_future_edge_ipulse_ai",
+    "chainStatus": "not_issued"
+  },
+  "draftReceipt": {
+    "accepted": true,
+    "publisherId": "publisher_future_edge_ipulse_ai",
+    "chainStatus": "not_issued"
+  },
+  "foreignIssuer": {
+    "accepted": true,
+    "publisherId": "publisher_future_edge_ipulse_ai",
+    "chainStatus": "not_issued"
+  },
+  "unverifiedProof": {
+    "accepted": true,
+    "publisherId": "publisher_future_edge_ipulse_ai",
+    "chainStatus": "verified"
+  },
+  "revisionStorage": {
+    "sameStorageDocument": true,
+    "differentPublicId": true,
+    "writeMode": "mutable_current"
+  }
+}

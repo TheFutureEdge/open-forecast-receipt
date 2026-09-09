@@ -102,7 +102,6 @@ function isNavigableBreadcrumb(path: string): boolean {
     || /^\/entities\/(listed-securities|corporations|investment-funds|organizations)\/[^/]+$/.test(path)
     || /^\/entities\/listed-securities\/[^/]+\/forecasts$/.test(path)
     || /^\/entities\/listed-securities\/[^/]+\/forecast-sets\/[^/]+$/.test(path)
-    || /^\/entities\/listed-securities\/[^/]+\/forecasts\/[^/]+\/[^/]+\/[^/]+$/.test(path)
     || /^\/entities\/(subjects|context)\/[^/]+$/.test(path)
     || (
       /^\/entities\/[^/]+$/.test(path)
@@ -154,7 +153,7 @@ export function Breadcrumbs() {
 
   return (
     <nav className="py-2.5" aria-label="Breadcrumb">
-      <ol className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
+      <ol className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
         {crumbs.map((crumb, i) => (
           <li key={`${crumb.path ?? i}-${crumb.label}`} className="flex items-center gap-1.5">
             {i > 0 && <span className="text-slate-300 dark:text-slate-700">/</span>}

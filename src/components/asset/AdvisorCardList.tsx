@@ -32,13 +32,14 @@ export function AdvisorCardList({ fixtures, advisorCount, selectedDigest, onSele
         <div className="mb-3 flex items-center justify-between">
           <div>
             <h2 className="text-sm font-semibold text-slate-950 dark:text-white">Forecasters</h2>
-            <p className="text-[11px] text-slate-500">{fixtures.length} of {advisorCount} receipts loaded</p>
+            <p className="text-[11px] text-slate-500">{fixtures.length} of {advisorCount} forecast records available</p>
           </div>
           <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${isComplete ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"}`}>{isComplete ? "Complete" : "Recent"}</span>
         </div>
         <label className="relative block">
           <MagnifyingGlass className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} aria-hidden="true" />
           <input
+            aria-label="Search forecasters"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search forecasters"
@@ -74,7 +75,7 @@ export function AdvisorCardList({ fixtures, advisorCount, selectedDigest, onSele
                 ) : fixture.showcaseSelected ? (
                   <span className="block size-2 rounded-full bg-amber-400" title="Proof selected" />
                 ) : (
-                  <CheckCircle size={16} weight="fill" className="text-emerald-500" aria-label="Receipt loaded" />
+                  <CheckCircle size={16} weight="fill" className="text-emerald-500" aria-label="Receipt available" />
                 )}
               </span>
             </button>

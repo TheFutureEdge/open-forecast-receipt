@@ -460,7 +460,7 @@ export async function listLibraryForecastLedgerPageServer(entityId: string, befo
   let partsQuery = (await getCatalogCollectionServer("public_entity_forecast_ledgers", catalogGenerationId)).doc(entityId).collection("parts")
     .orderBy("partNumber", "desc");
   if (beforePartNumber !== undefined) partsQuery = partsQuery.where("partNumber", "<", beforePartNumber);
-  const partSnapshots = await partsQuery.limit(2).get().catch(() => null);
+  const partSnapshots = await partsQuery.limit(2).get();
   if (partSnapshots && !partSnapshots.empty) {
     const parts = partSnapshots.docs.map((document) => document.data() as PublicEntityForecastLedgerPartRecord);
     const forecasts = sortForecasts(parts.flatMap((part) => part.forecasts));
@@ -505,13 +505,16 @@ export async function getLibraryReceiptServer(receiptDigest: string): Promise<Li
 
 /** Read the small, materialized sitemap index instead of listing thousands of forecasts. */
 export async function listPublicSitemapEntriesServer(): Promise<PublicSitemapEntry[]> {
-  const manifestSnapshot = await (await getCatalogCollectionServer("public_sitemap_catalogs")).doc("site").get().catch(() => null);
+  // Route handlers do not share React's render cache. Pin explicitly so the
+  // manifest and its parts cannot straddle a publication switch.
+  const catalogs = await getCatalogCollectionServer("public_sitemap_catalogs");
+  const manifestSnapshot = await catalogs.doc("site").get().catch(() => null);
   if (!manifestSnapshot?.exists) {
     if (isProductionDeployment()) throw new Error("Required production sitemap catalog is missing");
     return [];
   }
   const manifest = manifestSnapshot.data() as PublicSitemapCatalogManifestRecord;
-  const partsSnapshot = await (await getCatalogCollectionServer("public_sitemap_catalogs")).doc("site").collection("parts")
+  const partsSnapshot = await catalogs.doc("site").collection("parts")
     .orderBy("partNumber", "asc")
     .limit(manifest.partCount)
     .get();

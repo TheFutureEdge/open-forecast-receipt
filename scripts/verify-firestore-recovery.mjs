@@ -14,9 +14,9 @@ const hash = value => createHash("sha256").update(canonicalize(value)).digest("h
 const assert = (test, message) => { if (!test) throw new Error(message); };
 const sourceCollections = (await source.listCollections()).map(ref => ref.id).sort();
 const restoredCollections = (await restored.listCollections()).map(ref => ref.id).sort();
-// Run before any new source publication. Names are inventory only; content is
-// always read at the clone's exact snapshot time.
-assert(JSON.stringify(sourceCollections) === JSON.stringify(restoredCollections), "Top-level collection inventory differs");
+// Include names on either side. A collection created after the snapshot is
+// correctly empty at readTime and must also be absent from the restored copy.
+const collections = [...new Set([...sourceCollections, ...restoredCollections])].sort();
 const revisions = new Map();
 const receiptIds = new Set();
 const forecastResolvers = new Map();
@@ -52,7 +52,7 @@ async function inventory(db, name, pointInTime, group = false) {
   return { documents: count, sha256: digest.digest("hex") };
 }
 const inventories = {};
-for (const name of [...sourceCollections, "parts"]) {
+for (const name of [...collections, "parts"]) {
   const group = name === "parts";
   const [original, recovered] = await Promise.all([inventory(source, name, true, group), inventory(restored, name, false, group)]);
   assert(original.documents === recovered.documents && original.sha256 === recovered.sha256, `Recovery content mismatch: ${name}`);

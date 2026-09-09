@@ -167,17 +167,18 @@ function publicManifestEntity(record, publicEntity) {
 const targetProject = argumentValue("--project") || DEFAULT_TARGET_PROJECT;
 const apply = process.argv.includes("--apply");
 const db = getServerFirestore(targetProject);
-const expectedPointer = await db.doc("public_catalog_state/current").get();
-
-const [entitySnapshot, collectionSnapshot, collectionEntitySnapshot, forecastSnapshot, forecasterSnapshot, publisherSnapshot, targetSnapshot] = await Promise.all([
-  db.collection("public_entities").get(),
-  db.collection("public_collections").get(),
-  db.collection("public_collection_entities").get(),
-  db.collection("public_forecast_revisions").get(),
-  db.collection("public_forecasters").get(),
-  db.collection("public_publishers").get(),
-  db.collection("public_targets").get(),
-]);
+// Every input belongs to one consistent source snapshot, even if a publisher
+// writes new authoritative records while the derived generation is building.
+const [expectedPointer, entitySnapshot, collectionSnapshot, collectionEntitySnapshot, forecastSnapshot, forecasterSnapshot, publisherSnapshot, targetSnapshot] = await db.runTransaction(tx => Promise.all([
+  tx.get(db.doc("public_catalog_state/current")),
+  tx.get(db.collection("public_entities")),
+  tx.get(db.collection("public_collections")),
+  tx.get(db.collection("public_collection_entities")),
+  tx.get(db.collection("public_forecast_revisions")),
+  tx.get(db.collection("public_forecasters")),
+  tx.get(db.collection("public_publishers")),
+  tx.get(db.collection("public_targets")),
+]), { readOnly: true });
 assert(forecastSnapshot.size > 0, "Backfill immutable public_forecast_revisions before materializing catalogs");
 const existingTargets = new Map(targetSnapshot.docs.map((snapshot) => [snapshot.id, snapshot.data()]));
 

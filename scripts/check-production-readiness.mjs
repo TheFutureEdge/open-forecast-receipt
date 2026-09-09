@@ -69,7 +69,7 @@ check(materializer.includes("MAX_PUBLIC_CATALOG_BYTES = 650 * 1024"), "Catalogs 
 check(publisher.includes("MAX_PUBLIC_CATALOG_BYTES = 650 * 1024") && entitySync.includes("MAX_PUBLIC_CATALOG_BYTES = 650 * 1024"), "All publisher paths enforce the same catalog ceiling");
 check(materializer.includes('collectionName: "public_entity_forecast_catalogs"'), "Collection/entity forecast catalogs are materialized");
 check(materializer.includes('collectionName: "public_entity_forecast_ledgers"'), "Cross-collection entity ledgers are materialized");
-check(materializer.includes('db.collection("public_forecast_revisions").get()') && !materializer.includes('collectionName: "public_forecast_resolvers"'), "Catalog rebuilds read immutable revisions without rewriting permanent resolvers");
+check(materializer.includes('tx.get(db.collection("public_forecast_revisions"))') && !materializer.includes('collectionName: "public_forecast_resolvers"'), "Catalog rebuilds read immutable revisions without rewriting permanent resolvers");
 check(materializer.includes('collectionName: "public_sitemap_catalogs"'), "Bounded sitemap catalogs are materialized");
 
 check(sitemap.includes('dynamic = "force-dynamic"') && sitemap.includes("listPublicSitemapEntriesServer"), "Sitemap is SSR from bounded catalogs");

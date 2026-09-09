@@ -32,7 +32,7 @@ public_catalog_generations/{generationId}
   public_sitemap_catalogs/site/parts/{partId}
 ```
 
-The materializer captures the active pointer before reading source records,
+The materializer reads the active pointer and source records in one consistent read-only transaction,
 creates a unique generation, writes every document, then reads every document
 back and compares canonical SHA-256 hashes. Only a successful build becomes
 `ready`. A transaction switches the single active pointer and rejects concurrent
@@ -90,7 +90,7 @@ Wait for the clone operation to finish before validation. The verifier compares
 all top-level collections and the `parts` collection group against the original
 snapshot, recomputes each receipt payload digest, and checks every immutable
 revision against both permanent resolvers. It prints counts and hashes only.
-Run before resuming source publication so collection-name inventories align.
+Source comparisons use the exact snapshot time even if later data is published.
 
 Run the application locally with the server-only `FIRESTORE_DATABASE_ID` set
 to the restored database and check catalog pages, long and short forecast URLs,

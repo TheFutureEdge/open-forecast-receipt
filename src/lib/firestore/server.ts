@@ -29,6 +29,6 @@ export function getLibraryServerFirestore(): Firestore {
   // Firestore, so avoid pulling the broader Firebase Admin surface into SSR.
   // SSR uses finite reads, not realtime listeners. REST also avoids loading
   // the gRPC transport for the public request path.
-  firestore = new Firestore({ projectId, preferRest: true });
+  firestore = new Firestore({ projectId, databaseId: process.env.FIRESTORE_DATABASE_ID || "(default)", preferRest: true });
   return firestore;
 }

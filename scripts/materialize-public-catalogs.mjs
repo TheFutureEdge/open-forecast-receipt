@@ -3,7 +3,7 @@
 import process from "node:process";
 import { buildForecastLedgerCatalogParts } from "./lib/forecast-ledger-catalog.mjs";
 import { getServerFirestore } from "./lib/firestore-client.mjs";
-import { checkedBulkWrite } from "./lib/checked-bulk-write.mjs";
+import { publishCatalogGeneration } from "./lib/catalog-generation.mjs";
 import { ipulseCollectionPresentation } from "./lib/ipulse-collection-presentation.mjs";
 
 const DEFAULT_TARGET_PROJECT = "oflapp-staging";
@@ -167,6 +167,7 @@ function publicManifestEntity(record, publicEntity) {
 const targetProject = argumentValue("--project") || DEFAULT_TARGET_PROJECT;
 const apply = process.argv.includes("--apply");
 const db = getServerFirestore(targetProject);
+const expectedPointer = await db.doc("public_catalog_state/current").get();
 
 const [entitySnapshot, collectionSnapshot, collectionEntitySnapshot, forecastSnapshot, forecasterSnapshot, publisherSnapshot, targetSnapshot] = await Promise.all([
   db.collection("public_entities").get(),
@@ -489,41 +490,16 @@ for (const [index, entries] of sitemapGroups.entries()) {
 }
 
 let writeCount = 0;
-let deleteCount = 0;
+const deleteCount = 0;
+let generation = null;
 if (apply) {
   assert(process.env.OFR_CONFIRM_FIRESTORE_PROJECT === targetProject, "Set OFR_CONFIRM_FIRESTORE_PROJECT to the exact target project before --apply");
-  await checkedBulkWrite(db, planned.map((item) => ({
-    kind: "set", reference: db.collection(item.collectionName).doc(item.documentId), value: item.value,
-  })));
+  generation = await publishCatalogGeneration(db, planned, {
+    expectedPointer,
+    generationId: argumentValue("--generation"),
+    activate: !process.argv.includes("--stage-only"),
+  });
   writeCount = planned.length;
-  // Never remove old parts until every replacement write has succeeded.
-  const obsoleteParts = [];
-  const ledgerEntityIds = [...new Set(forecasts.map((forecast) => forecast.entityId))];
-  for (let offset = 0; offset < ledgerEntityIds.length; offset += 8) {
-    await Promise.all(ledgerEntityIds.slice(offset, offset + 8).map(async (entityId) => {
-    const collectionName = `public_entity_forecast_ledgers/${entityId}/parts`;
-    const plannedPartIds = new Set(planned
-      .filter((item) => item.collectionName === collectionName)
-      .map((item) => item.documentId));
-    const existingParts = await db.collection(collectionName).get();
-    for (const existingPart of existingParts.docs) {
-      if (!plannedPartIds.has(existingPart.id)) {
-        obsoleteParts.push({ kind: "delete", reference: existingPart.ref });
-      }
-    }
-    }));
-  }
-  const plannedSitemapPartIds = new Set(planned
-    .filter((item) => item.collectionName === "public_sitemap_catalogs/site/parts")
-    .map((item) => item.documentId));
-  const existingSitemapParts = await db.collection("public_sitemap_catalogs/site/parts").get();
-  for (const existingPart of existingSitemapParts.docs) {
-    if (!plannedSitemapPartIds.has(existingPart.id)) {
-      obsoleteParts.push({ kind: "delete", reference: existingPart.ref });
-    }
-  }
-  await checkedBulkWrite(db, obsoleteParts);
-  deleteCount = obsoleteParts.length;
 }
 
 function reportCollectionName(collectionName) {
@@ -563,4 +539,5 @@ console.log(JSON.stringify({
   byCollection,
   writeCount,
   deleteCount,
+  generation,
 }, null, 2));

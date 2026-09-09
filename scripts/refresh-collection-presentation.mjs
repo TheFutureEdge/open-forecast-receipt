@@ -6,6 +6,7 @@ const apply = process.argv.includes("--apply");
 if (!["oflapp-staging", "oflapp-prod"].includes(project)) throw new Error("Specify an approved Forecast Library project");
 if (apply && process.env.OFR_CONFIRM_FIRESTORE_PROJECT !== project) throw new Error("Confirm the exact target project");
 const db = getServerFirestore(project);
+if ((await db.doc("public_catalog_state/current").get()).exists) throw new Error("Catalog generations are enabled; use materialize-public-catalogs.mjs to publish presentation changes atomically");
 const [collections, revisions, subjects] = await Promise.all([
   db.collection("public_collections").get(),
   db.collection("public_forecast_revisions").select("collectionId", "forecastCreatedAt", "subjectCategory", "entityId").get(),

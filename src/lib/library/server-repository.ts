@@ -1,4 +1,5 @@
 import "server-only";
+import { getCatalogCollectionServer, getCatalogGenerationServer } from "./catalog-server";
 import { publicForecastOriginalSource } from "./entityRoutes";
 import { ipulsePublisherForIssuer } from "../publishers/ipulse";
 
@@ -69,7 +70,7 @@ function publicEntityDirectoryItem(entity: PublicEntityRecord): PublicEntityDire
 }
 
 async function readEntityDirectoryCatalog(catalogId: "forecast-subjects" | "organizations"): Promise<PublicEntityDirectoryItem[] | null> {
-  const snapshot = await getLibraryServerFirestore().collection("public_entity_directory_catalogs").doc(catalogId).get();
+  const snapshot = await (await getCatalogCollectionServer("public_entity_directory_catalogs")).doc(catalogId).get();
   return snapshot.exists ? (snapshot.data() as PublicEntityDirectoryCatalogRecord).entities : null;
 }
 
@@ -97,8 +98,7 @@ export function listPublicOrganizationsServer(): Promise<PublicEntityDirectoryIt
 }
 
 export async function getPublicLibraryLandingMetricsServer(): Promise<PublicLibraryLandingMetrics> {
-  const db = getLibraryServerFirestore();
-  const statsSnapshot = await db.collection("public_library_stats").doc("summary").get().catch(() => null);
+  const statsSnapshot = await (await getCatalogCollectionServer("public_library_stats")).doc("summary").get().catch(() => null);
   if (statsSnapshot?.exists) {
     const stats = statsSnapshot.data() as PublicLibraryStatsRecord;
     return {
@@ -112,8 +112,8 @@ export async function getPublicLibraryLandingMetricsServer(): Promise<PublicLibr
   }
   if (isProductionDeployment()) throw new Error("Required production library statistics are missing");
   const [collectionSnapshot, forecasterCountSnapshot] = await Promise.all([
-    db.collection("public_collections").doc("batch-6").get(),
-    db.collection("public_forecasters").count().get(),
+    (await getCatalogCollectionServer("public_collections")).doc("batch-6").get(),
+    (await getCatalogCollectionServer("public_forecasters")).count().get(),
   ]);
   const collection = collectionSnapshot.exists
     ? collectionSnapshot.data() as PublicCollectionRecord
@@ -129,7 +129,7 @@ export async function getPublicLibraryLandingMetricsServer(): Promise<PublicLibr
 }
 
 export async function listPublicForecastersServer(): Promise<PublicForecasterRecord[]> {
-  const snapshot = await getLibraryServerFirestore().collection("public_forecasters").get();
+  const snapshot = await (await getCatalogCollectionServer("public_forecasters")).get();
   return snapshot.docs
     .map((document) => document.data() as PublicForecasterRecord)
     .sort((left, right) => left.displayName.localeCompare(right.displayName));
@@ -141,8 +141,7 @@ export async function listPublicForecastsServer(): Promise<PublicForecastRecord[
 }
 
 export async function getPublicForecasterCatalogServer(): Promise<PublicForecasterCatalogRecord> {
-  const db = getLibraryServerFirestore();
-  const catalog = await db.collection("public_forecaster_catalogs").doc("active").get().catch(() => null);
+  const catalog = await (await getCatalogCollectionServer("public_forecaster_catalogs")).doc("active").get().catch(() => null);
   if (catalog?.exists) {
     const record = catalog.data() as PublicForecasterCatalogRecord;
     return {
@@ -170,10 +169,9 @@ export async function getPublicForecasterCatalogServer(): Promise<PublicForecast
 }
 
 export async function getPublicForecasterServer(routeKey: string): Promise<PublicForecasterRecord | null> {
-  const db = getLibraryServerFirestore();
-  const direct = await db.collection("public_forecasters").doc(routeKey).get();
+  const direct = await (await getCatalogCollectionServer("public_forecasters")).doc(routeKey).get();
   if (direct.exists) return direct.data() as PublicForecasterRecord;
-  const bySlug = await db.collection("public_forecasters").where("publicSlug", "==", routeKey).limit(1).get();
+  const bySlug = await (await getCatalogCollectionServer("public_forecasters")).where("publicSlug", "==", routeKey).limit(1).get();
   if (!bySlug.empty) return bySlug.docs[0].data() as PublicForecasterRecord;
   const catalog = await getPublicForecasterCatalogServer();
   return catalog.forecasters.find((forecaster) => (
@@ -183,7 +181,7 @@ export async function getPublicForecasterServer(routeKey: string): Promise<Publi
 }
 
 export async function getPublicTargetServer(routeKey: string): Promise<PublicTargetRecord | null> {
-  const snapshot = await getLibraryServerFirestore().collection("public_targets").doc(routeKey).get();
+  const snapshot = await (await getCatalogCollectionServer("public_targets")).doc(routeKey).get();
   return snapshot.exists ? snapshot.data() as PublicTargetRecord : null;
 }
 
@@ -206,7 +204,7 @@ export async function getPublicPublisherServer(routeKey: string): Promise<Public
 }
 
 export async function listPublicTargetsServer(): Promise<PublicTargetRecord[]> {
-  const snapshot = await getLibraryServerFirestore().collection("public_targets").get();
+  const snapshot = await (await getCatalogCollectionServer("public_targets")).get();
   return snapshot.docs.map((document) => document.data() as PublicTargetRecord)
     .sort((left, right) => left.name.localeCompare(right.name));
 }
@@ -222,7 +220,7 @@ export async function listPublicPublishersServer(): Promise<PublicPublisherRecor
 }
 
 export async function listPublicCollectionsServer(): Promise<PublicCollectionRecord[]> {
-  const snapshot = await getLibraryServerFirestore().collection("public_collections").get();
+  const snapshot = await (await getCatalogCollectionServer("public_collections")).get();
   return snapshot.docs.map((document) => {
     const collection = document.data() as PublicCollectionRecord;
     const date = collection.publishedAt.slice(0, 10);
@@ -301,7 +299,7 @@ export async function getPublicReceiptResolverServer(receiptDigest: string): Pro
 
 export async function listPublicForecastStatsByEntityServer(): Promise<Map<string, PublicForecastEntityStats>> {
   const db = getLibraryServerFirestore();
-  const catalogSnapshots = await db.collection("public_collection_catalogs").get().catch(() => null);
+  const catalogSnapshots = await (await getCatalogCollectionServer("public_collection_catalogs")).get().catch(() => null);
   if (catalogSnapshots && !catalogSnapshots.empty) {
     const stats = new Map<string, PublicForecastEntityStats>();
     for (const snapshot of catalogSnapshots.docs) {
@@ -324,7 +322,7 @@ export async function listPublicForecastStatsByEntityServer(): Promise<Map<strin
 
   const [entitySnapshots, collectionSnapshots] = await Promise.all([
     db.collection("public_collection_entities").get(),
-    db.collection("public_collections").get(),
+    (await getCatalogCollectionServer("public_collections")).get(),
   ]);
   const activity = new Map<string, string>();
   for (const snapshot of collectionSnapshots.docs) {
@@ -386,12 +384,12 @@ export async function listEntityCollectionsServer(entityId: string): Promise<Pub
 
 export async function getLibraryManifestServer(collectionId: string): Promise<LibraryManifest | null> {
   const db = getLibraryServerFirestore();
-  const catalog = await db.collection("public_collection_catalogs").doc(collectionId).get().catch(() => null);
+  const catalog = await (await getCatalogCollectionServer("public_collection_catalogs")).doc(collectionId).get().catch(() => null);
   if (catalog?.exists) return (catalog.data() as PublicCollectionCatalogRecord).manifest;
   if (isProductionDeployment()) throw new Error(`Required production collection catalog ${collectionId} is missing`);
 
   const [collection, collectionEntities, publicEntities] = await Promise.all([
-    db.collection("public_collections").doc(collectionId).get(),
+    (await getCatalogCollectionServer("public_collections")).doc(collectionId).get(),
     db.collection("public_collection_entities").where("collectionId", "==", collectionId).get(),
     db.collection("public_entities").where("entityClasses", "array-contains", "forecastable_entity").get(),
   ]);
@@ -435,7 +433,7 @@ export async function getLibraryEntityServer(collectionId: string, routeSlug: st
 
 export async function listLibraryForecastsServer(collectionId: string, entityId: string): Promise<PublicForecastRecord[]> {
   const db = getLibraryServerFirestore();
-  const catalog = await db.collection("public_entity_forecast_catalogs").doc(`${collectionId}__${entityId}`).get().catch(() => null);
+  const catalog = await (await getCatalogCollectionServer("public_entity_forecast_catalogs")).doc(`${collectionId}__${entityId}`).get().catch(() => null);
   if (catalog?.exists) {
     return [...(catalog.data() as PublicEntityForecastCatalogRecord).forecasts]
       .sort((left, right) => left.sortOrder - right.sortOrder);
@@ -458,7 +456,8 @@ function sortForecasts(forecasts: PublicForecastRecord[]): PublicForecastRecord[
 
 export async function listLibraryForecastLedgerPageServer(entityId: string, beforePartNumber?: number): Promise<PublicForecastLedgerPage> {
   const db = getLibraryServerFirestore();
-  let partsQuery = db.collection("public_entity_forecast_ledgers").doc(entityId).collection("parts")
+  const catalogGenerationId = await getCatalogGenerationServer();
+  let partsQuery = (await getCatalogCollectionServer("public_entity_forecast_ledgers", catalogGenerationId)).doc(entityId).collection("parts")
     .orderBy("partNumber", "desc");
   if (beforePartNumber !== undefined) partsQuery = partsQuery.where("partNumber", "<", beforePartNumber);
   const partSnapshots = await partsQuery.limit(2).get().catch(() => null);
@@ -468,6 +467,7 @@ export async function listLibraryForecastLedgerPageServer(entityId: string, befo
     const partNumbers = parts.map((part) => part.partNumber).sort((left, right) => right - left);
     const oldest = Math.min(...partNumbers);
     return {
+      catalogGenerationId,
       forecasts,
       partNumbers,
       hasOlderParts: oldest > 1,
@@ -477,18 +477,18 @@ export async function listLibraryForecastLedgerPageServer(entityId: string, befo
     };
   }
   if (beforePartNumber !== undefined) {
-    return { forecasts: [], partNumbers: [], hasOlderParts: false, totalForecastCount: 0, source: "parts" };
+    return { catalogGenerationId, forecasts: [], partNumbers: [], hasOlderParts: false, totalForecastCount: 0, source: "parts" };
   }
   if (isProductionDeployment()) throw new Error(`Required production forecast ledger ${entityId} is missing`);
-  const legacy = await db.collection("public_entity_forecast_ledgers").doc(entityId).get().catch(() => null);
+  const legacy = await (await getCatalogCollectionServer("public_entity_forecast_ledgers")).doc(entityId).get().catch(() => null);
   if (legacy?.exists && Array.isArray((legacy.data() as PublicEntityForecastLedgerCatalogRecord).forecasts)) {
     const record = legacy.data() as PublicEntityForecastLedgerCatalogRecord;
     const forecasts = sortForecasts(record.forecasts);
-    return { forecasts, partNumbers: [], hasOlderParts: false, totalForecastCount: record.forecastCount || forecasts.length, source: "legacy_catalog" };
+    return { catalogGenerationId, forecasts, partNumbers: [], hasOlderParts: false, totalForecastCount: record.forecastCount || forecasts.length, source: "legacy_catalog" };
   }
   const snapshot = await db.collection("public_forecasts").where("entityId", "==", entityId).get();
   const forecasts = sortForecasts(snapshot.docs.map((document) => document.data() as PublicForecastRecord));
-  return { forecasts, partNumbers: [], hasOlderParts: false, totalForecastCount: forecasts.length, source: "documents" };
+  return { catalogGenerationId, forecasts, partNumbers: [], hasOlderParts: false, totalForecastCount: forecasts.length, source: "documents" };
 }
 
 export async function getLibraryReceiptServer(receiptDigest: string): Promise<LibraryReceipt | null> {
@@ -505,14 +505,13 @@ export async function getLibraryReceiptServer(receiptDigest: string): Promise<Li
 
 /** Read the small, materialized sitemap index instead of listing thousands of forecasts. */
 export async function listPublicSitemapEntriesServer(): Promise<PublicSitemapEntry[]> {
-  const db = getLibraryServerFirestore();
-  const manifestSnapshot = await db.collection("public_sitemap_catalogs").doc("site").get().catch(() => null);
+  const manifestSnapshot = await (await getCatalogCollectionServer("public_sitemap_catalogs")).doc("site").get().catch(() => null);
   if (!manifestSnapshot?.exists) {
     if (isProductionDeployment()) throw new Error("Required production sitemap catalog is missing");
     return [];
   }
   const manifest = manifestSnapshot.data() as PublicSitemapCatalogManifestRecord;
-  const partsSnapshot = await db.collection("public_sitemap_catalogs").doc("site").collection("parts")
+  const partsSnapshot = await (await getCatalogCollectionServer("public_sitemap_catalogs")).doc("site").collection("parts")
     .orderBy("partNumber", "asc")
     .limit(manifest.partCount)
     .get();

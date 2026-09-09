@@ -1,3 +1,4 @@
+import { getCatalogCollectionClient, getCatalogGenerationClient } from "./catalog-client";
 import {
   collection,
   doc,
@@ -30,7 +31,7 @@ import { publicEntitySlug } from "./entityRoutes";
 import type { PublicEntityRouteKind } from "./entityRoutes";
 
 export async function listPublicForecasters(): Promise<PublicForecasterRecord[]> {
-  const snapshots = await getDocs(collection(getLibraryFirestore(), "public_forecasters"));
+  const snapshots = await getDocs((await getCatalogCollectionClient("public_forecasters")));
   return snapshots.docs
     .map((snapshot) => snapshot.data() as PublicForecasterRecord)
     .sort((left, right) => left.displayName.localeCompare(right.displayName));
@@ -43,7 +44,7 @@ export async function listPublicForecasts(): Promise<PublicForecastRecord[]> {
 
 async function readEntityDirectoryCatalog(catalogId: "forecast-subjects" | "organizations"): Promise<PublicEntityDirectoryItem[] | null> {
   try {
-    const snapshot = await getDoc(doc(getLibraryFirestore(), "public_entity_directory_catalogs", catalogId));
+    const snapshot = await getDoc(doc(await getCatalogCollectionClient("public_entity_directory_catalogs"), catalogId));
     if (!snapshot.exists()) return null;
     return (snapshot.data() as PublicEntityDirectoryCatalogRecord).entities;
   } catch {
@@ -117,7 +118,7 @@ export interface PublicForecastEntityStats {
 /** Aggregate active receipt counts and the newest public collection activity for each entity. */
 export async function listPublicForecastStatsByEntity(): Promise<Map<string, PublicForecastEntityStats>> {
   const db = getLibraryFirestore();
-  const catalogSnapshots = await getDocs(collection(db, "public_collection_catalogs")).catch(() => null);
+  const catalogSnapshots = await getDocs((await getCatalogCollectionClient("public_collection_catalogs"))).catch(() => null);
   if (catalogSnapshots && !catalogSnapshots.empty) {
     const stats = new Map<string, PublicForecastEntityStats>();
     for (const snapshot of catalogSnapshots.docs) {
@@ -137,7 +138,7 @@ export async function listPublicForecastStatsByEntity(): Promise<Map<string, Pub
   }
   const [entitySnapshots, collectionSnapshots] = await Promise.all([
     getDocs(collection(db, "public_collection_entities")),
-    getDocs(collection(db, "public_collections")),
+    getDocs((await getCatalogCollectionClient("public_collections"))),
   ]);
   const collectionActivity = new Map<string, string>();
   for (const snapshot of collectionSnapshots.docs) {
@@ -204,10 +205,10 @@ function collectionEntityDocumentId(collectionId: string, routeSlug: string): st
 
 export async function getLibraryManifest(collectionId: string): Promise<LibraryManifest | null> {
   const db = getLibraryFirestore();
-  const catalogSnapshot = await getDoc(doc(db, "public_collection_catalogs", collectionId)).catch(() => null);
+  const catalogSnapshot = await getDoc(doc(await getCatalogCollectionClient("public_collection_catalogs"), collectionId)).catch(() => null);
   if (catalogSnapshot?.exists()) return (catalogSnapshot.data() as PublicCollectionCatalogRecord).manifest;
   const [collectionSnapshot, entitySnapshots, publicEntitySnapshots] = await Promise.all([
-    getDoc(doc(db, "public_collections", collectionId)),
+    getDoc(doc(await getCatalogCollectionClient("public_collections"), collectionId)),
     getDocs(query(collection(db, "public_collection_entities"), where("collectionId", "==", collectionId))),
     getDocs(query(collection(db, "public_entities"), where("entityClasses", "array-contains", "forecastable_entity"))),
   ]);
@@ -266,7 +267,7 @@ export async function listLibraryForecasts(
   entityId: string,
 ): Promise<PublicForecastRecord[]> {
   const db = getLibraryFirestore();
-  const catalogSnapshot = await getDoc(doc(db, "public_entity_forecast_catalogs", `${collectionId}__${entityId}`)).catch(() => null);
+  const catalogSnapshot = await getDoc(doc(await getCatalogCollectionClient("public_entity_forecast_catalogs"), `${collectionId}__${entityId}`)).catch(() => null);
   if (catalogSnapshot?.exists()) {
     return [...(catalogSnapshot.data() as PublicEntityForecastCatalogRecord).forecasts]
       .sort((left, right) => left.sortOrder - right.sortOrder);
@@ -282,6 +283,7 @@ export async function listLibraryForecasts(
 }
 
 export interface PublicForecastLedgerPage {
+  catalogGenerationId?: string | null;
   forecasts: PublicForecastRecord[];
   partNumbers: number[];
   hasOlderParts: boolean;
@@ -314,29 +316,33 @@ function mergeForecastLedgerAggregate(entityId: string, forecasts: PublicForecas
  * with forecast time, so the initial screen always includes both a newly
  * opened sparse part and the preceding populated part.
  */
-export function listLibraryForecastLedgerPage(
+export async function listLibraryForecastLedgerPage(
   entityId: string,
   beforePartNumber?: number,
+  requestedGenerationId?: string | null,
 ): Promise<PublicForecastLedgerPage> {
-  const cacheKey = `${entityId}:${beforePartNumber ?? "latest"}`;
+  const catalogGenerationId = requestedGenerationId === undefined ? await getCatalogGenerationClient() : requestedGenerationId;
+  const aggregateKey = `${catalogGenerationId ?? "legacy"}:${entityId}`;
+  const cacheKey = `${aggregateKey}:${beforePartNumber ?? "latest"}`;
   const cached = forecastLedgerPageCache.get(cacheKey);
   if (cached) return cached;
 
   const request = (async () => {
     const db = getLibraryFirestore();
-    const partsCollection = collection(db, "public_entity_forecast_ledgers", entityId, "parts");
+    const partsCollection = collection(doc(await getCatalogCollectionClient("public_entity_forecast_ledgers", catalogGenerationId), entityId), "parts");
     const partQuery = beforePartNumber === undefined
       ? query(partsCollection, orderBy("partNumber", "desc"), limit(2))
       : query(partsCollection, where("partNumber", "<", beforePartNumber), orderBy("partNumber", "desc"), limit(2));
-    const partSnapshots = await getDocs(partQuery).catch(() => null);
+    const partSnapshots = await getDocs(partQuery);
 
     if (partSnapshots && !partSnapshots.empty) {
       const parts = partSnapshots.docs.map((snapshot) => snapshot.data() as PublicEntityForecastLedgerPartRecord);
       const forecasts = sortForecasts(parts.flatMap((part) => part.forecasts));
-      mergeForecastLedgerAggregate(entityId, forecasts);
+      mergeForecastLedgerAggregate(aggregateKey, forecasts);
       const partNumbers = parts.map((part) => part.partNumber).sort((left, right) => right - left);
       const oldestLoadedPart = Math.min(...partNumbers);
       return {
+        catalogGenerationId,
         forecasts,
         partNumbers,
         hasOlderParts: oldestLoadedPart > 1,
@@ -348,23 +354,27 @@ export function listLibraryForecastLedgerPage(
 
     if (beforePartNumber !== undefined) {
       return {
+        catalogGenerationId,
         forecasts: [],
         partNumbers: [],
         hasOlderParts: false,
-        totalForecastCount: forecastLedgerAggregateCache.get(entityId)?.length || 0,
+        totalForecastCount: forecastLedgerAggregateCache.get(aggregateKey)?.length || 0,
         source: "parts" as const,
       };
     }
 
+    if (catalogGenerationId !== null) throw new Error(`Required forecast ledger ${entityId} is missing`);
+
     // Transitional compatibility while v0.2 part catalogs are promoted.
-    const legacySnapshot = await getDoc(doc(db, "public_entity_forecast_ledgers", entityId)).catch(() => null);
+    const legacySnapshot = await getDoc(doc(await getCatalogCollectionClient("public_entity_forecast_ledgers", catalogGenerationId), entityId)).catch(() => null);
     const legacy = legacySnapshot?.exists()
       ? legacySnapshot.data() as PublicEntityForecastLedgerCatalogRecord
       : null;
     if (legacy && Array.isArray(legacy.forecasts)) {
       const forecasts = sortForecasts(legacy.forecasts);
-      mergeForecastLedgerAggregate(entityId, forecasts);
+      mergeForecastLedgerAggregate(aggregateKey, forecasts);
       return {
+        catalogGenerationId,
         forecasts,
         partNumbers: [],
         hasOlderParts: false,
@@ -378,8 +388,9 @@ export function listLibraryForecastLedgerPage(
       where("entityId", "==", entityId),
     ));
     const forecasts = sortForecasts(snapshots.docs.map((snapshot) => snapshot.data() as PublicForecastRecord));
-    mergeForecastLedgerAggregate(entityId, forecasts);
+    mergeForecastLedgerAggregate(aggregateKey, forecasts);
     return {
+      catalogGenerationId,
       forecasts,
       partNumbers: [],
       hasOlderParts: false,
@@ -395,12 +406,13 @@ export function listLibraryForecastLedgerPage(
 
 /** Read the newest ledger window plus any older catalog pages already loaded in this browser session. */
 export async function listLibraryForecastLedger(entityId: string): Promise<PublicForecastRecord[]> {
-  await listLibraryForecastLedgerPage(entityId);
-  return forecastLedgerAggregateCache.get(entityId) || [];
+  const page = await listLibraryForecastLedgerPage(entityId);
+  return forecastLedgerAggregateCache.get(`${page.catalogGenerationId ?? "legacy"}:${entityId}`) || [];
 }
 
 export function getLoadedLibraryForecastLedger(entityId: string): PublicForecastRecord[] {
-  return forecastLedgerAggregateCache.get(entityId) || [];
+  // Only an opportunistic lookup for immutable revision navigation.
+  return [...forecastLedgerAggregateCache.entries()].filter(([key]) => key.endsWith(`:${entityId}`)).flatMap(([, records]) => records);
 }
 
 export async function getLibraryReceipt(receiptDigest: string): Promise<LibraryReceipt | null> {

@@ -2,6 +2,32 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    match /public_catalog_state/current {
+      allow get: if true;
+      allow list, write: if false;
+    }
+
+    // Incomplete builds are private. Retained ready versions remain readable
+    // so a visitor can finish paging the version rendered by the server.
+    match /public_catalog_generations/{generationId}/{catalog}/{documentId} {
+      function ready() {
+        return get(/databases/$(database)/documents/public_catalog_generations/$(generationId)).data.status == 'ready';
+      }
+      allow get: if ready() && catalog in [
+        'public_collections', 'public_targets', 'public_forecasters',
+        'public_collection_catalogs', 'public_entity_directory_catalogs',
+        'public_entity_forecast_catalogs', 'public_entity_forecast_ledgers',
+        'public_forecaster_catalogs', 'public_library_stats'
+      ];
+      allow list, write: if false;
+      match /parts/{partId} {
+        allow get: if ready() && catalog == 'public_entity_forecast_ledgers';
+        allow list: if ready() && catalog == 'public_entity_forecast_ledgers'
+          && request.query.limit != null && request.query.limit <= 2;
+        allow write: if false;
+      }
+    }
+
     // Public Library records live in dedicated public namespaces. The browser
     // can read them anonymously, but no web or mobile client can create,
     // update, or delete them. Controlled publishers use the Admin SDK and IAM.

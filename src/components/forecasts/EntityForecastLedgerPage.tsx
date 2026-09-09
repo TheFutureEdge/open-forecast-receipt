@@ -95,6 +95,7 @@ function firstGenerationTime(forecasts: PublicForecastRecord[]): string | undefi
 }
 
 export interface EntityForecastLedgerInitialData {
+  catalogGenerationId?: string | null;
   entity: PublicEntityRecord | null;
   memberships: PublicCollectionEntityRecord[];
   forecasts: PublicForecastRecord[];
@@ -104,6 +105,7 @@ export interface EntityForecastLedgerInitialData {
 }
 
 export function EntityForecastLedgerPage({ routeSlug, initialData }: { routeSlug: string; initialData?: EntityForecastLedgerInitialData }) {
+  const [catalogGenerationId, setCatalogGenerationId] = useState<string | null | undefined>(initialData ? initialData.catalogGenerationId ?? null : undefined);
   const [entity, setEntity] = useState<PublicEntityRecord | null>(initialData?.entity || null);
   const [memberships, setMemberships] = useState<PublicCollectionEntityRecord[]>(initialData?.memberships || []);
   const [forecastRecords, setForecastRecords] = useState<PublicForecastRecord[]>(initialData?.forecasts || []);
@@ -117,6 +119,7 @@ export function EntityForecastLedgerPage({ routeSlug, initialData }: { routeSlug
 
   useEffect(() => {
     if (initialData) {
+      setCatalogGenerationId(initialData.catalogGenerationId ?? null);
       setEntity(initialData.entity);
       setMemberships(initialData.memberships);
       setForecastRecords(initialData.forecasts);
@@ -156,6 +159,7 @@ export function EntityForecastLedgerPage({ routeSlug, initialData }: { routeSlug
         if ("ledgerPage" in result && result.ledgerPage) {
           setForecastRecords(result.ledgerPage.forecasts);
           setForecastTotalCount(result.ledgerPage.totalForecastCount);
+          setCatalogGenerationId(result.ledgerPage.catalogGenerationId);
           setNextBeforePartNumber(result.ledgerPage.nextBeforePartNumber);
           setHasOlderCatalogParts(result.ledgerPage.hasOlderParts);
         }
@@ -198,7 +202,7 @@ export function EntityForecastLedgerPage({ routeSlug, initialData }: { routeSlug
     if (!entity || !hasOlderCatalogParts || nextBeforePartNumber === undefined || loadingOlder) return;
     setLoadingOlder(true);
     try {
-      const page = await listLibraryForecastLedgerPage(entity.entityId, nextBeforePartNumber);
+      const page = await listLibraryForecastLedgerPage(entity.entityId, nextBeforePartNumber, catalogGenerationId);
       setForecastRecords((current) => {
         const records = new Map(current.map((forecast) => [forecast.receiptDigest || forecast.forecastId, forecast]));
         for (const forecast of page.forecasts) records.set(forecast.receiptDigest || forecast.forecastId, forecast);

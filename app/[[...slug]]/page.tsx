@@ -415,6 +415,7 @@ async function resolveRoute(pathname: string): Promise<ReactNode> {
       memberships,
       forecasts: ledger.forecasts,
       totalForecastCount: ledger.totalForecastCount,
+      catalogGenerationId: ledger.catalogGenerationId,
       nextBeforePartNumber: ledger.nextBeforePartNumber,
       hasOlderParts: ledger.hasOlderParts,
     }} />;

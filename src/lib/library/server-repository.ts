@@ -1,5 +1,6 @@
 import "server-only";
 import { publicForecastOriginalSource } from "./entityRoutes";
+import { ipulsePublisherForIssuer } from "../publishers/ipulse";
 
 import { getLibraryServerFirestore } from "../firestore/server";
 import type {
@@ -493,8 +494,12 @@ export async function getLibraryReceiptServer(receiptDigest: string): Promise<Li
   const snapshot = await getLibraryServerFirestore().collection("public_receipts").doc(receiptDigest).get();
   if (!snapshot.exists) return null;
   const record = snapshot.data() as PublicReceiptRecord;
-  return { document: record.document, projection: record.projection, entityId: record.entityId, publisherId: record.publisherId,
-    originalSource: publicForecastOriginalSource(record.entitySlug, record) };
+  // Older receipt wrappers omitted browse metadata. Resolve publisher identity
+  // from the sealed issuer, never from a financial-looking subject or batch ID.
+  const publisherId = record.publisherId || ipulsePublisherForIssuer(record.document.receiptPayload.issuer.id);
+  const sourceRecord = { ...record, publisherId };
+  return { document: record.document, projection: record.projection, entityId: record.entityId, publisherId,
+    originalSource: publicForecastOriginalSource(record.entitySlug, sourceRecord) };
 }
 
 /** Read the small, materialized sitemap index instead of listing thousands of forecasts. */

@@ -2,9 +2,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const { firestore } = vi.hoisted(() => ({ firestore: { collection: vi.fn() } }));
 vi.mock("server-only", () => ({}));
 vi.mock("../../lib/firestore/server", () => ({ getLibraryServerFirestore: () => firestore }));
-import { getPublicForecastByPublicIdServer, getPublicReceiptResolverServer } from "../../lib/library/server-repository";
+import { getPublicForecastByPublicIdServer, getPublicReceiptResolverServer, getLibraryReceiptServer } from "../../lib/library/server-repository";
 afterEach(() => { vi.unstubAllEnvs(); vi.resetAllMocks(); });
 describe("stable forecast resolution", () => {
+  it("recovers old browse metadata only from the explicitly sealed publisher identity", async () => {
+    const record = { entityId: "equity_9bcb5738-6092-5a90-83b0-28f2be8172b2", entitySlug: "natera-ntra", collectionId: "batch-6", forecastCreatedAt: "2026-07-05T00:00:00Z",
+      document: { receiptPayload: { issuer: { id: "https://ipulseai.com" } } }, projection: {} };
+    firestore.collection.mockImplementation(() => ({ doc: () => ({ get: async () => ({ exists: true, data: () => record }) }) }));
+    expect((await getLibraryReceiptServer("digest"))?.originalSource?.url).toBe("https://ipulseai.com/stocks/natera-ntra/forecast-history/2026-07-05-sb6/ai-forecasts");
+    record.document.receiptPayload.issuer.id = "https://weather-lab.example";
+    expect((await getLibraryReceiptServer("digest"))?.originalSource).toBeUndefined();
+  });
   it("returns not-found for an unknown receipt digest and preserves infrastructure errors", async () => {
     vi.stubEnv("NEXT_PUBLIC_OFL_ENVIRONMENT", "production");
     firestore.collection.mockImplementation(() => ({ doc: () => ({ get: async () => ({ exists: false }) }) }));

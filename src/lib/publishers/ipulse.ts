@@ -3,6 +3,9 @@ import type { PublicForecastOriginalSource } from "../library/types";
 
 /** Publisher adapter only. These market paths are not Forecast Library taxonomy. */
 export const IPULSE_PUBLISHER_ID = "publisher_future_edge_ipulse_ai";
+export function ipulsePublisherForIssuer(issuerId: string): string | undefined {
+  return issuerId === "https://ipulseai.com" ? IPULSE_PUBLISHER_ID : undefined;
+}
 type SourceRecord = { publisherId?: string; entityId?: string; originalSource?: PublicForecastOriginalSource };
 export function isIpulseSource(record: SourceRecord): boolean {
   return record.publisherId === IPULSE_PUBLISHER_ID

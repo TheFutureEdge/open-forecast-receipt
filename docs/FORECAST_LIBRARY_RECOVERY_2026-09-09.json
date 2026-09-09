@@ -1,0 +1,302 @@
+{
+  "applicationCommit": "607ab464b0fa6c33cfd54d5ce1366ba6731e7a89",
+  "method": "Firestore PITR clone into an isolated named database",
+  "scheduledBackupRestoreClaimed": false,
+  "clone": {
+    "operation": "projects/oflapp-prod/databases/ofl-recovery-drill-20260909/operations/hzW-jMnhCIE5R9XEh-8q7xAqMWxhcnRuZWMtc3ULIgwQIRo",
+    "done": true,
+    "metadata": {
+      "@type": "type.googleapis.com/google.firestore.admin.v1.CloneDatabaseMetadata",
+      "startTime": "2026-09-09T18:39:55.168692Z",
+      "endTime": "2026-09-09T19:14:08.366433Z",
+      "operationState": "SUCCESSFUL",
+      "database": "projects/oflapp-prod/databases/ofl-recovery-drill-20260909",
+      "progressPercentage": {
+        "estimatedWork": "100",
+        "completedWork": "100"
+      },
+      "pitrSnapshot": {
+        "database": "projects/oflapp-prod/databases/(default)",
+        "snapshotTime": "2026-09-09T18:35:00Z"
+      }
+    }
+  },
+  "dataVerification": {
+    "projectId": "oflapp-prod",
+    "databaseId": "ofl-recovery-drill-20260909",
+    "snapshotTime": "2026-09-09T18:35:00Z",
+    "completedAt": "2026-09-09T19:24:07.522Z",
+    "inventories": {
+      "entities": {
+        "documents": 802,
+        "sha256": "9c384e017006b8dd40849f31c986585a5155b987a490968823311f0504387351"
+      },
+      "entity_aliases": {
+        "documents": 2410,
+        "sha256": "7fc53869930f9c2d69a981b4057c0297515c181c54f212429e74584b61c90e7e"
+      },
+      "entity_identifier_keys": {
+        "documents": 1394,
+        "sha256": "075549811f5b8bc36bd85bfaab426b1d0d599e9aaa14b92bd24d8e8e5beb8196"
+      },
+      "entity_identifiers": {
+        "documents": 5601,
+        "sha256": "fd367faf7a7287abe29f8fab29253e99c6db02ee6a0dd5199f15df60b4e20f8b"
+      },
+      "entity_relationships": {
+        "documents": 2020,
+        "sha256": "0b17a60e1e3d5c2c7ce9ff9ee60cae98016d72580b1365687f532171a50db8a3"
+      },
+      "entity_versions": {
+        "documents": 1561,
+        "sha256": "6f45ff1ab6e417b0343ee7fb0241d81f56f7d53eb18aaae0fdac0c6af37b8d43"
+      },
+      "proof_jobs": {
+        "documents": 6,
+        "sha256": "0945b03694b1d152ab4d220e922ccdc89df68383dd74c92daee9d27fef8ab4cb"
+      },
+      "public_catalog_generations": {
+        "documents": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "public_catalog_state": {
+        "documents": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "public_collection_catalogs": {
+        "documents": 1,
+        "sha256": "6d701de50e04ce8f52df75e49bfb025ecd8e03f79affcbed15826c2ea79a7269"
+      },
+      "public_collection_entities": {
+        "documents": 376,
+        "sha256": "8db768d54a99684a4c9d61c04e7f2dd76b8cbcab49d4c1cb693ace82d5f513a7"
+      },
+      "public_collections": {
+        "documents": 1,
+        "sha256": "721bb0c76ada69007106816cbaff08d96437f9d0777973ef4841255fb9459bc7"
+      },
+      "public_entities": {
+        "documents": 802,
+        "sha256": "38810be66238d2a289a7802f0ef2e8dbddd48f49a78b26f6f9022192beed5181"
+      },
+      "public_entity_directory_catalogs": {
+        "documents": 2,
+        "sha256": "6ef9802c80f3376539584d73eb788c75e69a73cfb913567363cc5d9ee327e16f"
+      },
+      "public_entity_forecast_catalogs": {
+        "documents": 376,
+        "sha256": "5a26ca3020716af3677e884a8e2f897e7bfd3931a35e8595b1ed2293af9a53c9"
+      },
+      "public_entity_forecast_ledgers": {
+        "documents": 376,
+        "sha256": "81b13ead80cb461059ce528818eb37060ee24b3b3d0d6fde999b04fdedee9abe"
+      },
+      "public_forecast_resolvers": {
+        "documents": 4511,
+        "sha256": "4928a2860ab02387809ac71b33ea4bb12a410b86be0b1b37a197f214d10bac24"
+      },
+      "public_forecast_revisions": {
+        "documents": 4511,
+        "sha256": "d30aee8d194c820722d659d73fdfeabd44629d57e0cf534072a208c3aa6f9be3"
+      },
+      "public_forecaster_catalogs": {
+        "documents": 1,
+        "sha256": "aca3b7b8c70fd001d9c040851313c41c42097b5149a87f14a271be40fd809bd1"
+      },
+      "public_forecasters": {
+        "documents": 8,
+        "sha256": "9d92df3557462e0b31e782e0c6b856410414070f4bcff80ec0ede1186b1a2b0c"
+      },
+      "public_forecasts": {
+        "documents": 4511,
+        "sha256": "ab014560d0e22c67c3b2e89e5afa9eac0ca59acd31638e40e0ee51498542cab5"
+      },
+      "public_library_stats": {
+        "documents": 1,
+        "sha256": "02c516dfbdf76b441e670f8edb3ddaebbe73b9d1d9259c4bc404ffdcf9c7970c"
+      },
+      "public_publishers": {
+        "documents": 1,
+        "sha256": "13784089bf7a9583bf9711ee01155055275ccfb6286d32cefd641a6d232bcf08"
+      },
+      "public_receipt_resolvers": {
+        "documents": 4511,
+        "sha256": "0e81120c8912d283e0a3ce74744dcf1ca82876f995941e4385d8cb8c96e8f8c3"
+      },
+      "public_receipts": {
+        "documents": 4511,
+        "sha256": "339281803506e7bc26eec08dc62e515fc3211412bb3bdfe81be94b4986c378d5"
+      },
+      "public_sitemap_catalogs": {
+        "documents": 1,
+        "sha256": "6ac2eef004561d1fbeed5c4fbed5f4013c03915bd6482e68e5b2128f98e7af3c"
+      },
+      "public_targets": {
+        "documents": 1,
+        "sha256": "7eabad3bb68ee48f6923e983fa7f52d585dfdf4cff87e4a2eb692d389b00a24d"
+      },
+      "publisher_runs": {
+        "documents": 1,
+        "sha256": "204c6863089340465c7ed8559c580c05f7486bf2ec0a76f0551cc478244aad88"
+      },
+      "collectionGroup:parts": {
+        "documents": 378,
+        "sha256": "cf6d2a27690b8e799b6c3e15ec09693f5432c7b2fdd7a259954039ab07c1448c"
+      }
+    },
+    "receiptsVerified": 4511,
+    "permanentRevisionLinksVerified": 4511,
+    "result": "PASS",
+    "writes": 0
+  },
+  "applicationVerification": {
+    "projectId": "oflapp-prod",
+    "databaseId": "ofl-recovery-drill-20260909",
+    "catalogGenerationId": null,
+    "base": "http://127.0.0.1:4192",
+    "completedAt": "2026-09-09T19:18:03.136Z",
+    "result": "PASS",
+    "routes": 33,
+    "results": [
+      {
+        "path": "/",
+        "status": 200
+      },
+      {
+        "path": "/forecasts",
+        "status": 200
+      },
+      {
+        "path": "/entities",
+        "status": 200
+      },
+      {
+        "path": "/entities/listed-securities",
+        "status": 200
+      },
+      {
+        "path": "/forecasters",
+        "status": 200
+      },
+      {
+        "path": "/collections/ipulse-ai/2026-08-06-sb6",
+        "status": 200
+      },
+      {
+        "path": "/entities/listed-securities/pepsico-pep/forecasts",
+        "status": 200
+      },
+      {
+        "path": "/submit",
+        "status": 200
+      },
+      {
+        "path": "/sitemap.xml",
+        "status": 200
+      },
+      {
+        "path": "/forecasts/f-00b7x9j09bj4txf19brgzc1akm",
+        "status": 200
+      },
+      {
+        "path": "/entities/listed-securities/hyundai-motor-005380/forecasts/2026-07-05/adjusted-end-of-day-close-return/superintelligence-ai-on-gemini-3-1-pro/f-00b7x9j09bj4txf19brgzc1akm",
+        "status": 200
+      },
+      {
+        "path": "/receipts/da4376817ec2b912bfb9da00dc1a6e382eec82bc95c8cdf194d07a0c0bcd0b68",
+        "status": 200
+      },
+      {
+        "path": "/api/v1/receipts/da4376817ec2b912bfb9da00dc1a6e382eec82bc95c8cdf194d07a0c0bcd0b68",
+        "status": 200
+      },
+      {
+        "path": "/forecasts/f-00j451bvwdx4y6a0qx1nfhvb2w",
+        "status": 200
+      },
+      {
+        "path": "/entities/listed-securities/ucb/forecasts/2026-07-05/adjusted-end-of-day-close-return/superintelligence-ai-on-gemini-3-1-pro/f-00j451bvwdx4y6a0qx1nfhvb2w",
+        "status": 200
+      },
+      {
+        "path": "/receipts/60d95d38ff25d26ec9269990806da517068359e43b5459069225b0976d464afa",
+        "status": 200
+      },
+      {
+        "path": "/api/v1/receipts/60d95d38ff25d26ec9269990806da517068359e43b5459069225b0976d464afa",
+        "status": 200
+      },
+      {
+        "path": "/forecasts/f-00vcgn1mzgce1w6h0f5vjkp1er",
+        "status": 200
+      },
+      {
+        "path": "/entities/listed-securities/advanced-micro-devices-amd/forecasts/2026-07-05/adjusted-end-of-day-close-return/sherlock-holmes-ai-on-gemini-3-1-pro/f-00vcgn1mzgce1w6h0f5vjkp1er",
+        "status": 200
+      },
+      {
+        "path": "/receipts/64d48c221a193f73bee13fe37011e275d96289dc5fcc9d79208347e73842f971",
+        "status": 200
+      },
+      {
+        "path": "/api/v1/receipts/64d48c221a193f73bee13fe37011e275d96289dc5fcc9d79208347e73842f971",
+        "status": 200
+      },
+      {
+        "path": "/forecasts/f-00wmkgwjj3qw4drxmxmkpkysm8",
+        "status": 200
+      },
+      {
+        "path": "/entities/listed-securities/mastercard-ma/forecasts/2026-07-05/adjusted-end-of-day-close-return/ray-dalio-ai-on-gemini-3-1-pro/f-00wmkgwjj3qw4drxmxmkpkysm8",
+        "status": 200
+      },
+      {
+        "path": "/receipts/5a163d99841f55e61df1eb29df88110e894fb9eefca496598abe23c9923f57cb",
+        "status": 200
+      },
+      {
+        "path": "/api/v1/receipts/5a163d99841f55e61df1eb29df88110e894fb9eefca496598abe23c9923f57cb",
+        "status": 200
+      },
+      {
+        "path": "/forecasts/f-00y6e0hp2shr0ay2t4qqrwec14",
+        "status": 200
+      },
+      {
+        "path": "/entities/listed-securities/ucb/forecasts/2026-07-05/adjusted-end-of-day-close-return/j-p-morgan-ai-on-gemini-3-1-pro/f-00y6e0hp2shr0ay2t4qqrwec14",
+        "status": 200
+      },
+      {
+        "path": "/receipts/abd2f5d1955efe38d1b236ace48e8dd3ff3a858b28fd70a17af1fb0c7f105194",
+        "status": 200
+      },
+      {
+        "path": "/api/v1/receipts/abd2f5d1955efe38d1b236ace48e8dd3ff3a858b28fd70a17af1fb0c7f105194",
+        "status": 200
+      },
+      {
+        "path": "/forecasts/f-00y7twjn4bnzgk3t1vgqa12bh0",
+        "status": 200
+      },
+      {
+        "path": "/entities/listed-securities/intuitive-surgical-isrg/forecasts/2026-07-05/adjusted-end-of-day-close-return/superintelligence-ai-on-gemini-3-1-pro/f-00y7twjn4bnzgk3t1vgqa12bh0",
+        "status": 200
+      },
+      {
+        "path": "/receipts/28de6aaebb25ade983abf25e4c85633c0125c526a2866efbbdb14d218e6bfcd0",
+        "status": 200
+      },
+      {
+        "path": "/api/v1/receipts/28de6aaebb25ade983abf25e4c85633c0125c526a2866efbbdb14d218e6bfcd0",
+        "status": 200
+      }
+    ]
+  },
+  "anonymousAccessVerification": {
+    "projectId": "oflapp-prod",
+    "databaseId": "ofl-recovery-drill-20260909",
+    "livePublicControlRead": "PASS",
+    "recoveredDatabaseAnonymousRead": "DENIED",
+    "result": "PASS"
+  }
+}

@@ -11,12 +11,16 @@ and `public_collection_catalogs/{collectionId}.manifest`. It contains title,
 publisher name, description, tags, and the source forecast date range. This
 is mutable browsing metadata, outside immutable receipts and revisions.
 
-`scripts/refresh-collection-presentation.mjs --project=oflapp-staging` previews
-the update. `--apply` additionally requires `OFR_CONFIRM_FIRESTORE_PROJECT`
-to match the target. Each collection and catalog pair updates atomically,
-with concurrency checks. The full catalog materializer uses the same helper
-so rebuilds preserve this behavior. Financial wording is limited to the
-explicit iPulse publisher; other publishers retain their own metadata.
+The original two-document refresh command has been superseded by atomic
+catalog generations. It now refuses to run when generations are enabled.
+Use `scripts/materialize-public-catalogs.mjs` to derive and publish presentation
+updates. Live collection and manifest projections reside beneath
+`public_catalog_generations/{generationId}`; the root documents remain as
+authoritative inputs and legacy compatibility. See
+[the publication runbook](CATALOG_PUBLICATION_AND_RECOVERY.md).
+The same publisher-specific helper preserves the title and tags on rebuild.
+Financial wording is limited to the explicit iPulse publisher; other publishers
+retain their own metadata.
 
 The user-facing label is now Stocks. Existing `listed_security` identifiers
 and `/entities/listed-securities` URLs remain unchanged. The original Batch 6

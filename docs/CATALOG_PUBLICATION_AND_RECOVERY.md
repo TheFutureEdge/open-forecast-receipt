@@ -99,10 +99,47 @@ a production cutover. Client pagination also needs matching Firebase database
 configuration before any real named-database cutover. Keep the restored database
 private; no production rule release or website traffic is directed to it.
 
+After building the application, use an explicit server project locally:
+
+```
+GOOGLE_CLOUD_PROJECT=oflapp-prod FIRESTORE_DATABASE_ID=REVIEWED_NEW_DATABASE NEXT_PUBLIC_OFL_ENVIRONMENT=production NEXT_PUBLIC_SITE_ORIGIN=https://forecastlibrary.com npm run start -- --hostname 127.0.0.1 --port 4192
+node scripts/smoke-public-routes.mjs --project=oflapp-prod --database=REVIEWED_NEW_DATABASE --base=http://127.0.0.1:4192
+```
+
+The route verifier checks 33 responses and recomputes the JSON receipt digests.
+For localhost it supplies the canonical forwarded host to exercise the
+production routing policy without redirecting requests to the live database.
+
 A scheduled backup can also be restored into an isolated new database with
 `gcloud firestore databases restore --source-backup=BACKUP_RESOURCE --destination-database=NEW_DATABASE --project=oflapp-prod`.
 Validate the restored snapshot before making any application cutover. Never
 assume a successful restore operation proves data and URLs are intact.
+
+## Completed drill: 9 September 2026
+
+The managed clone of the 18:35:00 UTC production snapshot completed successfully
+in 34 minutes 13 seconds. The isolated database is
+`ofl-recovery-drill-20260909`. Full verification completed at 19:24:07 UTC,
+44 minutes 12 seconds after the clone request, including preparation and checks.
+These are measured drill durations, not recovery-time guarantees.
+
+- All 38,675 recovered documents matched their source snapshot, including the
+  378 nested ledger and sitemap parts.
+- All 4,511 receipt payload digests and all 4,511 permanent revision mappings
+  verified against both resolvers.
+- All 33 application routes passed against the restored database. Its legacy
+  catalog marker differed from live production, confirming the preview used the
+  recovered data.
+- Anonymous reads of the restored database were denied. Live public reads
+  succeeded as a control. The recovery copy remains isolated and retained for
+  review, with deletion protection enabled.
+- The pre-drill scheduled-backup inventory was empty. This was a PITR recovery
+  exercise; no scheduled-backup restore is claimed. Daily backups are configured
+  with seven-day retention.
+
+[Machine-readable drill evidence](FORECAST_LIBRARY_RECOVERY_2026-09-09.json)
+contains the source snapshot, per-collection counts and hashes, route results,
+and anonymous-access checks. It contains no receipt payloads or credentials.
 
 References: [Firestore clone API](https://firebase.google.com/docs/firestore/reference/rest/v1/projects.databases/clone),
 [PITR](https://firebase.google.com/docs/firestore/use-pitr),

@@ -2,10 +2,10 @@
 import assert from "node:assert/strict";
 import { initializeApp } from "firebase/app";
 import { getFirestore, getDoc, getDocs, doc, collection, query, orderBy, limit, terminate } from "firebase/firestore";
-const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID;
 assert(["oflapp-staging", "oflapp-prod"].includes(projectId));
 const requested = process.argv.find(arg => arg.startsWith("--generation="))?.slice(13);
-const app = initializeApp({ projectId, apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY, appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID });
+const app = initializeApp({ projectId, apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.VITE_FIREBASE_API_KEY, appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || process.env.VITE_FIREBASE_APP_ID });
 const db = getFirestore(app);
 const state = await getDoc(doc(db, "public_catalog_state/current"));
 const generationId = requested || state.data()?.activeGenerationId;

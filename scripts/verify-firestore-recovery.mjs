@@ -26,7 +26,10 @@ async function inventory(db, name, pointInTime, group = false) {
   const digest = createHash("sha256");
   let count = 0, cursor;
   while (true) {
-    let query = (group ? db.collectionGroup(name) : db.collection(name)).orderBy(FieldPath.documentId()).limit(50);
+    // Receipts carry large payloads; index/projection records can be compared
+    // in larger bounded pages to keep a recovery drill practical over a WAN.
+    const pageSize = name === "public_receipts" ? 50 : 200;
+    let query = (group ? db.collectionGroup(name) : db.collection(name)).orderBy(FieldPath.documentId()).limit(pageSize);
     if (cursor) query = query.startAfter(cursor);
     const page = pointInTime ? await db.runTransaction(tx => tx.get(query), { readOnly: true, readTime }) : await query.get();
     if (page.empty) break;

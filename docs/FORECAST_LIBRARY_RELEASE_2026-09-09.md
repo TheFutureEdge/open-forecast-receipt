@@ -95,13 +95,52 @@ The broader domain direction does not make the financial v0.1 receipt profile
 universal. Support reviews additional domain requirements before publication.
 The iPulse source URL catalog is used only by its explicitly owned adapter.
 
-## Remaining expansion work
+## Required launch reliability
 
-This release stabilizes published evidence and the first publisher integration.
-Atomic catalog generation switching, a full isolated backup restore drill,
-generalized v0.2 output profiles, external publisher onboarding and automated
-A2A/evaluation services remain separate work. The manual support flow stays
-in place. None requires changing an existing forecast or receipt permalink.
+Atomic catalog publication is deployed in staging and production from `9ce4b1f`.
+All 1,146 derived documents are written into an isolated generation, read back,
+and hash-verified before a transaction changes the active pointer. Inputs come
+from one consistent read-only snapshot. Existing pages retain their generation
+for pagination, and sitemap reads pin their manifest and parts together.
+
+Staging switched from generation A to B and back to A successfully. Reading A
+while B was active also passed. The final production generation is
+`g-20260909-prod-atomic-a`. All 96 tests, 28 readiness checks, six anonymous
+access restrictions per environment, and 33 final public routes per environment
+passed. Receipt and forecast permalink namespaces were not rewritten.
+
+The isolated recovery drill passed. A managed PITR clone restored the production
+18:35:00 UTC snapshot into `ofl-recovery-drill-20260909`. The clone ran from
+18:39:55 to 19:14:08 UTC (34 minutes 13 seconds). Full verification finished at
+19:24:07 UTC: all 38,675 documents matched the snapshot, all 4,511 receipt
+payload hashes verified, and all 4,511 immutable revision/resolver bindings
+retained their original permanent paths. All 33 application routes passed
+against the restored database; its anonymous read was denied while the live
+public control read succeeded. The copy remains isolated and retained for review.
+
+Daily backups have seven-day retention, and PITR is enabled. No scheduled backup
+was available at the pre-drill check, so this exercise tested full PITR recovery;
+it does not claim a scheduled-backup restore was performed. This closes the
+current curated launch's recoverability requirement.
+See [the publication and recovery runbook](CATALOG_PUBLICATION_AND_RECOVERY.md).
+The [machine-readable recovery evidence](FORECAST_LIBRARY_RECOVERY_2026-09-09.json)
+records the complete checks.
+
+CI also exposed dependency security advisories in the prior runtime. Commit
+`607ab46` patches Next.js to 16.3.4, Sharp to 0.35.4, and Vitest to 4.1.11.
+All 96 tests and CI pass, and the dependency audit reports zero vulnerabilities.
+Both environments are deployed from `607ab46` and passed their final 33 route
+checks on that runtime. The current-launch reliability requirements are closed.
+See [the security patch record](SECURITY_PATCH_2026-09-09.md).
+
+## Optional expansion
+
+Generalized v0.2 output profiles, self-service external publisher onboarding,
+and automated A2A/evaluation services can wait. The current launch uses curated
+publication and manual support submissions. Broader forecasting remains the
+product direction, while the current iPulse AI adapter is explicitly financial.
+None of these future features requires changing an existing forecast or receipt
+permalink.
 
 The future publisher adapter contract is explicit ownership plus original and
 optional current-subject URLs. A missing publisher must fail validation; a

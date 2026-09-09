@@ -170,7 +170,10 @@ export function IndividualForecastPage({
 
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="grid lg:grid-cols-[300px_minmax(0,1fr)]">
-            <aside className="border-b border-slate-200 dark:border-slate-800 lg:border-b-0 lg:border-r">
+            <div className="order-1 min-w-0 bg-[#f8fafc] p-4 dark:bg-slate-950/50 sm:p-6 lg:order-2">
+              <LoadedReceiptDetail document={receipt.document} projection={receipt.projection} embedded />
+            </div>
+            <aside className="order-2 border-t border-slate-200 dark:border-slate-800 lg:order-1 lg:border-r lg:border-t-0">
               <AdvisorCardList
                 fixtures={forecasts}
                 advisorCount={totalForecastCount}
@@ -179,9 +182,6 @@ export function IndividualForecastPage({
                 onSelect={(nextForecast) => navigate(publicForecastPath(publicEntitySlug(entity), nextForecast))}
               />
             </aside>
-            <div className="min-w-0 bg-[#f8fafc] p-4 dark:bg-slate-950/50 sm:p-6">
-              <LoadedReceiptDetail document={receipt.document} projection={receipt.projection} embedded />
-            </div>
           </div>
         </section>
       </div>

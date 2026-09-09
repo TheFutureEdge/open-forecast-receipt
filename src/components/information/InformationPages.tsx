@@ -132,9 +132,10 @@ export function SubmissionPage() {
   return <InformationPage
     eyebrow="Public submissions"
     title="Submit a public forecast"
-    summary="Self-service publishing is intentionally disabled while the public contract is stabilized. We review submissions manually during this phase."
+    summary="Contact support to discuss a forecast and request manual publication review. No account or payment is required."
     sections={[
       { heading: "How to request publication", body: <p>Email <a href="mailto:support@ipulseai.com?subject=Forecast%20Library%20submission" className="font-semibold text-blue-600 hover:underline">support@ipulseai.com</a> with the forecast subject, target, horizon, forecaster identity, forecast values, and evidence or provenance you can disclose.</p> },
+      { heading: "Start with a template or example", body: <><p><a href="/forecast-submission-template.txt" download className="font-semibold text-blue-600 underline">Download the submission checklist</a> and fill it in for your forecasting domain. Financial markets are the first live profile; support can discuss the requirements for other subjects and methods.</p><p><a href="/api/v1/receipts/af9593e0922992eab5f6051a39e9576de4c9e638080c47c4960f37fd793e84c2" className="font-semibold text-blue-600 underline">Inspect a real iPulse AI receipt JSON</a>, read the <a href="/schemas/open-forecast-receipt/v0.1.0/schema.json" className="font-semibold text-blue-600 underline">frozen v0.1 schema</a>, or try the <Link to="/integrity-test" className="font-semibold text-blue-600 underline">interactive integrity test</Link>.</p></> },
       { heading: "What happens next", body: <p className="flex gap-3"><LockKey className="mt-1 shrink-0 text-blue-600" size={22} /> We validate the subject and target, prepare an Open Forecast Receipt, confirm publication rights, and agree whether an optional blockchain proof is requested. No payment or public account is required in this phase.</p> },
       { heading: "Editorial control", body: <p className="flex gap-3"><Scales className="mt-1 shrink-0 text-slate-700 dark:text-slate-200" size={22} /> Submission does not guarantee publication. Forecast Library may reject incomplete, unlawful, misleading, duplicated, or unverifiable material.</p> },
     ]}

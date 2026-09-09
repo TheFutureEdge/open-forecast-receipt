@@ -1,0 +1,32 @@
+Forecast Library - manual submission request
+Send to: support@ipulseai.com
+
+This is a review checklist, not a published receipt. No account or payment is
+required. The first live receipt profile covers market forecasts; support
+reviews the requirements for other forecasting domains individually.
+
+Publisher name and public website:
+Contact for the review:
+Domain (for example, markets, weather, demand, science):
+Subject and its stable source identifier:
+Target or question, including units and the outcome resolution rule:
+Forecast output (values/probabilities, dates, intervals or categories):
+Generation time and timezone:
+Forecast horizon / resolution date:
+Information available at generation, including its cutoff date:
+Forecaster identity, method and version (human, model, ensemble, hybrid, etc.):
+Original public source URL:
+Optional current subject/context URL:
+Evidence or methodology that can be disclosed publicly:
+Correction of an earlier record? Include its permanent URL and the reason:
+Optional independent timestamp request:
+
+Publication rights:
+Describe your authority to publish the forecast and accompanying evidence,
+including any third-party material or attribution requirements. Confirm which
+material you are authorizing for public release. Do not include credentials
+or private source data.
+
+Support reviews completeness, domain/profile compatibility and publication
+rights, then discusses the receipt and publication details with you. Sending
+this request does not itself publish a record or guarantee acceptance.

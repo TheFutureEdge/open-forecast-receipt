@@ -181,8 +181,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     : entity && entityMatch
       ? publicEntityPath(entity)
       : pathname;
-  const title = entity && individualForecast
-    ? `${individualForecast.forecaster?.displayName || individualForecast.forecasterLabel} ${entity.canonicalName} Forecast`
+  const receiptSubject = individualForecast
+    ? (await getLibraryReceiptCached(individualForecast.receiptDigest).catch(() => null))?.document.receiptPayload.forecast.entity.name
+    : undefined;
+  const subjectName = receiptSubject || entity?.canonicalName || "Public";
+  const title = individualForecast
+    ? `${individualForecast.forecaster?.displayName || individualForecast.forecasterLabel} ${subjectName} Forecast`
     : entity
       ? `${entity.canonicalName}${ledgerMatch ? " Forecast Ledger" : entity.entityClasses.includes("forecastable_entity") ? " Forecast Subject" : " Profile"}`
       : forecaster
@@ -195,7 +199,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
               ? `${collection.batchLabel} Forecast Collection`
       : fallback.title;
   const description = individualForecast
-    ? `Inspect this ${entity?.canonicalName || "public"} forecast, its original iPulse AI publication, sealed receipt, provenance, integrity, and optional blockchain proof.`
+    ? `Inspect this ${subjectName} forecast, its original publication, sealed receipt, provenance, integrity, and optional blockchain proof.`
     : entity?.description
       || forecaster?.description
       || target?.description

@@ -163,7 +163,7 @@ export function SummaryTab({ document }: SummaryTabProps) {
 
       {payload.receipt.issuanceMode === "retrospective" && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
-          <strong>Retrospective receipt.</strong> The source forecast predates this receipt. The later proof shows when this sealed payload was anchored; it does not rewrite the original forecast date.
+          <strong>Retrospective receipt.</strong> The source forecast predates this receipt. Sealing it later does not establish that it was sealed when originally generated. Any verified independent timestamp is shown separately.
         </div>
       )}
 

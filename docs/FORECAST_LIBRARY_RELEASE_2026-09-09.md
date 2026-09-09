@@ -17,12 +17,17 @@ under the current financial v0.1 ingestion profile.
 - Permanent record release `d591494` plus compatibility fix `1a2dd19`: direct
   short-ID and receipt routes, frozen original paths, immutable revision
   storage, publisher-specific source links and public frozen schema mirror.
+- `84162c1` and `80a6d51`: receipt-first mobile layout, specific record titles,
+  manual submission checklist, explicit broad forecasting-science positioning
+  and the current Firestore read-flow documentation.
 - Future Edge `6820849`: live `/forecast-library/` explanation, homepage and
   navigation links, open-source origins/video, manual support submission and
   distinct product positioning.
 - iPulse `3fe4e125` and `d85df550`: explicit individual receipt links in history
   and advisor reports, bounded link-registry shards, readable receipt lists
   and public frozen schema mirror. Promotion uses PR 634, staging to main.
+- iPulse `debbfe9e` (PR 635): the selected advisor's embedded workspace header
+  and signed-out preview also expose the exact original revision link.
 
 ## Data changes
 
@@ -55,6 +60,40 @@ recovery and a daily backup schedule with seven-day retention were enabled.
 - Browser inspection: Future Edge desktop and mobile page, correct readable
   heading contrast, iPulse signed-out historical ledger and its expanded
   twelve-receipt list. Existing auth and entitlement behavior is unchanged.
+- Both Forecast Library environments pass all 24 permanent-route checks.
+  The production homepage explicitly distinguishes the broad Library from
+  iPulse AI, and the manual intake template is served successfully.
+- The advisor-header follow-up passes nine focused tests and a complete build.
+  Browser selection changes from Warren Buffett to Ray Dalio update the link
+  to each advisor's distinct published ID.
+- All 256 iPulse staging and production registry files match the reviewed source byte for
+  byte, covering all 4,511 exact task/revision bindings and the frozen schema.
+- Production robots allow crawling. All 4,511 original published forecast
+  paths appear in the live sitemap, which contains no duplicate URLs.
+- Initial iPulse promotion PR 634 merged as `3232163b`; production rollout
+  and post-rollout verification both passed. The live PepsiCo ledger contains
+  twelve unique direct Forecast Library links in the server HTML.
+- PR 635 passed staging rollout, post-rollout checks and live advisor-switch
+  verification before its normal merge as `70e3e3f9`. No admin bypass was used.
+- Final production acceptance: iPulse rollout `rollout-2026-09-09-002`
+  succeeded at 05:21 UTC; both deployment and post-rollout checks are green.
+  The production browser displayed Warren Buffett's exact receipt and then
+  changed to Ray Dalio's exact receipt when the selected advisor changed.
+- Forecast Library `80a6d51` completed deployment to staging and production;
+  Future Edge `6820849` completed its production deployment. This document-only
+  completion record does not require another application build.
+
+## Production entry points
+
+- [Forecast Library](https://forecastlibrary.com)
+- [Future Edge explanation](https://ftredge.com/forecast-library/)
+- [Example iPulse historical ledger](https://ipulseai.com/stocks/pepsico-pep/forecast-history)
+- [An exact published forecast revision](https://forecastlibrary.com/forecasts/f-2fv5zyna8wgg7vdqeyd1cg6gy4)
+- [Manual submission instructions](https://forecastlibrary.com/submit)
+
+The broader domain direction does not make the financial v0.1 receipt profile
+universal. Support reviews additional domain requirements before publication.
+The iPulse source URL catalog is used only by its explicitly owned adapter.
 
 ## Remaining expansion work
 

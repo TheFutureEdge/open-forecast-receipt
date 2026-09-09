@@ -37,7 +37,7 @@ const SUBJECT_CATEGORY_ROUTES: Record<string, string> = {
 };
 
 const SUBJECT_CATEGORY_LABELS: Record<string, string> = {
-  listed_security: "Listed securities",
+  listed_security: "Stocks",
   listed_fund_share: "Funds & ETFs",
   cryptoasset: "Cryptoassets",
   commodity_spot: "Commodities",
@@ -73,10 +73,10 @@ export const ENTITY_CATALOG_PRESETS: Record<string, EntityCatalogPreset> = {
   "listed-securities": {
     key: "listed-securities",
     view: "forecastable",
-    title: "Browse listed securities",
+    title: "Browse stocks",
     description: "Explore separately identifiable listed shares and depositary receipts, each connected to its issuer, trading venue, and governed identifiers.",
-    metricLabel: "Listed securities",
-    categoryLabel: "Listed Securities",
+    metricLabel: "Stocks",
+    categoryLabel: "Stocks",
     entityTypes: ["listed_security"],
   },
   "funds-etfs": {

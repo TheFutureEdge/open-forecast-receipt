@@ -413,6 +413,7 @@ export async function getLibraryManifestServer(collectionId: string): Promise<Li
     batchId: record.batchId,
     batchLabel: record.batchLabel,
     description: record.description,
+    ...(record.presentation ? { presentation: record.presentation } : {}),
     entities,
     receiptCount: record.receiptCount,
     selectedProofCount: record.selectedProofCount,

@@ -45,7 +45,7 @@ const sections: SidebarSection[] = [
     label: "Forecast Subjects",
     items: [
       { label: "All forecast subjects", path: "/entities", Icon: GlobeHemisphereWest, match: "exact" },
-      { label: "Listed securities", path: "/entities/listed-securities", Icon: Buildings },
+      { label: "Stocks", path: "/entities/listed-securities", Icon: Buildings },
       { label: "Funds & ETFs", path: "/entities/funds-etfs", Icon: ChartLineUp },
       { label: "Cryptoassets", path: "/entities/cryptoassets", Icon: Coins },
       { label: "Commodities", path: "/entities/commodities", Icon: ChartLineUp },

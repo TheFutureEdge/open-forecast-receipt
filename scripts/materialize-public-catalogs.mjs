@@ -4,6 +4,7 @@ import process from "node:process";
 import { buildForecastLedgerCatalogParts } from "./lib/forecast-ledger-catalog.mjs";
 import { getServerFirestore } from "./lib/firestore-client.mjs";
 import { checkedBulkWrite } from "./lib/checked-bulk-write.mjs";
+import { ipulseCollectionPresentation } from "./lib/ipulse-collection-presentation.mjs";
 
 const DEFAULT_TARGET_PROJECT = "oflapp-staging";
 // Stay below the agreed 700 KiB ceiling with enough room for Firestore field
@@ -260,6 +261,8 @@ for (const forecaster of forecasters) {
 }
 
 for (const collection of publicCollections) {
+  const presentation = ipulseCollectionPresentation(collection, forecasts, publicEntitiesById);
+  if (presentation) collection.presentation = presentation;
   planned.push({ collectionName: "public_collections", documentId: collection.collectionId, value: collection, bytes: assertCatalogSize(`public_collections/${collection.collectionId}`, collection) });
 }
 
@@ -332,6 +335,7 @@ for (const collectionRecord of publicCollections) {
       batchId: collectionRecord.batchId,
       batchLabel: collectionRecord.batchLabel,
       description: collectionRecord.description,
+      ...(collectionRecord.presentation ? { presentation: collectionRecord.presentation } : {}),
       entities: manifestEntities,
       receiptCount: collectionRecord.receiptCount,
       selectedProofCount: collectionRecord.selectedProofCount,

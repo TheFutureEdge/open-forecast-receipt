@@ -20,7 +20,7 @@ const labelMap: Record<string, string> = {
   directory: "Entity Directory",
   subjects: "Forecast Subjects",
   context: "Context Entities",
-  "listed-securities": "Listed Securities",
+  "listed-securities": "Stocks",
   "funds-etfs": "Funds & ETFs",
   cryptoassets: "Cryptoassets",
   commodities: "Commodities",

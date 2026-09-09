@@ -20,5 +20,13 @@ export interface BatchManifest {
   batchId: string;
   batchLabel: string;
   description: string;
+  presentation?: {
+    title: string;
+    publisherName: string;
+    description: string;
+    tags: string[];
+    forecastDateStart: string;
+    forecastDateEnd: string;
+  };
   entities: BatchManifestEntity[];
 }

@@ -26,10 +26,10 @@ export const ENTITY_CATALOG_PRESETS: Record<string, EntityCatalogPreset> = {
   "listed-securities": {
     key: "listed-securities",
     view: "forecastable",
-    title: "Browse listed securities",
+    title: "Browse stocks",
     description: "Explore separately identifiable listed shares and depositary receipts, each connected to its issuer, trading venue, and governed identifiers.",
-    metricLabel: "Listed securities",
-    categoryLabel: "Listed Securities",
+    metricLabel: "Stocks",
+    categoryLabel: "Stocks",
     entityTypes: ["listed_security"],
   },
   "funds-etfs": {

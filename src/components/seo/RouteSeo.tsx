@@ -10,7 +10,7 @@ const entityCatalogMetadata: Record<string, Omit<PageSeoProps, "canonicalPath">>
     description: "Explore forecast subjects and context entities connected through the Forecast Library semantic Knowledge Graph.",
   },
   "/entities/subjects/listed-securities": {
-    title: "Listed Security Forecast Subjects | Forecast Library",
+    title: "Stock Forecast Subjects | Forecast Library",
     description: "Browse governed listed securities with stable identities, market identifiers, issuer relationships, and forecast-ready target bindings.",
   },
   "/entities/subjects/funds-etfs": {

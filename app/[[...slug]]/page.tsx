@@ -136,7 +136,7 @@ function staticMetadata(pathname: string): { title: string; description: string 
     "/submit": { title: "Submit a Public Forecast", description: "Contact support to submit a forecast for manual review and public receipt publication." },
   };
   if (exact[pathname]) return exact[pathname];
-  if (pathname.includes("/subjects/listed-securities")) return { title: "Listed Security Forecast Subjects", description: "Browse governed listed securities, market identifiers, issuer relationships, targets, and public forecasts." };
+  if (pathname.includes("/subjects/listed-securities")) return { title: "Stock Forecast Subjects", description: "Browse governed listed securities, market identifiers, issuer relationships, targets, and public forecasts." };
   if (pathname.includes("/subjects/funds-etfs")) return { title: "Fund and ETF Forecast Subjects", description: "Browse forecastable fund and ETF market representations and their governed identities." };
   if (pathname.includes("/subjects/cryptoassets")) return { title: "Cryptoasset Forecast Subjects", description: "Browse governed cryptoasset subjects, identifiers, and forecast targets." };
   if (pathname.includes("/subjects/commodities")) return { title: "Commodity Forecast Subjects", description: "Browse governed commodity subjects and measurable forecast targets." };
@@ -196,7 +196,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
           : publisher
             ? `${publisher.name} Forecast Publisher`
             : collection
-              ? `${collection.batchLabel} Forecast Collection`
+              ? `${collection.presentation?.title || collection.batchLabel} Forecast Collection`
       : fallback.title;
   const description = individualForecast
     ? `Inspect this ${subjectName} forecast, its original publication, sealed receipt, provenance, integrity, and optional blockchain proof.`

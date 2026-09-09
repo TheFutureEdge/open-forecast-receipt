@@ -11,6 +11,7 @@ import {
 import type { LibraryManifest } from "../../lib/library/types";
 import { Link } from "../../lib/router";
 import { AssetRow } from "./AssetRow";
+import { CollectionTags } from "./CollectionTags";
 import { getManifestProofCounts } from "../../lib/library/repository";
 
 interface BatchManifestProps {
@@ -35,14 +36,15 @@ export function BatchManifestComponent({ manifest }: BatchManifestProps) {
         <div className="grid gap-7 px-5 py-7 sm:px-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:px-9 lg:py-9">
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-blue-700 dark:border-blue-900 dark:bg-blue-950/60 dark:text-blue-300">
-              <ShieldCheck size={15} weight="fill" /> Publisher: iPulse AI
+              <ShieldCheck size={15} weight="fill" /> {manifest.presentation?.publisherName ? `Publisher: ${manifest.presentation.publisherName}` : "Forecast collection"}
             </div>
             <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl dark:text-white">
-              iPulse AI market forecasts
+              {manifest.presentation?.title || manifest.batchLabel}
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-              Every forecast is preserved as its own receipt: what was predicted, who generated it, when it was created, and whether an independent blockchain proof is available.
+              {manifest.presentation?.description || manifest.description}
             </p>
+            <CollectionTags tags={manifest.presentation?.tags} />
             <div className="mt-5 flex flex-wrap gap-2.5">
               <Link
                 to="#collection-entities"

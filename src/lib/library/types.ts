@@ -176,6 +176,9 @@ export interface PublicCollectionCatalogRecord {
 }
 
 export interface PublicForecastRecord {
+  /** Frozen on first publication; display names and catalog reorganizations never rebuild this path. */
+  canonicalPath?: string;
+  revisionStorageVersion?: string;
   /**
    * Stable public forecast identity. Production publishers must persist this
    * independently from the receipt digest so corrections can issue new
@@ -246,6 +249,9 @@ export interface PublicForecastOriginalSource {
   url: string;
   publicationId?: string;
   publicationDate?: string;
+  /** Optional current subject context, supplied by this publisher's adapter. */
+  subjectUrl?: string;
+  subjectLabel?: string;
 }
 
 /** Read-optimized forecast summaries for one collection/entity pair. */
@@ -447,6 +453,7 @@ export interface PublicForecasterCatalogRecord {
 }
 
 export interface PublicReceiptRecord {
+  publisherId?: string;
   collectionId: string;
   entityId: string;
   entitySlug: string;
@@ -468,6 +475,9 @@ export interface PublicReceiptRecord {
 export interface LibraryReceipt {
   document: OfrDocument;
   projection: CompactEasProjection;
+  entityId?: string;
+  publisherId?: string;
+  originalSource?: PublicForecastOriginalSource;
 }
 
 export interface LibraryShowcaseCounts {

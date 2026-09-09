@@ -1,4 +1,5 @@
 import "server-only";
+import { publicForecastOriginalSource } from "./entityRoutes";
 
 import { getLibraryServerFirestore } from "../firestore/server";
 import type {
@@ -249,6 +250,13 @@ export async function getPublicCollectionServer(publisherSlug: string, collectio
 
 export async function getPublicForecastByPublicIdServer(forecastPublicId: string): Promise<PublicForecastRecord | null> {
   const db = getLibraryServerFirestore();
+  const revision = await db.collection("public_forecast_revisions").doc(forecastPublicId).get();
+  if (revision.exists) {
+    const record = revision.data() as PublicForecastRecord;
+    if (record.forecastPublicId !== forecastPublicId || !record.canonicalPath
+      || record.visibility !== "public" || record.publicationStatus !== "published") return null;
+    return record;
+  }
   const resolver = await db.collection("public_forecast_resolvers").doc(forecastPublicId).get();
   if (resolver?.exists) {
     const record = resolver.data() as PublicForecastResolverRecord;
@@ -256,7 +264,7 @@ export async function getPublicForecastByPublicIdServer(forecastPublicId: string
     if (!forecast.exists) return null;
     const resolved = forecast.data() as PublicForecastRecord;
     if (resolved.forecastPublicId !== forecastPublicId || resolved.receiptDigest !== record.receiptDigest) return null;
-    return resolved;
+    return { ...resolved, canonicalPath: record.canonicalPath };
   }
   if (isProductionDeployment()) return null;
   const fallback = await db.collection("public_forecasts").where("forecastPublicId", "==", forecastPublicId).limit(1).get();
@@ -485,7 +493,8 @@ export async function getLibraryReceiptServer(receiptDigest: string): Promise<Li
   const snapshot = await getLibraryServerFirestore().collection("public_receipts").doc(receiptDigest).get();
   if (!snapshot.exists) return null;
   const record = snapshot.data() as PublicReceiptRecord;
-  return { document: record.document, projection: record.projection };
+  return { document: record.document, projection: record.projection, entityId: record.entityId, publisherId: record.publisherId,
+    originalSource: publicForecastOriginalSource(record.entitySlug, record) };
 }
 
 /** Read the small, materialized sitemap index instead of listing thousands of forecasts. */

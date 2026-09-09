@@ -16,6 +16,7 @@ import {
   publicEntitySlug,
   publicForecastPublicId,
   publicForecastOriginalSource,
+  publicForecastSubjectSource,
   publicForecastPath,
   publicForecastSourceTag,
 } from "../../lib/library/entityRoutes";
@@ -104,12 +105,6 @@ export function IndividualForecastPage({
     return () => { active = false; };
   }, [forecastPublicId, initialData, routeSlug]);
 
-  useEffect(() => {
-    if (!loaded) return;
-    const canonicalPath = publicForecastPath(publicEntitySlug(loaded.entity), loaded.forecast);
-    if (window.location.pathname !== canonicalPath) navigate(canonicalPath, { replace: true });
-  }, [loaded]);
-
   if (loading) return <div className="py-20 text-center text-sm text-slate-500">Loading individual forecast…</div>;
   if (!loaded || error) {
     return (
@@ -126,6 +121,7 @@ export function IndividualForecastPage({
   const ledgerPath = publicEntityForecastLedgerPath(publicEntitySlug(entity));
   const canonicalPath = publicForecastPath(publicEntitySlug(entity), forecast);
   const originalSource = publicForecastOriginalSource(publicEntitySlug(entity), forecast);
+  const assetSource = publicForecastSubjectSource(forecast);
 
   return (
     <>
@@ -152,6 +148,8 @@ export function IndividualForecastPage({
               </div>
             </div>
             {originalSource && (
+              <div className="flex flex-wrap items-center gap-3">
+              {assetSource && <a href={assetSource.url} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700">{assetSource.label} <span aria-hidden="true">↗</span></a>}
               <a
                 href={originalSource.url}
                 target="_blank"
@@ -165,6 +163,7 @@ export function IndividualForecastPage({
                 </span>
                 <ArrowSquareOut size={17} weight="bold" className="text-blue-600 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               </a>
+              </div>
             )}
           </div>
         </section>

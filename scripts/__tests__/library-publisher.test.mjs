@@ -78,6 +78,28 @@ function reseal(entry) {
 }
 
 describe("OFL publication bundle planner", () => {
+  it("gives later source revisions distinct immutable storage IDs", () => {
+    const bundle = publicationBundle();
+    const first = planPublicationBundle(bundle, validateReceipt);
+    bundle.entries[0].receipt.receiptPayload.receipt.revisionNumber = 2;
+    reseal(bundle.entries[0]);
+    const second = planPublicationBundle(bundle, validateReceipt);
+    for (const collection of ["public_forecasts", "public_forecast_revisions", "public_forecast_resolvers", "public_receipt_resolvers"]) {
+      const a = first.documents.find((item) => item.collectionName === collection);
+      const b = second.documents.find((item) => item.collectionName === collection);
+      expect(a.documentId).not.toBe(b.documentId);
+      if (collection !== "public_forecasts") expect(a.writeMode).toBe("immutable");
+    }
+  });
+  it("preserves a previously published path on reimport, but refuses a digest substitution", () => {
+    const plan = planPublicationBundle(publicationBundle(), validateReceipt);
+    for (const collection of ["public_forecast_revisions", "public_forecast_resolvers", "public_receipt_resolvers"]) {
+      const item = plan.documents.find((record) => record.collectionName === collection);
+      const old = { ...item.value, canonicalPath: "/entities/original-name/original-record" };
+      expect(immutablePublicationMatches(item, old)).toBe(true);
+      expect(immutablePublicationMatches(item, { ...old, receiptDigest: "0".repeat(64) })).toBe(false);
+    }
+  });
   it("never treats a caller-supplied attestation UID as verified proof", () => {
     const bundle = publicationBundle();
     bundle.entries[0].projection.protocolSuppliedAfterIssuance = { attestationUID: `0x${"1".repeat(64)}` };

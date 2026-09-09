@@ -1,6 +1,11 @@
 # Forecast Library Firestore structure
 
-Verified against repository publishers/readers and live Firestore on 2026-09-08.
+Verified against repository publishers/readers and live Firestore on 2026-09-09.
+
+The permanent-record update adds 4,511 immutable revision snapshots in each
+project. See `PERMANENT_RECORDS_AND_PUBLISHER_BOUNDARIES_2026-09-09.md` for the
+current URL contract and publisher-adapter boundaries. Forecast Library covers
+forecasting science broadly; iPulse AI is its first financial-markets publisher.
 
 Forecast Library is the website at `https://forecastlibrary.com`. Open Forecast
 Receipt is its open-source receipt standard. The website, receipt format, and
@@ -42,7 +47,10 @@ projects/oflapp-{staging|prod}/databases/(default)/documents
 |-- public_collections/{collectionId}        publication-set metadata
 |-- public_collection_entities/{collectionId}__{routeSlug}
 |                                           one collection/subject membership
-|-- public_forecasts/{sourceForecastId}      compact index for one forecast
+|-- public_forecasts/{forecastPublicId}      rebuildable index for new writes
+|                                           legacy source-ID keys retained
+|-- public_forecast_revisions/{forecastPublicId}
+|                                           immutable revision and frozen URL
 |-- public_receipts/{sha256Digest}           sealed JSON plus EAS projection
 |-- public_proofs/{network}__{attestationUID} optional issued proof state
 |
@@ -76,12 +84,13 @@ contract. Current rules do not grant them browser access.
 
 | Document | Main fields and references |
 | --- | --- |
+| `public_forecast_revisions/{forecastPublicId}` | Frozen summary, publisher/source/revision identity, receipt digest, original `canonicalPath`, `revisionStorageVersion`; create-only and directly resolvable without current catalogs |
 | `public_entities/{entityId}` | `entityId`, `currentVersionId`, `entityType`, `entityClasses`, `canonicalName`, `stableSlug`/`publicSlug`, aliases, external identifiers, related entities, logo, lifecycle, public status |
 | `public_forecasters/{forecasterId}` | Stable ID, display name, public slug, model/persona, forecaster and implementation kinds, version pointer, publisher organization/team, modes, task-configuration and subject-assignment references |
 | `public_publishers/publisher_future_edge_ipulse_ai` | Publisher ID, public slug `ipulse-ai`, name, organization reference, website, public status |
 | `public_targets/adjusted-end-of-day-close-return` | Target ID, public slug, name, observation description, dimension/transformation, unit |
 | `public_collections/batch-6` | Collection ID, batch label, publisher, public slug `2026-08-06-sb6`, publication time, subject/receipt/proof totals |
-| `public_forecasts/{sourceForecastId}` | Source forecast ID and revision, stable `forecastPublicId`, entity, forecaster, publisher, target, collection, receipt digest, creation/horizon times, run provenance, original iPulse AI URL, proof status |
+| `public_forecasts/{forecastPublicId}` (legacy keys: source ID) | Rebuildable source forecast index; catalogs now read immutable revisions. Publisher-owned source URLs are separate from Library identity. |
 | `public_receipts/{digest}` | Receipt digest, IDs linking back to forecast/entity/forecaster/collection, timestamps, specification/profile versions, complete `document`, compact `projection`, original source reference |
 | `public_forecast_resolvers/{forecastPublicId}` | Public forecast ID, source forecast ID, entity ID, receipt digest, canonical path |
 | `public_receipt_resolvers/{digest}` | Receipt digest, public forecast ID, canonical path |

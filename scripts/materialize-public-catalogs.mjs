@@ -3,7 +3,6 @@
 import process from "node:process";
 import { buildForecastLedgerCatalogParts } from "./lib/forecast-ledger-catalog.mjs";
 import { getServerFirestore } from "./lib/firestore-client.mjs";
-import { deriveForecastPublicId } from "./lib/library-publisher.mjs";
 import { checkedBulkWrite } from "./lib/checked-bulk-write.mjs";
 
 const DEFAULT_TARGET_PROJECT = "oflapp-staging";
@@ -61,6 +60,7 @@ function collectionPublicSlug(collection) {
 }
 
 function canonicalForecastPath(forecast) {
+  if (forecast.canonicalPath) return forecast.canonicalPath;
   return `/entities/listed-securities/${encodeURIComponent(forecast.entitySlug)}/forecasts/${String(forecast.forecastCreatedAt).slice(0, 10)}/${encodeURIComponent(forecast.targetSlug)}/${encodeURIComponent(forecast.forecasterPublicSlug)}/${encodeURIComponent(forecast.forecastPublicId)}`;
 }
 
@@ -171,11 +171,12 @@ const [entitySnapshot, collectionSnapshot, collectionEntitySnapshot, forecastSna
   db.collection("public_entities").get(),
   db.collection("public_collections").get(),
   db.collection("public_collection_entities").get(),
-  db.collection("public_forecasts").get(),
+  db.collection("public_forecast_revisions").get(),
   db.collection("public_forecasters").get(),
   db.collection("public_publishers").get(),
   db.collection("public_targets").get(),
 ]);
+assert(forecastSnapshot.size > 0, "Backfill immutable public_forecast_revisions before materializing catalogs");
 const existingTargets = new Map(targetSnapshot.docs.map((snapshot) => [snapshot.id, snapshot.data()]));
 
 const publicEntities = entitySnapshot.docs.map((snapshot) => snapshot.data());
@@ -183,8 +184,6 @@ const publicEntitiesById = new Map(publicEntities.map((entity) => [entity.entity
 const publicCollections = collectionSnapshot.docs.map((snapshot) => ({
   ...snapshot.data(),
   publicSlug: snapshot.data().publicSlug || collectionPublicSlug(snapshot.data()),
-  publisherId: snapshot.data().publisherId || "publisher_future_edge_ipulse_ai",
-  publisherSlug: snapshot.data().publisherSlug || "ipulse-ai",
 }));
 const collectionEntities = collectionEntitySnapshot.docs.map((snapshot) => snapshot.data());
 const forecasts = forecastSnapshot.docs.map((snapshot) => {
@@ -194,27 +193,16 @@ const forecasts = forecastSnapshot.docs.map((snapshot) => {
   // Public catalogs are derived exclusively from lightweight forecast index
   // records. Full receipts can be large and remain point-read artifacts; a
   // catalog rebuild must never list and download every sealed receipt.
-  const revision = forecast.sourceRevisionId ?? forecast.revisionNumber ?? 1;
+  assert(forecast.forecastPublicId && forecast.publisherId && forecast.canonicalPath, `Incomplete immutable revision identity: ${snapshot.id}`);
   return compact({
     ...forecast,
     // Collection membership keeps its original label; public forecast URLs
     // use the governed entity locator, not the original publisher route alias.
     entitySlug: entity.publicSlug || entity.stableSlug || forecast.entitySlug,
-    forecastPublicId: forecast.forecastPublicId || deriveForecastPublicId({
-      publisherId: forecast.publisherId || "publisher_future_edge_ipulse_ai",
-      sourceForecastId: forecast.forecastId,
-      sourceRevisionId: revision,
-    }),
-    publisherId: forecast.publisherId || "publisher_future_edge_ipulse_ai",
-    publisherSlug: forecast.publisherSlug || "ipulse-ai",
     targetSlug: targetSlugFor(forecast),
     forecasterPublicSlug: forecasterSlugFor(forecast),
     horizonStartAt: forecast.horizonStartAt || forecast.forecastCreatedAt,
-    executionProvenance: forecast.executionProvenance || {
-      controlFlow: "single_model_invocation",
-      contextAcquisition: ["provided_context"],
-      provenanceStatus: "reconstructed",
-    },
+    executionProvenance: forecast.executionProvenance || { provenanceStatus: "unknown" },
   });
 });
 const forecasters = forecasterSnapshot.docs.map((snapshot) => {
@@ -222,9 +210,6 @@ const forecasters = forecasterSnapshot.docs.map((snapshot) => {
   return compact({
     ...forecaster,
     publicSlug: forecaster.publicSlug || slugify(forecaster.displayName || forecaster.name || forecaster.forecasterId),
-    currentVersionId: forecaster.currentVersionId || `forecaster_version_${forecaster.forecasterId}`,
-    forecasterKind: forecaster.forecasterKind || (String(forecaster.type).includes("ai") ? "ai" : "quant_model"),
-    implementationKind: forecaster.implementationKind || (String(forecaster.type).includes("ai") ? "llm" : "machine_learning_model"),
   });
 });
 const generatedAt = publicCollections.map((collection) => collection.publishedAt).filter(Boolean).sort().at(-1)
@@ -232,50 +217,16 @@ const generatedAt = publicCollections.map((collection) => collection.publishedAt
 const planned = [];
 const targetsBySlug = new Map();
 
-// Publisher and target definitions belong to publication, not to a read-model
-// rebuild. Only synthesize them for older imports that did not publish them.
-if (!publisherSnapshot.docs.some((snapshot) => snapshot.id === "publisher_future_edge_ipulse_ai")) planned.push({
-  collectionName: "public_publishers",
-  documentId: "publisher_future_edge_ipulse_ai",
-  value: {
-    publisherId: "publisher_future_edge_ipulse_ai",
-    publicSlug: "ipulse-ai",
-    name: "iPulse AI",
-    organizationId: "oflorg_future_edge_group_fze",
-    description: "The open agentic investment research platform built by Future Edge Group FZE.",
-    websiteUrl: "https://ipulseai.com",
-    publicationStatus: "published",
-    visibility: "public",
-  },
-});
+// Publisher ownership must be explicit; never infer iPulse ownership from
+// subject shape, collection labels, or missing data in another domain.
+const publishers = new Set(publisherSnapshot.docs.map((snapshot) => snapshot.id));
+for (const record of [...forecasts, ...publicCollections]) {
+  assert(record.publisherId && publishers.has(record.publisherId), "Missing governed publisher identity");
+}
 
-for (const [index, forecast] of forecasts.entries()) {
-  const sourceDocumentId = forecastSnapshot.docs[index].id;
-  planned.push({ collectionName: "public_forecasts", documentId: sourceDocumentId, value: forecast, bytes: assertCatalogSize(`public_forecasts/${sourceDocumentId}`, forecast) });
-  planned.push({
-    collectionName: "public_receipt_resolvers",
-    documentId: forecast.receiptDigest,
-    value: {
-      receiptDigest: forecast.receiptDigest,
-      forecastPublicId: forecast.forecastPublicId,
-      canonicalPath: canonicalForecastPath(forecast),
-      publicationStatus: "published",
-      visibility: "public",
-    },
-  });
-  planned.push({
-    collectionName: "public_forecast_resolvers",
-    documentId: forecast.forecastPublicId,
-    value: {
-      forecastPublicId: forecast.forecastPublicId,
-      forecastId: forecast.forecastId,
-      entityId: forecast.entityId,
-      receiptDigest: forecast.receiptDigest,
-      canonicalPath: canonicalForecastPath(forecast),
-      publicationStatus: "published",
-      visibility: "public",
-    },
-  });
+for (const forecast of forecasts) {
+  // Sealed revisions and permanent resolver addresses are publication-owned.
+  // A browsing rebuild must never rewrite either namespace.
   const knownMarketReturnTarget = forecast.targetSlug === "adjusted-end-of-day-close-return";
   const targetRecord = compact({
       targetId: `target_${forecast.targetSlug.replaceAll("-", "_")}`,

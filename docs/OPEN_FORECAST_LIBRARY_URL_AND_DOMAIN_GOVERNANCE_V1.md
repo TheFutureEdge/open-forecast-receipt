@@ -1,5 +1,9 @@
 # Forecast Library URL and Domain Governance v1
 
+Individual-record routing is superseded by
+`PERMANENT_RECORDS_AND_PUBLISHER_BOUNDARIES_2026-09-09.md`: published URLs serve
+their original evidence directly, without per-record redirect dependencies.
+
 **Status:** Product name and canonical domain approved; route contract remains the production-launch gate
 **Date:** 2026-08-28
 **Scope:** Public domain, canonical URLs, entity and forecast permalinks, redirects, indexing, sitemaps, and cross-linking with iPulse AI

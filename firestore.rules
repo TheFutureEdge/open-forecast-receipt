@@ -79,6 +79,11 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /public_forecast_revisions/{documentId} {
+      allow get: if true;
+      allow list, write: if false;
+    }
+
     match /public_forecast_resolvers/{documentId} {
       allow get: if true;
       allow list: if false;

@@ -380,13 +380,11 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
       publicationStatus: "published",
       visibility: "public",
     };
-    addPlannedDocument(planned, "public_forecasts", forecast.forecastId, publicForecastRecord, "mutable_current");
-    const canonicalPath = canonicalForecastPath({
-      entitySlug: presentation.routeSlug,
-      forecastCreatedAt: forecast.temporal.forecastCreatedAt,
-      targetSlug: publicForecastRecord.targetSlug,
-      forecasterSlug: forecasterPublicSlug,
-      forecastPublicId: publicForecastRecord.forecastPublicId,
+    const canonicalPath = `/forecasts/${publicForecastRecord.forecastPublicId}`;
+    publicForecastRecord.canonicalPath = canonicalPath;
+    addPlannedDocument(planned, "public_forecasts", publicForecastRecord.forecastPublicId, publicForecastRecord, "mutable_current");
+    addPlannedDocument(planned, "public_forecast_revisions", publicForecastRecord.forecastPublicId, {
+      ...publicForecastRecord, revisionStorageVersion: "ofl-forecast-revision-v1",
     });
     addPlannedDocument(planned, "public_receipt_resolvers", digest, {
       receiptDigest: digest,
@@ -394,7 +392,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
       canonicalPath,
       publicationStatus: "published",
       visibility: "public",
-    }, "mutable_current");
+    });
     addPlannedDocument(planned, "public_forecast_resolvers", publicForecastRecord.forecastPublicId, {
       forecastPublicId: publicForecastRecord.forecastPublicId,
       forecastId: forecast.forecastId,
@@ -403,7 +401,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
       canonicalPath,
       publicationStatus: "published",
       visibility: "public",
-    }, "mutable_current");
+    });
     addPlannedDocument(planned, "public_targets", publicForecastRecord.targetSlug, {
       targetId: `target_${publicForecastRecord.targetSlug.replaceAll("-", "_")}`,
       publicSlug: publicForecastRecord.targetSlug,
@@ -611,6 +609,14 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
 /** Older pilot wrappers omitted this browse-only link. Preserve them verbatim. */
 export function immutablePublicationMatches(item, existing) {
   if (canonicalize(existing) === canonicalize(item.value)) return true;
+  if (["public_forecast_revisions", "public_forecast_resolvers", "public_receipt_resolvers"].includes(item.collectionName)) {
+    // Existing locations and snapshots win on idempotent reimports. A digest
+    // conflict is never accepted, and no existing bytes are rewritten.
+    return existing.forecastPublicId === item.value.forecastPublicId
+      && existing.receiptDigest === item.value.receiptDigest
+      && Boolean(existing.canonicalPath)
+      && (item.collectionName === "public_receipt_resolvers" || existing.forecastId === item.value.forecastId);
+  }
   if (item.collectionName !== "public_receipts" || existing.originalSource !== undefined) return false;
   const { originalSource: _originalSource, ...withoutSourceLink } = item.value;
   return canonicalize(existing) === canonicalize(withoutSourceLink);

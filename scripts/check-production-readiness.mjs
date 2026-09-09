@@ -69,11 +69,11 @@ check(materializer.includes("MAX_PUBLIC_CATALOG_BYTES = 650 * 1024"), "Catalogs 
 check(publisher.includes("MAX_PUBLIC_CATALOG_BYTES = 650 * 1024") && entitySync.includes("MAX_PUBLIC_CATALOG_BYTES = 650 * 1024"), "All publisher paths enforce the same catalog ceiling");
 check(materializer.includes('collectionName: "public_entity_forecast_catalogs"'), "Collection/entity forecast catalogs are materialized");
 check(materializer.includes('collectionName: "public_entity_forecast_ledgers"'), "Cross-collection entity ledgers are materialized");
-check(materializer.includes('collectionName: "public_forecast_resolvers"'), "Stable forecast resolvers are materialized");
+check(materializer.includes('db.collection("public_forecast_revisions").get()') && !materializer.includes('collectionName: "public_forecast_resolvers"'), "Catalog rebuilds read immutable revisions without rewriting permanent resolvers");
 check(materializer.includes('collectionName: "public_sitemap_catalogs"'), "Bounded sitemap catalogs are materialized");
 
 check(sitemap.includes('dynamic = "force-dynamic"') && sitemap.includes("listPublicSitemapEntriesServer"), "Sitemap is SSR from bounded catalogs");
-check(routes.includes("parsePublicForecastPath") && routes.includes("permanentRedirect(canonicalPath)"), "Forecast canonicalization is server-side");
+check(routes.includes("parsePublicForecastPath") && routes.includes("!permanentId && pathname !== canonicalPath") && !routes.includes("permanentRedirect(canonicalPath)"), "Published forecast paths resolve directly against frozen canonical paths");
 check(routes.includes('pathname === "/integrity-test"'), "Canonical integrity-test route exists");
 check(!routes.includes('pathname === "/showcase"'), "No showcase product route remains");
 check(urlGovernance.includes("https://forecastlibrary.com") && urlGovernance.includes("Forecast Library URL and Domain Governance v1"), "Domain and URL governance is documented");

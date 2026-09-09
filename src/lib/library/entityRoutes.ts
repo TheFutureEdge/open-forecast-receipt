@@ -4,6 +4,7 @@ import type {
   PublicForecastRecord,
   PublicRelatedEntity,
 } from "./types";
+import { ipulseAssetUrl, ipulseHistoricalSource } from "../publishers/ipulse";
 
 export type PublicEntityRouteKind = "listed-securities" | "corporations" | "investment-funds" | "organizations" | "entities";
 
@@ -84,23 +85,10 @@ export function publicForecastSourceTag(collectionId?: string): string {
  * existing iPulse AI records useful while the explicit index field rolls out.
  */
 export function publicForecastOriginalSource(
-  entitySlug: string,
-  forecast: Pick<PublicForecastRecord, "collectionId" | "forecastCreatedAt" | "originalSource">,
+  _entitySlug: string,
+  forecast: Pick<PublicForecastRecord, "collectionId" | "forecastCreatedAt" | "originalSource"> & Partial<Pick<PublicForecastRecord, "entityId" | "publisherId">>,
 ): PublicForecastOriginalSource | undefined {
-  if (forecast.originalSource?.url) return forecast.originalSource;
-
-  const batch = forecast.collectionId?.match(/^batch-(\d+)$/i)?.[1];
-  if (!batch || Number(batch) < 6) return undefined;
-  const publicationDate = forecast.forecastCreatedAt.slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(publicationDate)) return undefined;
-  const publicationId = `${publicationDate}-sb${batch}`;
-  return {
-    publisherName: "iPulse AI",
-    label: "View the original historical forecast",
-    url: `https://ipulseai.com/stocks/${encodeURIComponent(entitySlug)}/forecast-history/${publicationId}/ai-forecasts`,
-    publicationId,
-    publicationDate,
-  };
+  return ipulseHistoricalSource(forecast) || forecast.originalSource;
 }
 
 /** Build a date-led publication-set slug. Batch identity never leads the public URL. */
@@ -166,9 +154,32 @@ export function publicForecastKeyMatches(
 }
 
 export function publicForecastPath(entitySlug: string, forecast: PublicForecastRecord): string {
+  if (forecast.canonicalPath) return forecast.canonicalPath;
   const forecasterSlug = forecast.forecasterPublicSlug
     || slugifyEntityName(forecast.forecaster?.displayName || forecast.forecasterLabel || forecast.forecasterId);
   return `${publicEntityForecastLedgerPath(entitySlug)}/${encodeURIComponent(publicForecastDateSlug(forecast.forecastCreatedAt))}/${encodeURIComponent(publicForecastTargetSlug(forecast))}/${encodeURIComponent(forecasterSlug)}/${encodeURIComponent(publicForecastPublicId(forecast))}`;
+}
+
+/** A permanent direct record route, independent of subject, model and taxonomy. */
+export function publicForecastPermalink(forecastPublicId: string): string {
+  if (!/^f-[0-9a-hjkmnp-tv-z]{26}$/.test(forecastPublicId)) throw new Error("Invalid public forecast ID");
+  return `/forecasts/${forecastPublicId}`;
+}
+
+/** Original historical evidence and the current asset research have distinct destinations. */
+export function publicForecastAssetSource(forecast: Pick<PublicForecastRecord, "originalSource"> & Partial<Pick<PublicForecastRecord, "entityId" | "publisherId">>): string | undefined {
+  return ipulseAssetUrl(forecast);
+}
+
+/** Publisher-neutral current context. Financial labeling stays in its adapter. */
+export function publicForecastSubjectSource(forecast: Pick<PublicForecastRecord, "originalSource"> & Partial<Pick<PublicForecastRecord, "entityId" | "publisherId">>): { url: string; label: string } | undefined {
+  const ipulseUrl = ipulseAssetUrl(forecast);
+  if (ipulseUrl) return { url: ipulseUrl, label: "Explore current AI Consensus on iPulse AI" };
+  try {
+    const url = new URL(forecast.originalSource?.subjectUrl || "");
+    if (url.protocol !== "https:" || url.username || url.password) return undefined;
+    return { url: url.href, label: forecast.originalSource?.subjectLabel || `Explore current subject context on ${forecast.originalSource?.publisherName || "the publisher site"}` };
+  } catch { return undefined; }
 }
 
 export function parsePublicForecastPath(pathname: string): { routeSlug: string; generatedDate: string; targetSlug: string; forecasterSlug: string; forecastPublicId: string } | null {

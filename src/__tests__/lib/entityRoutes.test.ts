@@ -11,6 +11,7 @@ import {
   publicEntityPath,
   publicEntitySlug,
   publicForecastOriginalSource,
+  publicForecastSubjectSource,
   publicForecastKeyMatches,
   publicForecastPath,
   publicRelatedEntityPath,
@@ -78,6 +79,8 @@ describe("public entity routes", () => {
 
   it("links Batch 6+ forecasts to their original iPulse AI historical publication", () => {
     expect(publicForecastOriginalSource("3m-mmm", {
+      publisherId: "publisher_future_edge_ipulse_ai",
+      originalSource: { publisherName: "iPulse AI", label: "Historical forecast", url: "https://ipulseai.com/stocks/3m-mmm" },
       collectionId: "batch-6",
       forecastCreatedAt: "2026-07-05T14:56:47Z",
     })).toEqual({
@@ -92,6 +95,15 @@ describe("public entity routes", () => {
       collectionId: "batch-5",
       forecastCreatedAt: "2026-01-05T00:00:00Z",
     })).toBeUndefined();
+  });
+
+  it("keeps other forecasting domains independent from iPulse asset mappings", () => {
+    const weather = { publisherId: "weather-lab", entityId: "unrelated-subject", collectionId: "batch-6", forecastCreatedAt: "2026-07-05T00:00:00Z",
+      originalSource: { publisherName: "Weather Lab", label: "Original weather forecast", url: "https://example.org/forecasts/rain-2026", subjectUrl: "https://example.org/regions/abu-dhabi", subjectLabel: "Current weather research" } };
+    expect(publicForecastOriginalSource("3m-mmm", weather)).toEqual(weather.originalSource);
+    expect(publicForecastSubjectSource(weather)).toEqual({ url: weather.originalSource.subjectUrl, label: weather.originalSource.subjectLabel });
+    expect(publicForecastOriginalSource("3m-mmm", { collectionId: "batch-6", forecastCreatedAt: weather.forecastCreatedAt })).toBeUndefined();
+    expect(publicForecastSubjectSource({ ...weather, originalSource: { ...weather.originalSource, subjectUrl: "javascript:alert(1)" } })).toBeUndefined();
   });
 
   it("retains the first hackathon collection route only as a redirect input", () => {

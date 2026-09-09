@@ -16,13 +16,20 @@ describe("stable forecast resolution", () => {
     vi.stubEnv("NEXT_PUBLIC_OFL_ENVIRONMENT", "production");
     firestore.collection.mockImplementation(() => ({ doc: () => ({ get: async () => ({ exists: false }) }) }));
     expect(await getPublicForecastByPublicIdServer("f-unknown")).toBeNull();
-    expect(firestore.collection).toHaveBeenCalledTimes(1);
+    expect(firestore.collection).toHaveBeenCalledTimes(2);
   });
   it.each([false, true])("refuses an old resolver after the current index changes (changed=%s)", async (changed) => {
     vi.stubEnv("NEXT_PUBLIC_OFL_ENVIRONMENT", "production");
-    const original = { forecastId: "source", forecastPublicId: "f-original", receiptDigest: "digest-original" };
+    const original = { forecastId: "source", forecastPublicId: "f-original", receiptDigest: "digest-original", canonicalPath: "/original" };
     const current = changed ? { ...original, forecastPublicId: "f-new", receiptDigest: "digest-new" } : original;
-    firestore.collection.mockImplementation((name: string) => ({ doc: () => ({ get: async () => ({ exists: true, data: () => name === "public_forecast_resolvers" ? original : current }) }) }));
+    firestore.collection.mockImplementation((name: string) => ({ doc: () => ({ get: async () => ({ exists: name !== "public_forecast_revisions", data: () => name === "public_forecast_resolvers" ? original : current }) }) }));
     expect(await getPublicForecastByPublicIdServer("f-original")).toEqual(changed ? null : original);
+  });
+  it("reads an immutable revision without consulting mutable indexes", async () => {
+    const original = { forecastPublicId: "f-original", receiptDigest: "digest-original", canonicalPath: "/original", visibility: "public", publicationStatus: "published" };
+    firestore.collection.mockImplementation(() => ({ doc: () => ({ get: async () => ({ exists: true, data: () => original }) }) }));
+    expect(await getPublicForecastByPublicIdServer("f-original")).toEqual(original);
+    expect(firestore.collection).toHaveBeenCalledTimes(1);
+    expect(firestore.collection).toHaveBeenCalledWith("public_forecast_revisions");
   });
 });

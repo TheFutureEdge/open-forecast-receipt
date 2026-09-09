@@ -1,35 +1,27 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-
-const { resolveReceipt } = vi.hoisted(() => ({ resolveReceipt: vi.fn() }));
-vi.mock("../lib/library/server-repository", () => ({ getPublicReceiptResolverServer: resolveReceipt }));
-import { GET } from "../../app/receipts/[digest]/route";
-
-afterEach(() => { vi.unstubAllEnvs(); vi.resetAllMocks(); });
-const digest = "a".repeat(64);
-const request = new Request(`https://forecastlibrary.com/receipts/${digest}`);
-
-describe("receipt URL HTTP contract", () => {
-  it("returns a real permanent redirect after resolving the stored digest", async () => {
-    vi.stubEnv("NEXT_PUBLIC_OFL_ENVIRONMENT", "production");
-    vi.stubEnv("NEXT_PUBLIC_SITE_ORIGIN", "https://forecastlibrary.com");
-    resolveReceipt.mockResolvedValue({ canonicalPath: "/entities/listed-securities/pepsico-pep/forecasts/example" });
-    const response = await GET(request, { params: Promise.resolve({ digest: digest.toUpperCase() }) });
-    expect(response.status).toBe(308);
-    expect(response.headers.get("location")).toBe("https://forecastlibrary.com/entities/listed-securities/pepsico-pep/forecasts/example");
-    expect(resolveReceipt).toHaveBeenCalledWith(digest);
+import { readFileSync } from "node:fs";
+const { readReceipt } = vi.hoisted(() => ({ readReceipt: vi.fn() }));
+vi.mock("../lib/library/server-repository", () => ({ getLibraryReceiptServer: readReceipt }));
+vi.mock("next/navigation", () => ({ notFound: () => { throw new Error("HTTP404"); } }));
+vi.mock("../components/layout/AppShell", () => ({ AppShell: () => null }));
+vi.mock("../components/receipt/ReceiptDetail", () => ({ LoadedReceiptDetail: () => null }));
+import ReceiptPage, { generateMetadata } from "../../app/receipts/[digest]/page";
+afterEach(() => vi.resetAllMocks());
+const document = JSON.parse(readFileSync(new URL("../data/fixtures/pepsi/ray-ofr.json", import.meta.url), "utf8"));
+const digest = document.proofEnvelope.payloadDigestSha256;
+describe("permanent receipt URL", () => {
+  it("renders the exact payload directly and needs no current forecast resolver", async () => {
+    readReceipt.mockResolvedValue({ document, projection: {} });
+    expect(await ReceiptPage({ params: Promise.resolve({ digest }) })).toBeTruthy();
+    expect(readReceipt).toHaveBeenCalledWith(digest);
+    expect((await generateMetadata({ params: Promise.resolve({ digest }) })).alternates?.canonical).toBe(`/receipts/${digest}`);
   });
-
-  it("returns HTTP 404 for missing or malformed receipts", async () => {
-    resolveReceipt.mockResolvedValue(null);
-    expect((await GET(request, { params: Promise.resolve({ digest }) })).status).toBe(404);
-    expect((await GET(request, { params: Promise.resolve({ digest: "invalid" }) })).status).toBe(404);
-    expect(resolveReceipt).toHaveBeenCalledTimes(1);
-  });
-
-  it("rejects an external resolver destination", async () => {
-    vi.stubEnv("NEXT_PUBLIC_OFL_ENVIRONMENT", "production");
-    vi.stubEnv("NEXT_PUBLIC_SITE_ORIGIN", "https://forecastlibrary.com");
-    resolveReceipt.mockResolvedValue({ canonicalPath: "https://example.com/" });
-    await expect(GET(request, { params: Promise.resolve({ digest }) })).rejects.toThrow("canonical origin");
+  it("returns not-found for malformed, missing or mismatched evidence", async () => {
+    await expect(ReceiptPage({ params: Promise.resolve({ digest: "invalid" }) })).rejects.toThrow("HTTP404");
+    expect(readReceipt).not.toHaveBeenCalled();
+    readReceipt.mockResolvedValue(null);
+    await expect(ReceiptPage({ params: Promise.resolve({ digest }) })).rejects.toThrow("HTTP404");
+    readReceipt.mockResolvedValue({ document, projection: {} });
+    await expect(ReceiptPage({ params: Promise.resolve({ digest: "0".repeat(64) }) })).rejects.toThrow("HTTP404");
   });
 });

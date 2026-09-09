@@ -70,6 +70,7 @@ import {
   listPublicOrganizationsServer,
 } from "../../src/lib/library/server-repository";
 import { ENTITY_CATALOG_PRESETS } from "../../src/lib/library/catalog-presets";
+import type { PublicEntityRecord } from "../../src/lib/library/types";
 
 export const revalidate = 300;
 
@@ -132,6 +133,7 @@ function staticMetadata(pathname: string): { title: string; description: string 
     "/targets": { title: "Governed Forecast Targets", description: "Browse the measurable target definitions used by public forecasts." },
     "/publishers": { title: "Public Forecast Publishers", description: "Browse the accountable publishers of public forecast records." },
     "/collections": { title: "Public Forecast Collections", description: "Browse optional publisher collections while preserving one identity per forecast." },
+    "/submit": { title: "Submit a Public Forecast", description: "Contact support to submit a forecast for manual review and public receipt publication." },
   };
   if (exact[pathname]) return exact[pathname];
   if (pathname.includes("/subjects/listed-securities")) return { title: "Listed Security Forecast Subjects", description: "Browse governed listed securities, market identifiers, issuer relationships, targets, and public forecasts." };
@@ -149,6 +151,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const pathname = pathnameFrom(await params);
   const entityMatch = parseEntityDetailPath(pathname);
   const ledgerMatch = parseEntityForecastLedgerPath(pathname);
+  const permanentId = pathname.match(/^\/forecasts\/(f-[0-9a-hjkmnp-tv-z]{26})$/)?.[1];
   const individualMatch = parsePublicForecastPath(pathname);
   const forecasterMatch = pathname.match(/^\/forecasters\/([^/]+)$/);
   const targetMatch = pathname.match(/^\/targets\/([^/]+)$/);
@@ -162,8 +165,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         ? await getPublicEntityCached(individualMatch.routeSlug, "listed-securities").catch(() => null)
         : null;
   const fallback = staticMetadata(pathname);
-  const individualForecast = individualMatch
-    ? await getPublicForecastCached(individualMatch.forecastPublicId).catch(() => null)
+  const individualForecast = individualMatch || permanentId
+    ? await getPublicForecastCached(permanentId || individualMatch!.forecastPublicId).catch(() => null)
     : null;
   const [forecaster, target, publisher, collection] = await Promise.all([
     forecasterMatch ? getPublicForecasterCached(decodeURIComponent(forecasterMatch[1])).catch(() => null) : null,
@@ -173,8 +176,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       ? getPublicCollectionCached(decodeURIComponent(collectionMatch[1]), decodeURIComponent(collectionMatch[2])).catch(() => null)
       : null,
   ]);
-  const canonicalPath = entity && individualForecast
-    ? publicForecastPath(publicEntitySlug(entity), individualForecast)
+  const canonicalPath = individualForecast
+    ? publicForecastPath(individualForecast.entitySlug, individualForecast)
     : entity && entityMatch
       ? publicEntityPath(entity)
       : pathname;
@@ -347,23 +350,34 @@ async function resolveRoute(pathname: string): Promise<ReactNode> {
     />;
   }
 
-  const individual = parsePublicForecastPath(pathname);
+  const permanentId = pathname.match(/^\/forecasts\/(f-[0-9a-hjkmnp-tv-z]{26})$/)?.[1];
+  const individual = parsePublicForecastPath(pathname) || (permanentId ? {
+    routeSlug: "", generatedDate: "", targetSlug: "", forecasterSlug: "", forecastPublicId: permanentId,
+  } : null);
   if (individual) {
     const forecast = await getPublicForecastCached(individual.forecastPublicId);
     if (!forecast) return null;
-    const entity = await getPublicEntityCached(forecast.entityId, "listed-securities");
-    if (!entity) return null;
+    const receipt = await getLibraryReceiptCached(forecast.receiptDigest);
+    if (!receipt) return null;
+    const originalEntity = receipt.document.receiptPayload.forecast.entity;
+    const entity: PublicEntityRecord = await getPublicEntityCached(forecast.entityId, "listed-securities").catch(() => null) || {
+      entityId: forecast.entityId, currentVersionId: "receipt-snapshot", entityType: originalEntity.type,
+      entityClasses: ["forecastable_entity"], canonicalName: originalEntity.name, stableSlug: forecast.entitySlug,
+      aliases: [], classifications: [], schemaOrgTypes: ["Thing"], externalIdentifiers: [], sameAs: [],
+      publicationStatus: "published", visibility: "public",
+    };
     const canonicalPath = publicForecastPath(publicEntitySlug(entity), forecast);
-    if (pathname !== canonicalPath) permanentRedirect(canonicalPath);
-    const ledger = await listLibraryForecastLedgerPageServer(entity.entityId);
+    // Frozen published paths and ID-only permalinks render directly. Do not
+    // manufacture redirect chains when names, taxonomy or the UI change.
+    if (!permanentId && pathname !== canonicalPath) return null;
+    const ledger = await listLibraryForecastLedgerPageServer(entity.entityId).catch(() => ({ forecasts: [forecast], totalForecastCount: 1 }));
     const sidebarForecasts = ledger.forecasts.some((candidate) => candidate.forecastId === forecast.forecastId)
       ? ledger.forecasts
       : [forecast, ...ledger.forecasts];
-    const receipt = forecast ? await getLibraryReceiptCached(forecast.receiptDigest) : null;
     const initialData = forecast && receipt
       ? { entity, forecasts: sidebarForecasts, totalForecastCount: ledger.totalForecastCount, forecast, receipt }
       : null;
-    return <IndividualForecastPage {...individual} initialData={initialData} />;
+    return <IndividualForecastPage {...individual} routeSlug={forecast.entitySlug} initialData={initialData} />;
   }
 
   const legacyIndividual = parseLegacyPublicForecastPath(pathname);

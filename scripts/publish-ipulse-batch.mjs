@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import process from "node:process";
+import ipulseAssetPaths from "../src/data/ipulse-public-asset-paths.json" with { type: "json" };
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { GoogleAuth } from "google-auth-library";
@@ -96,6 +97,8 @@ function compact(values) {
 }
 
 function originalSourceForReceipt(routeSlug, scoringBatch, receipt) {
+  const assetPath = ipulseAssetPaths[receipt.receiptPayload.forecast.entity.id];
+  assert(assetPath, "Refresh the governed iPulse public asset URL map before importing a new subject");
   const forecastCreatedAt = receipt.receiptPayload.forecast.temporal.forecastCreatedAt;
   const publicationDate = String(forecastCreatedAt).slice(0, 10);
   assert(/^\d{4}-\d{2}-\d{2}$/.test(publicationDate), `Forecast ${receipt.receiptPayload.forecast.forecastId} has no public generation date`);
@@ -103,7 +106,7 @@ function originalSourceForReceipt(routeSlug, scoringBatch, receipt) {
   return {
     publisherName: "iPulse AI",
     label: "View the original historical forecast",
-    url: `https://ipulseai.com/stocks/${encodeURIComponent(routeSlug)}/forecast-history/${publicationId}/ai-forecasts`,
+    url: `https://ipulseai.com${assetPath}/forecast-history/${publicationId}/ai-forecasts`,
     publicationId,
     publicationDate,
   };

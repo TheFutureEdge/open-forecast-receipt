@@ -178,7 +178,7 @@ export function LandingPage({ metrics }: { metrics: PublicLibraryLandingMetrics 
     [formatted(metrics.forecastSubjectCount), "forecast subjects"],
     [formatted(metrics.receiptCount), "public receipts"],
     [formatted(metrics.forecasterCount), "forecaster profiles"],
-    [`${formatted(metrics.verifiedProofCount)}/${formatted(metrics.selectedProofCount)}`, "verified proofs"],
+    [formatted(metrics.verifiedProofCount), "verified proofs"],
   ];
   const structuredData = buildStructuredData(metrics);
 

@@ -97,8 +97,8 @@ function pathnameFrom(params: RouteParams): string {
 function staticMetadata(pathname: string): { title: string; description: string } {
   const exact: Record<string, { title: string; description: string }> = {
     "/": {
-      title: "Forecast Library | Verifiable Public Forecasts",
-      description: "Browse public forecasts, inspect their Open Forecast Receipts, verify integrity, and follow optional per-receipt blockchain proofs and later evaluations.",
+      title: "Forecast Library | Human, Statistical and AI Forecasts",
+      description: "A lasting public record for human, statistical and AI forecasts. Publish through support, inspect open JSON receipts, and request optional blockchain proof.",
     },
     "/entities": {
       title: "Semantic Entity Catalog for Verifiable Forecasts",

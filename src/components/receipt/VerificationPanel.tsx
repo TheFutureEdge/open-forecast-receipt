@@ -24,7 +24,7 @@ export function VerificationPanel({
   const showPublicProof = Boolean(attestationUID);
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <section id="blockchain-verification" className="scroll-mt-24 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <ShieldCheck size={18} weight="duotone" className="text-blue-600" aria-hidden="true" />

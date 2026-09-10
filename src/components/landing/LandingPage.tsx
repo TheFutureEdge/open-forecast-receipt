@@ -21,6 +21,7 @@ import {
 import { Link } from "../../lib/router";
 import type { PublicLibraryLandingMetrics } from "../../lib/library/types";
 import { getPublicSiteOrigin } from "../../lib/siteOrigin";
+import { BlockchainSection, ReceiptFormatSection } from "./BlockchainSection";
 
 const EXAMPLE_RECEIPT_DIGEST = "af9593e0922992eab5f6051a39e9576de4c9e638080c47c4960f37fd793e84c2";
 const GITHUB_URL = "https://github.com/TheFutureEdge/open-forecast-receipt";
@@ -68,7 +69,7 @@ const principles = [
   {
     Icon: Code,
     title: "Versioned provenance",
-    body: "Model, prompt, tool, retrieval, output-schema, and code versions can be preserved without exposing hidden chain-of-thought.",
+    body: "Preserve the method, assumptions, source evidence, and relevant model or code versions behind a forecast.",
   },
   {
     Icon: Fingerprint,
@@ -78,10 +79,10 @@ const principles = [
 ];
 
 const audiences = [
-  { Icon: UsersThree, title: "Forecast publishers", body: "Publish an inspectable record without building a provenance format from scratch." },
-  { Icon: MagnifyingGlass, title: "Researchers and reviewers", body: "Reconstruct what was known, supplied, generated, and later evaluated." },
-  { Icon: Code, title: "Developers", body: "Use the open schema, canonicalization rules, verifier, and publishing tools." },
-  { Icon: GlobeHemisphereWest, title: "The public", body: "Browse forecasts without an account and independently check receipt integrity." },
+  { Icon: UsersThree, title: "Publish your track record", body: "Give clients and readers a permanent link to your original prediction, whether you forecast personally, with statistical models, or with AI." },
+  { Icon: MagnifyingGlass, title: "Make research reproducible", body: "Keep the original values, dates, assumptions, and evidence available for later comparison with outcomes." },
+  { Icon: Code, title: "Build on an open format", body: "Download structured JSON and verify its digest with an open-source toolkit. Keep your integration independent of page layouts." },
+  { Icon: GlobeHemisphereWest, title: "Show your evidence", body: "Let anyone inspect your public record without an account. Request independent blockchain anchoring when extra traceability matters." },
 ];
 
 const faqs = [
@@ -189,17 +190,17 @@ export function LandingPage({ metrics }: { metrics: PublicLibraryLandingMetrics 
               <Database size={15} weight="fill" /> Public infrastructure for verifiable forecasts
             </div>
             <h1 className="mt-5 max-w-3xl text-4xl font-black leading-[1.04] tracking-[-0.04em] text-slate-950 sm:text-6xl dark:text-white">
-              Give forecasts a memory.
+              Your forecasts. A lasting public record.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600 dark:text-slate-300">
-              Forecast Library preserves what was predicted, by whom, when, and with which information—so the historical record can be inspected, verified, and evaluated instead of quietly overwritten.
+              Publish forecasts from people, statistical models, and AI in one inspectable library. Give your audience a permanent link to what you predicted, when you predicted it, and the evidence behind it.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link to="/forecasts" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-center text-sm font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 sm:w-auto">
                 Browse public forecasts <ArrowRight size={17} weight="bold" />
               </Link>
-              <Link to="/entities" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-center text-sm font-bold text-slate-700 hover:border-blue-300 hover:text-blue-700 sm:w-auto dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                Explore forecast subjects
+              <Link to="/submit" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-center text-sm font-bold text-slate-700 hover:border-blue-300 hover:text-blue-700 sm:w-auto dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                List your forecasts
               </Link>
               <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-center text-sm font-bold text-slate-700 hover:border-blue-300 hover:text-blue-700 sm:w-auto dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
                 <Code size={17} weight="bold" /> Open-source project
@@ -294,15 +295,16 @@ export function LandingPage({ metrics }: { metrics: PublicLibraryLandingMetrics 
         </div>
       </section>
 
+      <BlockchainSection />
       <section id="vision" className="border-b border-slate-200 dark:border-slate-800">
         <div className="mx-auto grid max-w-[1240px] gap-8 px-5 py-14 lg:grid-cols-2 lg:px-8">
           <div>
             <div className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">Open-source origins. A shared research record.</div>
-            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 dark:text-white">Forecast evidence that can travel between agents.</h2>
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 dark:text-white">Every forecasting method deserves an inspectable record.</h2>
             <p className="mt-4 text-base leading-7 text-slate-600 dark:text-slate-300">Forecast Library grew out of Open Forecast Receipt, an open-source initiative to make a prediction portable, inspectable, and independently verifiable. Its scope is forecasting science across domains, from markets and weather to demand and scientific research, including human, quantitative, and AI forecasts. iPulse AI is a separate financial-market research product and our first live publisher. Other domains will need their own reviewed receipt profiles.</p>
           </div>
           <div>
-            <p className="text-base leading-7 text-slate-600 dark:text-slate-300">Our ambition is for a research agent to hand a forecast to another agent with its source, timing, assumptions, and integrity evidence intact. A reviewer can check the record, a downstream workflow can reference it, and an evaluator can append the outcome without rewriting the original prediction.</p>
+            <p className="text-base leading-7 text-slate-600 dark:text-slate-300">Human judgment, statistical models, ensembles, and AI all contribute to forecasting. We expect increasingly capable AI to play a larger role, but the Library is designed around the forecast and its evidence, independent of who or what produced it. Our ambition is a shared record that people and research agents can both use.</p>
             <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">That vision includes Agent-to-Agent (A2A) collaboration and other agentic workflows. Today, developers can use the open receipt schema, deterministic verifier, and public receipt JSON API. Automated agent integrations and broader evaluation workflows are the next direction.</p>
             <div className="mt-5 flex flex-wrap gap-5 text-sm font-bold text-blue-700 dark:text-blue-300">
               <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2">Explore the open-source initiative <ArrowRight size={16} /></a>
@@ -316,12 +318,12 @@ export function LandingPage({ metrics }: { metrics: PublicLibraryLandingMetrics 
         <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
           <div>
             <div className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">The real-world problem</div>
-            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 dark:text-white">AI research has a memory problem.</h2>
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 dark:text-white">Make your original prediction easy to find and check.</h2>
             <p className="mt-4 text-base leading-7 text-slate-600 dark:text-slate-300">
-              Live dashboards show what a system thinks now. They rarely preserve the exact model, inputs, evidence, timing, and configuration that shaped an earlier prediction.
+              Reports get revised. Dashboards change. Forecasts disappear into posts and spreadsheets. Preserve the original prediction, method, assumptions, and timing so your audience can return to the same record later.
             </p>
             <blockquote className="mt-6 border-l-4 border-blue-500 pl-5 text-lg font-bold leading-8 text-slate-800 dark:text-slate-100">
-              “A live dashboard tells you what the system thinks now. A research record tells you what it knew then.”
+              A permanent receipt gives your forecast a reference your audience can cite, download, and independently verify.
             </blockquote>
             <p className="mt-4 text-sm leading-6 text-slate-500">
               Documentation does not make a forecast correct. It makes honest reconstruction, comparison, and evaluation possible.
@@ -412,6 +414,7 @@ export function LandingPage({ metrics }: { metrics: PublicLibraryLandingMetrics 
         </div>
       </section>
 
+      <ReceiptFormatSection />
       <section id="frequently-asked-questions" className="mx-auto max-w-[1000px] px-5 py-16 lg:px-8">
         <div className="text-center">
           <div className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">Frequently asked questions</div>

@@ -70,8 +70,8 @@ function metadataForPath(pathname: string): Omit<PageSeoProps, "canonicalPath"> 
 
   if (normalized === "/") {
     return {
-      title: "Forecast Library | Give Forecasts a Memory",
-      description: "Browse public forecasts, inspect Open Forecast Receipts, verify integrity, and follow optional per-receipt blockchain proofs.",
+      title: "Forecast Library | Human, Statistical and AI Forecasts",
+      description: "A lasting public record for human, statistical and AI forecasts. Publish through support, inspect open JSON receipts, and request optional blockchain proof.",
     };
   }
   if (normalized === "/forecasts" || normalized === "/manifest/batch-6") {

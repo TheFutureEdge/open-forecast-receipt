@@ -37,7 +37,7 @@ function InformationPage({ eyebrow, title, summary, sections, updated = "28 Augu
 export function AboutPage() {
   return <InformationPage
     eyebrow="About Forecast Library"
-    title="A public memory for forecasts"
+    title="A lasting public record for every forecasting method"
     summary="Forecast Library makes forecasts durable, inspectable, and comparable without confusing a prediction, its evidence, its receipt, and its eventual outcome."
     sections={[
       { heading: "The problem", body: <p>Forecasts often disappear into reports, dashboards, and model outputs. Their original wording, timing, context, and assumptions become difficult to recover. That makes honest evaluation—and institutional learning—far harder than it should be.</p> },
@@ -104,12 +104,16 @@ export function DisclaimerPage() {
 
 export function ReceiptStandardPage() {
   return <InformationPage
+    updated="10 September 2026"
     eyebrow="Open standard"
     title="Open Forecast Receipt v0.1"
     summary="A machine-verifiable JSON receipt that preserves one forecast, its timing, target, forecaster, provenance, and integrity envelope without storing hidden chain-of-thought."
     sections={[
       { heading: "One forecast, one receipt", body: <p>Each individual forecast is sealed independently. Publisher collections are browsing aids and never replace the identity or digest of an individual receipt.</p> },
       { heading: "Canonical verification", body: <p>Verifiers validate the JSON Schema, canonicalize <code>receiptPayload</code> using RFC 8785, compute SHA-256, and compare it with <code>proofEnvelope.payloadDigestSha256</code>.</p> },
+      { heading: "Supported format and scope", body: <><p>The machine-readable format is OFR v0.1.0 JSON, validated against the <a href="/schemas/open-forecast-receipt/v0.1.0/schema.json" className="font-semibold text-blue-600 underline">frozen public JSON Schema</a>. Its first live profile covers financial forecasts. Human judgment, statistical models, ensembles, and AI are all within the Library's scope; support reviews profile compatibility before accepting a publication.</p><p>A receipt is a structured forecast record, not a general agent-memory format or chat transcript. Do not submit hidden chain-of-thought, confidential inputs, or private source data.</p></> },
+      { heading: "Permanent links and public JSON", body: <><p>Forecasts have permanent <code>/forecasts/&#123;forecastPublicId&#125;</code> links. Receipts use <code>/receipts/&#123;sha256&#125;</code> and the read-only JSON endpoint <code>/api/v1/receipts/&#123;sha256&#125;</code>. Changing the homepage, category labels, or publisher presentation does not change these identities.</p><p>The SHA-256 covers <code>receiptPayload</code>; the separate proof envelope can gain verified attestation metadata without changing the sealed forecast.</p></> },
+      { heading: "Optional EAS projection", body: <p>The current compact financial projection contains 17 ABI-encoded fields, including subject, forecast and forecaster identifiers, forecast and anchor dates, target, anchor value and unit, retrospective status, cadence, forecast steps, and receipt digest. One forecast maps to one non-revocable EAS attestation with no expiry. Base Sepolia is the current testnet implementation; an unissued receipt has no blockchain proof.</p> },
       { heading: "Open-source toolkit", body: <p><a href="https://github.com/TheFutureEdge/open-forecast-receipt" className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:underline">View the schema, encoder, decoder, and verifier on GitHub <ArrowSquareOut size={14} /></a></p> },
     ]}
   />;
@@ -130,6 +134,7 @@ export function StandardsOverviewPage() {
 
 export function SubmissionPage() {
   return <InformationPage
+    updated="10 September 2026"
     eyebrow="Public submissions"
     title="Submit a public forecast"
     summary="Contact support to discuss a forecast and request manual publication review. No account or payment is required."
@@ -137,6 +142,7 @@ export function SubmissionPage() {
       { heading: "How to request publication", body: <p>Email <a href="mailto:support@ipulseai.com?subject=Forecast%20Library%20submission" className="font-semibold text-blue-600 hover:underline">support@ipulseai.com</a> with the forecast subject, target, horizon, forecaster identity, forecast values, and evidence or provenance you can disclose.</p> },
       { heading: "Start with a template or example", body: <><p><a href="/forecast-submission-template.txt" download className="font-semibold text-blue-600 underline">Download the submission checklist</a> and fill it in for your forecasting domain. Financial markets are the first live profile; support can discuss the requirements for other subjects and methods.</p><p><a href="/api/v1/receipts/af9593e0922992eab5f6051a39e9576de4c9e638080c47c4960f37fd793e84c2" className="font-semibold text-blue-600 underline">Inspect a real iPulse AI receipt JSON</a>, read the <a href="/schemas/open-forecast-receipt/v0.1.0/schema.json" className="font-semibold text-blue-600 underline">frozen v0.1 schema</a>, or try the <Link to="/integrity-test" className="font-semibold text-blue-600 underline">interactive integrity test</Link>.</p></> },
       { heading: "What happens next", body: <p className="flex gap-3"><LockKey className="mt-1 shrink-0 text-blue-600" size={22} /> We validate the subject and target, prepare an Open Forecast Receipt, confirm publication rights, and agree whether an optional blockchain proof is requested. No payment or public account is required in this phase.</p> },
+      { heading: "Request blockchain proof", body: <p>Include “blockchain proof requested” in your email or checklist. Support confirms the network, publication scope, and any issuance arrangements before anchoring. You receive the permanent receipt link and, after successful verification, its public attestation and transaction links. A testnet proof is labelled as testnet. A historical forecast anchored today cannot claim today's proof existed on its original forecast date.</p> },
       { heading: "Editorial control", body: <p className="flex gap-3"><Scales className="mt-1 shrink-0 text-slate-700 dark:text-slate-200" size={22} /> Submission does not guarantee publication. Forecast Library may reject incomplete, unlawful, misleading, duplicated, or unverifiable material.</p> },
     ]}
   />;

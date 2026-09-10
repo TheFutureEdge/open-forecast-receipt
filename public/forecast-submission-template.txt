@@ -19,7 +19,10 @@ Original public source URL:
 Optional current subject/context URL:
 Evidence or methodology that can be disclosed publicly:
 Correction of an earlier record? Include its permanent URL and the reason:
-Optional independent timestamp request:
+Optional blockchain proof requested (yes/no/discuss):
+Preferred network (production or testnet; agree with support before issuance):
+Acknowledgement: an anchor proves existence by the anchoring time, not accuracy
+or the original creation date of a retrospectively submitted forecast.
 
 Publication rights:
 Describe your authority to publish the forecast and accompanying evidence,

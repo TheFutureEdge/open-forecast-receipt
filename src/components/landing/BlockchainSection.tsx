@@ -9,9 +9,9 @@ export function BlockchainSection() {
         <p className="border-t border-white/10 px-5 py-3 text-xs text-slate-400">One forecast. One digest. An independently inspectable anchor.</p>
       </div>
       <div>
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-300"><Fingerprint size={19} /> Optional blockchain proof</div>
-        <h2 className="mt-3 text-3xl font-black tracking-tight">Evidence your audience can check beyond this website.</h2>
-        <p className="mt-4 text-base leading-7 text-slate-300">Add a public blockchain anchor to your forecast receipt. Anyone can compare the downloaded record with its onchain digest and inspect the attestation, issuing address, transaction, and anchoring time.</p>
+        <h2 className="flex items-center gap-3 text-3xl font-black uppercase tracking-tight text-blue-300 sm:text-4xl"><Fingerprint size={32} className="shrink-0" aria-hidden="true" /> BLOCKCHAIN PROOF</h2>
+        <p className="mt-4 text-xl font-semibold leading-snug sm:text-2xl">Evidence your audience can check beyond this website.</p>
+        <p className="mt-4 text-base leading-7 text-slate-300">Choose an optional public blockchain anchor when submitting your forecast receipt. Anyone can compare the downloaded record with its onchain digest and inspect the attestation, issuing address, transaction, and anchoring time.</p>
         <ol className="mt-6 space-y-4 text-sm leading-6 text-slate-300">
           <li><strong className="text-white">Seal the record.</strong> Canonical JSON and SHA-256 produce a fingerprint of the forecast payload.</li>
           <li><strong className="text-white">Anchor the fingerprint.</strong> Ethereum Attestation Service (EAS) records a compact forecast projection and digest. For the iPulse AI Showcase, all 12 advisor forecasts for an asset are submitted together in one transaction. Each receives an individual attestation ID within that submission.</li>

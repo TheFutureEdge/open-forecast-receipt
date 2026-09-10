@@ -234,6 +234,7 @@ export interface PublicForecastRecord {
   sortOrder: number;
   chainStatus: ChainStatus;
   showcaseSelected: boolean;
+  proofNetwork?: string;
   schemaUID?: string;
   attestationUID?: string;
   transactionHash?: string;

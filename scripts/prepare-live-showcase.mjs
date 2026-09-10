@@ -1,0 +1,62 @@
+// Read-only preparation of the complete, already-public Batch 6 Showcase.
+import { resolve } from "node:path";
+import { createRequire } from 'node:module';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+const root = resolve(import.meta.dirname, "..");
+const require = createRequire(`${root}/package.json`);
+const { Firestore } = require('@google-cloud/firestore');
+const { canonicalize } = require('json-canonicalize');
+const Ajv = require('ajv/dist/2020.js');
+const addFormats = require('ajv-formats');
+const { encodeAbiParameters, parseAbiParameters, parseAbi, encodeFunctionData, createPublicClient, http, keccak256, encodePacked } = require('viem');
+const { base, baseSepolia } = require('viem/chains');
+const config = JSON.parse(await readFile(`${root}/src/data/eas-base-sepolia.json`, 'utf8'));
+const schema = JSON.parse(await readFile(`${root}/schema/open_forecast_receipt_v0_1.schema.json`, 'utf8'));
+const ajv = new Ajv({ allErrors: true, strict: true }); addFormats(ajv);
+const validate = ajv.compile(schema);
+const assert = (value, message) => { if (!value) throw new Error(message); };
+const hash = value => createHash('sha256').update(value).digest('hex');
+const ids = ['equity_ea8243e7-75bd-549b-9ba6-48e03cf982c1', 'equity_aff2387b-9d08-5e40-8737-a5d658baf07c', 'crypto_8f824f2d-c67f-55e7-8124-aa113059635d', 'equity_e012cdce-768d-50c7-bb25-1ff8a901546c', 'fund_a02b062d-dd40-55e2-8113-721cc3c315af'];
+const db = new Firestore({ projectId: 'oflapp-prod', preferRest: true });
+const frozen = (await db.collection('public_forecast_revisions').where('entityId', 'in', ids).get()).docs.map(d => d.data()).filter(r => r.collectionId === 'batch-6');
+assert(frozen.length === 60, 'Expected 60 original Showcase records');
+assert(ids.every(id => frozen.filter(r => r.entityId === id).length === 12), 'Expected 12 forecasts per Showcase asset');
+assert(new Set(frozen.map(r => r.receiptDigest)).size === 60, 'Duplicate receipt');
+const receipts = await db.getAll(...frozen.map(r => db.doc(`public_receipts/${r.receiptDigest}`)));
+const abi = parseAbi(['function multiAttest((bytes32 schema, (address recipient, uint64 expirationTime, bool revocable, bytes32 refUID, bytes data, uint256 value)[] data)[] multiRequests) payable returns (bytes32[])', 'function register(string schema, address resolver, bool revocable) returns (bytes32)', 'function getSchema(bytes32 uid) view returns ((bytes32 uid, address resolver, bool revocable, string schema))']);
+assert(keccak256(encodePacked(['string','address','bool'],[config.schema,config.resolver,false]))===config.schemaUid,'Schema UID mismatch');
+const rows = frozen.map((r, i) => {
+  const saved = receipts[i].data();
+  assert(saved?.visibility === 'public' && saved?.publicationStatus === 'published', 'Public receipt missing');
+  const { document, projection } = saved;
+  assert(validate(document), ajv.errorsText(validate.errors));
+  const p = document.receiptPayload; const f = p.forecast; const e = projection.encodedFields;
+  assert(hash(canonicalize(p)) === r.receiptDigest && document.proofEnvelope.payloadDigestSha256 === r.receiptDigest, 'Sealed digest mismatch');
+  assert(f.forecastId === r.forecastId && f.entity.id === r.entityId && f.run.runNumber === 6, 'Frozen identity mismatch');
+  assert(e.receiptDigest === `0x${r.receiptDigest}` && e.forecastId === `0x${hash(f.forecastId)}` && e.forecasterId === `0x${hash(f.forecaster.id)}`, 'Projection identity mismatch');
+  assert(e.runNumber === 6 && e.runRevision === f.run.revision && e.retrospective === true && p.receipt.issuanceMode === 'retrospective', 'Revision or timing mode mismatch');
+  assert(e.forecastCreatedAt === Math.floor(Date.parse(f.temporal.forecastCreatedAt)/1000) && e.anchorAt === Math.floor(Date.parse(f.temporal.anchorAt)/1000), 'Projection date mismatch');
+  assert(e.target === f.target.name && e.anchorUnit === f.anchor.unit && e.classification === f.classification.value, 'Projection target mismatch');
+  assert(e.anchorValueMicros === Math.round(Number(f.anchor.valueDecimal)*1e6), 'Projection anchor mismatch');
+  assert(e.cadenceMonths === f.temporal.cadence.value && f.temporal.cadence.unit === 'month' && e.pointCount === f.prediction.points.length, 'Projection cadence mismatch');
+  assert(e.stepReturnBps === f.prediction.points.map(point => point.value).join(','), 'Projection path mismatch');
+  assert(projection.eas.schema === config.schema && projection.eas.revocable === false, 'Projection schema mismatch');
+  // Explicit schema field order avoids depending on JSON property ordering.
+  const ordered = parseAbiParameters(config.schema).map(({name,type}) => type === 'uint64' ? BigInt(e[name]) : e[name]);
+  const data = encodeAbiParameters(parseAbiParameters(config.schema), ordered);
+  return { forecastPublicId:r.forecastPublicId, receiptDigest:r.receiptDigest, forecastId:r.forecastId, entityId:r.entityId, canonicalPath:r.canonicalPath, forecasterLabel:r.forecasterLabel, encodedData:data, document, projection };
+});
+await db.terminate();
+const out = process.argv.find(arg => arg.startsWith("--output="))?.slice(9);
+assert(out, "--output=/absolute/review-directory is required");
+await mkdir(out,{recursive:true});
+for(const chain of [base,baseSepolia]) {
+  const client=createPublicClient({chain,transport:http(chain.id===8453?'https://mainnet.base.org':'https://sepolia.base.org')});
+  assert(await client.getChainId()===chain.id,'RPC network mismatch');
+  const schemaRecord=await client.readContract({address:config.contracts.schemaRegistry,abi,functionName:'getSchema',args:[config.schemaUid]});
+  const transactions=ids.map(entityId=>({entityId,receiptCount:12,to:config.contracts.eas,value:'0',chainId:chain.id,data:encodeFunctionData({abi,functionName:'multiAttest',args:[[{schema:config.schemaUid,data:rows.filter(r=>r.entityId===entityId).map(r=>({recipient:config.recipient,expirationTime:0n,revocable:false,refUID:config.refUid,data:r.encodedData,value:0n}))}]]})}));
+  const result={formatVersion:'ofr-live-showcase-plan-v1',projectId:'oflapp-prod',chainId:chain.id,schemaUid:config.schemaUid,network:chain.name,createdAt:new Date().toISOString(),issuanceMode:'retrospective',selectionPolicy:'Every original public Batch 6 individual advisor receipt for the five iPulse AI Showcase assets. No selection by rating, direction, return, or performance.',schemaRegistered:schemaRecord.uid===config.schemaUid,registration:{to:config.contracts.schemaRegistry,value:'0',chainId:chain.id,data:encodeFunctionData({abi,functionName:'register',args:[config.schema,config.resolver,false]})},transactions,receipts:rows};
+  await writeFile(`${out}/showcase-${chain.id}-unsigned.json`,JSON.stringify(result,null,2)+'\n');
+  console.log(JSON.stringify({chainId:chain.id,receiptCount:rows.length,assets:ids.length,transactions:transactions.length,schemaRegistered:result.schemaRegistered,file:`${out}/showcase-${chain.id}-unsigned.json`,blockchainWrites:0,firestoreWrites:0}));
+}

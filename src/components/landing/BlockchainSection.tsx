@@ -14,10 +14,10 @@ export function BlockchainSection() {
         <p className="mt-4 text-base leading-7 text-slate-300">Add a public blockchain anchor to your forecast receipt. Anyone can compare the downloaded record with its onchain digest and inspect the attestation, issuing address, transaction, and anchoring time.</p>
         <ol className="mt-6 space-y-4 text-sm leading-6 text-slate-300">
           <li><strong className="text-white">Seal the record.</strong> Canonical JSON and SHA-256 produce a fingerprint of the forecast payload.</li>
-          <li><strong className="text-white">Anchor the fingerprint.</strong> Ethereum Attestation Service (EAS) records a compact forecast projection and digest. Each individual forecast has its own attestation ID, even when submitted in one transaction.</li>
+          <li><strong className="text-white">Anchor the fingerprint.</strong> Ethereum Attestation Service (EAS) records a compact forecast projection and digest. For the iPulse AI Showcase, all 12 advisor forecasts for an asset are submitted together in one transaction. Each receives an individual attestation ID within that submission.</li>
           <li><strong className="text-white">Verify independently.</strong> Download the full receipt, recompute its digest, and compare it with the public chain record.</li>
         </ol>
-        <p className="mt-5 rounded-xl border border-white/10 bg-white/5 p-4 text-xs leading-6 text-slate-300">The current issuance tooling targets Base Sepolia, a test network. A receipt is only labelled verified when its onchain proof has been checked. Retrospective anchoring proves existence by the later anchoring time, not by the original forecast date. It does not prove accuracy or authorship.</p>
+        <p className="mt-5 rounded-xl border border-white/10 bg-white/5 p-4 text-xs leading-6 text-slate-300">The integration supports Base mainnet and Base Sepolia testnet; every issued proof identifies its actual network. A receipt is only labelled verified when its onchain proof has been checked. Retrospective anchoring proves existence by the later anchoring time, not by the original forecast date. It does not prove accuracy or authorship.</p>
         <Link to="/submit" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white hover:bg-blue-500">Request blockchain proof with your submission <ArrowRight size={17} /></Link>
       </div>
     </div>

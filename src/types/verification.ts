@@ -21,6 +21,8 @@ export type ChainFailureReason =
   | "payload_digest_invalid"
   | "payload_digest_mismatch"
   | "attestation_revoked"
+  | "attestation_policy_mismatch"
+  | "attester_mismatch"
   | "rpc_unavailable";
 
 export type LocalFailureReason =

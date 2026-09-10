@@ -55,7 +55,10 @@ export async function verifyDocument(
 
   if (attestationUID) {
     const { verifyChain } = await import("../eas/verify");
-    const chainResult = await verifyChain(attestationUID, computedDigest);
+    const proof = ofr.proofEnvelope.proofs.find(item => item.type === "eas_attestation" && item.id === attestationUID);
+    const chainResult = await verifyChain(attestationUID, computedDigest,
+      typeof proof?.network === "string" ? proof.network : undefined,
+      typeof proof?.attester === "string" ? proof.attester : undefined);
     onchainDigest = chainResult.attestedDigest;
     chainBlockTimestamp = chainResult.blockTimestamp ?? null;
     if (chainResult.status === "verified") {

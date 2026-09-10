@@ -5,6 +5,7 @@ import { buildForecastLedgerCatalogParts } from "./lib/forecast-ledger-catalog.m
 import { getServerFirestore } from "./lib/firestore-client.mjs";
 import { publishCatalogGeneration } from "./lib/catalog-generation.mjs";
 import { ipulseCollectionPresentation } from "./lib/ipulse-collection-presentation.mjs";
+import { indexVerifiedProofs, withVerifiedProof } from "./lib/forecast-proof-overlay.mjs";
 
 const DEFAULT_TARGET_PROJECT = "oflapp-staging";
 // Stay below the agreed 700 KiB ceiling with enough room for Firestore field
@@ -169,7 +170,7 @@ const apply = process.argv.includes("--apply");
 const db = getServerFirestore(targetProject);
 // Every input belongs to one consistent source snapshot, even if a publisher
 // writes new authoritative records while the derived generation is building.
-const [expectedPointer, entitySnapshot, collectionSnapshot, collectionEntitySnapshot, forecastSnapshot, forecasterSnapshot, publisherSnapshot, targetSnapshot] = await db.runTransaction(tx => Promise.all([
+const [expectedPointer, entitySnapshot, collectionSnapshot, collectionEntitySnapshot, forecastSnapshot, forecasterSnapshot, publisherSnapshot, targetSnapshot, proofSnapshot] = await db.runTransaction(tx => Promise.all([
   tx.get(db.doc("public_catalog_state/current")),
   tx.get(db.collection("public_entities")),
   tx.get(db.collection("public_collections")),
@@ -178,6 +179,7 @@ const [expectedPointer, entitySnapshot, collectionSnapshot, collectionEntitySnap
   tx.get(db.collection("public_forecasters")),
   tx.get(db.collection("public_publishers")),
   tx.get(db.collection("public_targets")),
+  tx.get(db.collection("public_proofs")),
 ]), { readOnly: true });
 assert(forecastSnapshot.size > 0, "Backfill immutable public_forecast_revisions before materializing catalogs");
 const existingTargets = new Map(targetSnapshot.docs.map((snapshot) => [snapshot.id, snapshot.data()]));
@@ -189,8 +191,9 @@ const publicCollections = collectionSnapshot.docs.map((snapshot) => ({
   publicSlug: snapshot.data().publicSlug || collectionPublicSlug(snapshot.data()),
 }));
 const collectionEntities = collectionEntitySnapshot.docs.map((snapshot) => snapshot.data());
+const proofsByDigest = indexVerifiedProofs(proofSnapshot.docs.map(snapshot => snapshot.data()));
 const forecasts = forecastSnapshot.docs.map((snapshot) => {
-  const forecast = snapshot.data();
+  const forecast = withVerifiedProof(snapshot.data(), proofsByDigest);
   const entity = publicEntitiesById.get(forecast.entityId);
   assert(entity, `Missing governed entity for forecast ${snapshot.id}`);
   // Public catalogs are derived exclusively from lightweight forecast index
@@ -263,6 +266,9 @@ for (const forecaster of forecasters) {
 }
 
 for (const collection of publicCollections) {
+  const members = forecasts.filter(forecast => forecast.collectionId === collection.collectionId);
+  collection.selectedProofCount = members.filter(forecast => forecast.showcaseSelected).length;
+  collection.verifiedProofCount = members.filter(forecast => forecast.chainStatus === "verified").length;
   const presentation = ipulseCollectionPresentation(collection, forecasts, publicEntitiesById);
   if (presentation) collection.presentation = presentation;
   planned.push({ collectionName: "public_collections", documentId: collection.collectionId, value: collection, bytes: assertCatalogSize(`public_collections/${collection.collectionId}`, collection) });
@@ -328,7 +334,14 @@ for (const collectionRecord of publicCollections) {
   const records = collectionEntities
     .filter((entity) => entity.collectionId === collectionRecord.collectionId)
     .sort((left, right) => left.sortOrder - right.sortOrder);
-  const manifestEntities = records.map((record) => publicManifestEntity(record, publicEntitiesById.get(record.entityId)));
+  const manifestEntities = records.map((record) => {
+    const members = forecasts.filter(forecast => forecast.collectionId === collectionRecord.collectionId && forecast.entityId === record.entityId);
+    const proofCount = members.filter(forecast => forecast.chainStatus === "verified").length;
+    return publicManifestEntity({ ...record, proofCount,
+      showcaseSelectionCount: members.filter(forecast => forecast.showcaseSelected).length,
+      chainStatus: proofCount > 0 ? "verified" : "not_issued",
+    }, publicEntitiesById.get(record.entityId));
+  });
   const collectionCatalog = {
     catalogVersion: "ofl-public-collection-catalog-v0.1.0",
     collectionId: collectionRecord.collectionId,

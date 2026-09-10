@@ -171,6 +171,7 @@ export function LoadedReceiptDetail({
         <VerificationPanel
           result={result}
           attestationUID={projection.protocolSuppliedAfterIssuance.attestationUID}
+          network={document.proofEnvelope.proofs.find(proof => proof.type === "eas_attestation" && proof.id === projection.protocolSuppliedAfterIssuance.attestationUID)?.network as string | undefined}
           transactionHash={projection.protocolSuppliedAfterIssuance.transactionHash}
           schemaUID={projection.protocolSuppliedAfterIssuance.schemaUID}
           attester={projection.protocolSuppliedAfterIssuance.attester}

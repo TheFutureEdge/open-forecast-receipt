@@ -124,6 +124,9 @@ const faqs = [
   },
 ];
 
+// Lead with the product definition; agent workflows are an optional later topic.
+faqs.push(faqs.shift()!);
+
 function formatted(value: number): string {
   return new Intl.NumberFormat("en-US").format(value);
 }

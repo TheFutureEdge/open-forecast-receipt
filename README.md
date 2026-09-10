@@ -44,18 +44,20 @@ are test/import inputs, not runtime storage.
 - One individual forecast is one OFR JSON document.
 - One individual forecast is one EAS attestation UID.
 - The 12 receipts for one asset may travel in one EAS `multiAttest` transaction without becoming one batch entity.
-- Batch 6 is a clearly labeled retrospective pilot on Base Sepolia.
+- Batch 6 receipts are retrospective. Issued proofs identify their actual network; Base mainnet and Base Sepolia testnet are never interchangeable.
 - iPulse AI ingestion starts at Batch 6. Pre-Batch-6 predictions are intentionally excluded; only Batch 6 and later public publications are eligible for OFL.
 - Future eligible receipts are intended to be issued asynchronously after iPulse AI's immutable public publication gate.
 
-The initial declared onchain showcase contains six receipts: one
-researcher-mode receipt for the same advisor persona across all five public
-assets, plus the PepsiCo thinker-mode companion. The rule is based only on
-asset, persona, and mode--not forecast direction, rating, magnitude, accuracy,
-or observed performance. One `multiAttest` transaction will still create six
-independent EAS UIDs.
+The current Showcase issuance plan includes all 60 original Batch 6 receipts
+for PepsiCo, NVIDIA, Alphabet, Bitcoin, and SPY: all 12 advisor forecasts per
+asset in one `multiAttest` transaction, for five asset submissions and 60
+independent EAS UIDs. Selection does not depend on forecast outcomes. See the
+[full execution runbook](docs/BATCH6_SHOWCASE_PROOF_EXECUTION.md).
 
-No EAS schema or forecast attestation has been issued from this directory yet. The examples remain planned, unissued test vectors until a Base Sepolia round-trip succeeds.
+As of 10 September 2026, the plans are unsigned and no proofs are issued.
+Network selection and wallet signing remain outstanding. The older six-receipt
+Sepolia fixtures and runbook are historical demonstration inputs, not the
+current full-cohort issuance plan.
 
 ## Project layout
 
@@ -91,6 +93,7 @@ Native project, and then rechecked by Native Builder and QA.
 - Open Forecast Registry product direction: `docs/OPEN_FORECAST_REGISTRY_PRODUCT_DIRECTION.md`
 - Open Forecast Receipt v0.2 requirements: `docs/OPEN_FORECAST_RECEIPT_V0_2_REQUIREMENTS.md`
 - Active low-cost showcase architecture: `docs/IPULSE_SHOWCASE_ARCHITECTURE_V0_1.md`
+- Current 60-receipt execution plan: `docs/BATCH6_SHOWCASE_PROOF_EXECUTION.md`
 - Complete Firestore Library architecture: `docs/OPEN_FORECAST_LIBRARY_ARCHITECTURE_V0_1.md`
 - Controlled internal publication bundle: `docs/OFL_PUBLICATION_BUNDLE_V0_1.md`
 - Six-receipt Base Sepolia runbook: `docs/BASE_SEPOLIA_SHOWCASE_RUNBOOK.md`

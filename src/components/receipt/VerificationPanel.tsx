@@ -1,6 +1,6 @@
 import { ArrowSquareOut, CheckCircle, LinkSimple, ShieldCheck, XCircle } from "@phosphor-icons/react";
 import type { VerificationResult } from "../../types/verification";
-import { getBaseTransactionUrl, getEasAttestationUrl } from "../../lib/eas/constants";
+import { CHAIN_CAIP2, getBaseTransactionUrl, getEasAttestationUrl, getEasNetwork } from "../../lib/eas/constants";
 import { StatusBadge } from "../common/StatusBadge";
 
 interface VerificationPanelProps {
@@ -10,6 +10,7 @@ interface VerificationPanelProps {
   schemaUID?: string | null;
   attester?: string | null;
   blockTimestamp?: number | null;
+  network?: string;
 }
 
 export function VerificationPanel({
@@ -19,9 +20,12 @@ export function VerificationPanel({
   schemaUID,
   attester,
   blockTimestamp,
+  network = CHAIN_CAIP2,
 }: VerificationPanelProps) {
   const passed = result.integrityStatus === "pass";
-  const showPublicProof = Boolean(attestationUID);
+  let supportedNetwork;
+  try { supportedNetwork = getEasNetwork(network); } catch { /* Unsupported networks never receive generated explorer links. */ }
+  const showPublicProof = Boolean(attestationUID && supportedNetwork);
 
   return (
     <section id="blockchain-verification" className="scroll-mt-24 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -76,11 +80,11 @@ export function VerificationPanel({
           </div>
           {showPublicProof && (
             <div className="flex flex-wrap gap-2">
-              <a href={getEasAttestationUrl(attestationUID!)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">
+              <a href={getEasAttestationUrl(attestationUID!, network)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">
                 View attestation <ArrowSquareOut size={14} weight="bold" />
               </a>
               {transactionHash && (
-                <a href={getBaseTransactionUrl(transactionHash)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                <a href={getBaseTransactionUrl(transactionHash, network)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
                   Transaction <ArrowSquareOut size={14} weight="bold" />
                 </a>
               )}
@@ -90,6 +94,7 @@ export function VerificationPanel({
 
         {showPublicProof && (
           <dl className="mt-4 grid gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-[10px] sm:grid-cols-3 dark:border-slate-800 dark:bg-slate-950/40">
+            <ProofMeta label="Network" value={supportedNetwork!.name} />
             {schemaUID && <ProofMeta label="Schema UID" value={schemaUID} />}
             {attester && <ProofMeta label="Attester" value={attester} />}
             {blockTimestamp && <ProofMeta label="Onchain time" value={new Date(blockTimestamp * 1_000).toISOString()} />}

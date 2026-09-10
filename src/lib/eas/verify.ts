@@ -4,10 +4,11 @@ import {
   type Address,
   type Hex,
 } from "viem";
-import { baseSepolia } from "viem/chains";
+import { base, baseSepolia } from "viem/chains";
 import type { ChainAttestation, ChainVerificationResult } from "../../types/eas";
 import {
-  BASE_SEPOLIA_RPC_URL,
+  CHAIN_CAIP2,
+  getEasNetwork,
   EAS_CONTRACT,
   EAS_SCHEMA_UID,
 } from "./constants";
@@ -40,11 +41,6 @@ const EAS_READ_ABI = [
   },
 ] as const;
 
-const publicClient = createPublicClient({
-  chain: baseSepolia,
-  transport: http(BASE_SEPOLIA_RPC_URL, { timeout: 10_000, retryCount: 1 }),
-});
-
 export function normalizeHex(value: string | null | undefined): string | null {
   return value ? value.toLowerCase() : null;
 }
@@ -68,6 +64,9 @@ export function verifyAttestationRecord(
   }
 
   let decoded;
+  if (attestation.time <= 0n || attestation.expirationTime !== 0n || attestation.revocable) {
+    return { status: "unavailable", failureReason: "attestation_policy_mismatch" };
+  }
   try {
     decoded = decodeAttestationData(attestation.data);
   } catch {
@@ -105,7 +104,9 @@ export function verifyAttestationRecord(
 
 export async function verifyChain(
   attestationUID: string | null | undefined,
-  computedDigest: string | undefined
+  computedDigest: string | undefined,
+  network: string = CHAIN_CAIP2,
+  expectedAttester?: string
 ): Promise<ChainVerificationResult> {
   if (!attestationUID) return { status: "not_issued" };
   if (!isValidBytes32(attestationUID)) {
@@ -116,12 +117,23 @@ export async function verifyChain(
   }
 
   try {
+    const configuration = getEasNetwork(network);
+    const publicClient = createPublicClient({
+      chain: configuration.chainId === 8453 ? base : baseSepolia,
+      transport: http(configuration.rpcUrl, { timeout: 10_000, retryCount: 1 }),
+    });
+    if (await publicClient.getChainId() !== configuration.chainId) {
+      return { status: "unavailable", failureReason: "chain_id_mismatch" };
+    }
     const attestation = await publicClient.readContract({
       address: EAS_CONTRACT as Address,
       abi: EAS_READ_ABI,
       functionName: "getAttestation",
       args: [attestationUID],
     });
+    if (expectedAttester && normalizeHex(attestation.attester) !== normalizeHex(expectedAttester)) {
+      return { status: "unavailable", failureReason: "attester_mismatch" };
+    }
     return verifyAttestationRecord(attestation, attestationUID, computedDigest);
   } catch {
     return { status: "unavailable", failureReason: "rpc_unavailable" };

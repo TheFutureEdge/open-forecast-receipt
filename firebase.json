@@ -8,6 +8,7 @@
     "rootDir": "/",
     "ignore": [
       "node_modules",
+      ".publication-runs",
       ".git",
       ".env",
       ".env.*",

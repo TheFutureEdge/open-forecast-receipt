@@ -31,6 +31,12 @@ describe('repeatable asset publication',()=>{
     expect(decoded.functionName).toBe('multiAttest');expect(decoded.args[0]).toHaveLength(1);expect(decoded.args[0][0].data).toHaveLength(12);
     expect(decoded.args[0][0].data.every(row=>row.revocable===false && row.value===0n && row.expirationTime===0n)).toBe(true);
   });
+  it('groups different 10- and 15-forecast cohorts without a fixed advisor limit',()=>{
+    const rows=[10,15].flatMap((count,index)=>Array.from({length:count},(_,n)=>({...receipts[n%receipts.length],entityId:`asset-${index}`,forecastPublicId:`asset-${index}-forecast-${n}`})));
+    const transactions=groupedTransactions(rows,[{entityId:'asset-0',expectedReceipts:10},{entityId:'asset-1',expectedReceipts:15}],8453);
+    expect(transactions).toHaveLength(2);
+    expect(transactions.map(tx=>decodeFunctionData({abi:submissionAbi,data:tx.data}).args[0][0].data.length)).toEqual([10,15]);
+  });
   it('rejects a missing forecast instead of partially publishing an asset',()=>expect(()=>groupedTransactions(receipts.slice(1),config.assets.slice(0,1),8453)).toThrow('Incomplete'));
   it('rejects mutated receipt bytes even if the plan was resealed',()=>{const p=fixture();p.receipts[0].document.receiptPayload.forecast.forecastId='changed';expect(()=>validatePublicationPlan(sealPublicationPlan(p))).toThrow();});
   it('rejects altered calldata even if the plan was resealed',()=>{const p=fixture();p.transactions[0].data+='00';expect(()=>validatePublicationPlan(sealPublicationPlan(p))).toThrow('submissions');});

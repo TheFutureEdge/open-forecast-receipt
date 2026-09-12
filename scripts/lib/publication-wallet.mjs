@@ -6,12 +6,21 @@ import eas from '../../src/data/eas-base-sepolia.json' with { type: 'json' };
 import { submissionAbi, requireValue } from './publication-plan.mjs';
 import { recordSigningIntent, recordTransactionHash, recordWalletRejection, savePublicationState } from './publication-state.mjs';
 
+export function publicationLabel(plan, transaction) {
+  const rows=plan.receipts.filter(row=>row.entityId===transaction.entityId);
+  const publishers=[...new Set(rows.map(row=>row.document?.receiptPayload.issuer?.name).filter(Boolean))].sort();
+  const dates=[...new Set(rows.map(row=>row.document?.receiptPayload.forecast?.temporal?.forecastCreatedAt?.slice(0,10)).filter(Boolean))].sort();
+  const subject=plan.configuration.assets.find(asset=>asset.entityId===transaction.entityId)?.label || transaction.entityId;
+  const dateLabel=dates.length?`Forecasts dated ${dates[0]}${dates.length>1?` to ${dates.at(-1)}`:''}`:'Forecast date unavailable';
+  return `${publishers.join(' / ') || 'Publisher unspecified'} | Batch ${plan.configuration.scoringBatch ?? plan.configuration.collectionId} | ${dateLabel} | ${transaction.receiptCount} forecasts for ${subject}`;
+}
+
 export async function servePublicationWallet({ plan, client, attester, journalPath, journal, signedPath, saveSigned, port = 0 }) {
   attester=getAddress(attester);
   requireValue(!journal || (journal.planDigest===plan.planDigest && journal.attester===attester),'Signing journal belongs to another plan or wallet');
   journal ||= { planDigest:plan.planDigest,attester,transactions:{} };
   await savePublicationState(journalPath,journal);
-  const calls=[{...plan.registration,id:'schema',label:'Register the non-revocable OFR schema',receiptCount:0},...plan.transactions.map(tx=>({...tx,id:tx.entityId,label:`All ${tx.receiptCount} forecasts for ${plan.configuration.assets.find(a=>a.entityId===tx.entityId)?.label || tx.entityId}`}))];
+  const calls=[{...plan.registration,id:'schema',label:'Register the non-revocable OFR schema',receiptCount:0},...plan.transactions.map(tx=>({...tx,id:tx.entityId,label:publicationLabel(plan,tx)}))];
   const token=randomBytes(32).toString('hex');
   let origin,mutating=false;
   async function nextState(){
@@ -26,7 +35,12 @@ export async function servePublicationWallet({ plan, client, attester, journalPa
       catch(error){if(error.name==='TransactionReceiptNotFoundError')return {waiting:true};throw error;}
       const tx=await client.getTransaction({hash:saved.hash});
       requireValue(receipt.status==='success' && tx.from.toLowerCase()===attester.toLowerCase() && tx.to?.toLowerCase()===call.to.toLowerCase() && tx.input.toLowerCase()===call.data.toLowerCase() && tx.value===0n,'Recorded transaction failed or differs from the plan; manual recovery required');
-      if(call.id==='schema')throw new Error('Schema transaction succeeded but expected schema is absent');
+      if(call.id==='schema'){
+        // The initial latest-state read can precede transaction inclusion. Read
+        // at its actual block before treating successful registration as absent.
+        const registered=await client.readContract({address:eas.contracts.schemaRegistry,abi:submissionAbi,functionName:'getSchema',args:[eas.schemaUid],blockNumber:receipt.blockNumber});
+        requireValue(registered.uid===eas.schemaUid && registered.schema===eas.schema && registered.resolver.toLowerCase()===eas.resolver.toLowerCase() && registered.revocable===false,'Schema transaction succeeded but expected schema is absent or differs at its inclusion block');
+      }
     }
     const signed={planDigest:plan.planDigest,attester,transactions:plan.transactions.map(tx=>journal.transactions[tx.entityId].hash)};
     await saveSigned(signedPath,signed);

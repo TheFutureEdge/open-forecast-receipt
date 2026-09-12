@@ -17,6 +17,8 @@ async function refresh(){
   document.querySelector('#summary').textContent=JSON.stringify({network:state.network,chainId:state.chainId,collection:state.collectionId,assets:state.assetCount,forecasts:state.receiptCount,attester:state.attester,planDigest:state.planDigest},null,2);
   document.querySelector('#next').textContent=state.next?JSON.stringify({purpose:state.next.label,to:state.next.to,value:'0 ETH (network fees still apply)',receipts:state.next.receiptCount,calldataBytes:(state.next.data.length-2)/2},null,2):state.waiting?'Waiting for the previous transaction to be included.':'All planned transaction hashes recorded. Return to the terminal for verification and publication.';
   button.disabled=!state.next || state.uncertain;
+  if(state.next){document.querySelector('#fee').textContent='Your wallet shows the network fee before you approve.';status.textContent='Ready to review the next transaction.';}
+  else if(state.complete)status.textContent='All submissions recorded. No further wallet approvals are needed. Verification and website publication are the next steps.';
   if(state.waiting)setTimeout(()=>refresh().catch(error=>{status.textContent=error.message;}),5000);
   if(state.uncertain)status.textContent='Uncertain prior signing attempt. Recover its hash using the operating guide; do not submit again.';
 }

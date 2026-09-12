@@ -19,9 +19,20 @@ alternative instructions. Run commands from this repository root with Node 22+.
 - The OFR schema was absent on Base mainnet at preparation. Initial publication
   therefore needs **one schema registration + five asset submissions**, yielding
   60 independent EAS UIDs. Later batches reuse the registered schema.
-- No transactions have been signed in this run. No proof metadata was written.
-  Do not describe these receipts as blockchain-verified until completion checks
-  pass. Update this state with real transaction hashes after actual publication.
+- The owner signed schema registration and all five asset transactions on
+  12 September 2026 using publishing wallet
+  `0xe30763d80052C83646a44ef58DFC1489f7F81788`. All five succeeded with 12
+  attestation events each. Finalized verification and site publication are pending.
+  The run's `signing-journal.json` preserves every transaction hash; never resend.
+
+| Submission | Base transaction |
+| --- | --- |
+| Schema | `0xd9300b70871b1d0fb6726eee1cadf2eabbc2b36d1a7b91d10b215a3a14a76076` |
+| PepsiCo | `0xa6d3980ca5d1c67d2deba1c38010966c118dc8b371afb7a8ff74ac032bd046b1` |
+| NVIDIA | `0x52a45ec94c45b4596012a69f1848da628f5eee9d1ba630dda84688a168cbb202` |
+| Bitcoin | `0x7d0063f86ba913f4e29b3d51c48237be8a829702a3a900e64c1fae81843e7b3b` |
+| Alphabet | `0x17575c0be8e42cda1550064239a34bc578d541b4c7f16c5797408d57c1cd66ed` |
+| SPY | `0x131d1e8ae2e8dcf5cc4b1e3acce3575f20f9c3cc128e621a3f22ab1a7f15aecf` |
 
 ## Architecture and guarantees
 
@@ -29,7 +40,7 @@ alternative instructions. Run commands from this repository root with Node 22+.
 flowchart TD
   A[iPulse immutable public source publication] --> B[Reviewed entity snapshot and frozen receipt bundle]
   B --> C[Forecast Library immutable revisions and receipt JSON]
-  C --> D[Sealed plan: 12 receipts per asset]
+  C --> D[Sealed plan: complete receipt cohort per asset]
   D --> E[Publishing wallet: one EAS multiAttest transaction per asset on Base]
   E --> F[Finalized block and full attestation verification]
   F --> G[Append public proofs and receipt envelope metadata]
@@ -40,9 +51,18 @@ flowchart TD
 ```
 
 **Identity:** one forecast revision, one receipt payload, one SHA-256 digest,
-one permanent forecast ID, and one EAS attestation UID. The 12 independent
-attestations share one transaction; they do not become one aggregate forecast.
+one permanent forecast ID, and one EAS attestation UID. All individual
+attestations for an asset and batch share one transaction; they do not become
+one aggregate forecast.
 All-or-nothing execution of that transaction prevents partial per-asset issuance.
+
+**Variable cohort size:** 12 is the Batch 6 Showcase count, not a schema or
+workflow limit. Each asset declares its own `expectedReceipts` in the publication
+configuration: 10, 15 or another complete reviewed count. Counts may differ
+between assets and batches. The same code creates one transaction containing
+exactly that asset's receipts and verifies the matching number of attestations.
+Gas simulation must succeed for the complete transaction; an oversized cohort
+stops for review rather than silently dropping forecasts or splitting it.
 
 **Sealing:** canonicalize `receiptPayload` using RFC 8785, then SHA-256 it.
 The versioned OFR JSON Schema validates the document. The compact market
@@ -138,6 +158,11 @@ absent. After registration, each asset transaction is simulated via
 including L1 data cost; a prior estimate is not a guaranteed fee budget. Sign
 one request at a time. The journal is flushed to disk before sending; the next
 asset is offered only after successful inclusion of the previous transaction.
+
+The display label uses publisher, batch, original forecast date (or range),
+receipt count and subject. It is derived from the sealed plan and is not a new
+onchain field or a change to receipt bytes. A successful registration is checked
+at its inclusion block if an earlier latest-state read did not yet see it.
 
 When all hashes are recorded, stop the local signing server with Ctrl-C. Wait
 until Base reports the transaction blocks as `finalized`, then run:
@@ -265,8 +290,9 @@ npm run publication -- export-history --config=publication/batch-N.json --histor
 Copy the reviewed candidates to iPulse's corresponding `src/data` files through
 its existing release checkout. Run its proof-link/history tests and build,
 release to staging, inspect each Showcase asset's ledger, then promote staging
-to main and verify production. Expect **12 individual proof links and one shared
-transaction link per Showcase asset**, with the actual network visible. Re-merge
+to main and verify production. Expect **one proof link per included forecast and one shared
+transaction link per Showcase asset** (12 proof links for each current Batch 6
+Showcase asset), with the actual network visible. Re-merge
 from the latest registry if another release added records in the meantime.
 Do not overwrite another task's uncommitted work or force-push.
 

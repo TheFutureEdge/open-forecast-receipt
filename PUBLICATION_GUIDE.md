@@ -22,8 +22,28 @@ alternative instructions. Run commands from this repository root with Node 22+.
 - The owner signed schema registration and all five asset transactions on
   12 September 2026 using publishing wallet
   `0xe30763d80052C83646a44ef58DFC1489f7F81788`. All five succeeded with 12
-  attestation events each. Finalized verification and site publication are pending.
+  attestation events each. All 60 attestations passed finalized verification in
+  production and staging. Both catalogs are active and all 180 public URL/proof
+  checks passed in each environment. The iPulse proof-link release (`fcd945ed`,
+  promoted through PR 646 as `dea1d059`) is deployed to staging and production.
+  Both passed live acceptance for all five ledgers, 60 individual proof links,
+  five shared transaction links and the updated methodology page.
   The run's `signing-journal.json` preserves every transaction hash; never resend.
+- Total network fees for all six transactions: `0.000451181271351734 ETH`.
+  Remaining publishing balance immediately afterward: `0.007048818728648266 ETH`.
+- Verified catalog generations: production
+  `ipulse-batch-6-showcase-proofs-1789212015268`; staging
+  `ipulse-batch-6-showcase-proofs-1789211847882`. Prior generations are retained.
+- Evidence: `architecture_and_operations/backups/forecast-publication-2026-09-12`
+  in the Future Edge workspace contains signed plans, journals, verified
+  registries, catalog checkpoints and live acceptance reports. All 4,511 iPulse
+  history links were preserved. Local verification passed 142 OFR tests,
+  TypeScript and seven iPulse receipt/ledger tests. Both iPulse cloud builds and
+  rollouts succeeded; local full builds timed out on page-data reads.
+- The iPulse repository's pre-existing security scan baseline is unchanged:
+  223 historical secret candidates and three code findings, with no new
+  findings from this release. These are not resolved by blockchain publication;
+  no scanner suppression or protection changes were made.
 
 | Submission | Base transaction |
 | --- | --- |
@@ -134,9 +154,38 @@ network; and the reviewed **public** attester address. No server-side signing ke
 is needed. Each wallet request shows its fee and requires the owner's signature.
 A mainnet plan does not spend funds merely by being prepared or opened.
 
-## A. Existing Batch 6: finish blockchain publication
+### Publishing wallet and funding
 
-Do not re-import or reseal Batch 6. It is already public.
+Use the dedicated ForecastLibrary wallet, not an everyday personal spending
+wallet. The current public address is
+`0xe30763d80052C83646a44ef58DFC1489f7F81788`. Recovery material stays with the
+owner; do not export it to this repository or the publication runner.
+
+Fund it with native ETH on Base mainnet (8453). ETH on Ethereum or another
+network must first be bridged to Base or withdrawn on Base; changing the wallet's
+selected network alone does not move funds. The owner reviews transfers and
+bridge fees in their wallet. Compare the complete destination address against
+the publishing wallet's Receive screen. Keep enough gas in the sending wallet.
+
+The first funding was 0.0075 ETH. Funding is a reserve, not a guaranteed number
+of future batches: transaction sizes, gas prices and ETH prices vary. Each
+submission transfers zero ETH to EAS but spends network fees. No automatic
+top-ups, token allowances or unattended private-key signing are part of this
+workflow.
+
+The signing page's `127.0.0.1` origin is a loopback server on the operator's
+computer. Its random session token, Host and Origin checks restrict local API
+access; the wallet still requires separate transaction approval. A future
+authenticated admin dashboard can reuse the sealed plans and verifier, with
+durable background jobs. That hosted dashboard is not yet deployed, and the
+current post-signing `run --apply` step remains an operator command.
+
+## A. Existing Batch 6: publication and recovery reference
+
+Do not re-import, reseal or issue Batch 6 again. It is already public and its
+five mainnet transactions are recorded above. The commands below document the
+execution sequence and recovery entry points; a completed run needs no further
+wallet approvals. Use section B for a genuinely new eligible batch.
 
 ```sh
 npm run publication -- prepare --config=publication/batch-6.json
@@ -186,6 +235,12 @@ hashes and permanent bindings. All chain proofs verify before any Firestore
 write. Metadata writes are bounded to 100 receipts per Firestore transaction
 (60 for this Showcase); interrupted larger runs resume idempotently. Catalog
 activation waits for the complete cohort.
+
+Attestation reads use one read-only Multicall per asset at the same finalized
+block, and fail if any member cannot be read. Run production and staging
+verification sequentially when using the public Base RPC to limit request
+bursts. A rate-limit error is a verification interruption, never a reason to
+resubmit a transaction or bypass finality.
 
 ## B. Next eligible batch: prepare once, publish, sign, resume
 

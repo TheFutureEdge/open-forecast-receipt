@@ -43,9 +43,12 @@ for(const hash of hashes) {
     try { const event=decodeEventLog({abi,data:log.data,topics:log.topics}); return event.eventName==='Attested'?[event]:[]; } catch { return []; }
   });
   assert(events.length===group.receiptCount,'Unexpected individual attestation count for asset');
-  for(const event of events) {
+  // Read the full cohort at the same finalized block in one RPC request.
+  // Individual sequential calls can exhaust the public endpoint's rate limit.
+  const attestations=await client.multicall({contracts:events.map(event=>({address:config.contracts.eas,abi,functionName:'getAttestation',args:[event.args.uid]})),allowFailure:false,blockNumber:finalized.number,batchSize:0});
+  for(const [index,event] of events.entries()) {
     const uid=event.args.uid;
-    const attestation=await client.readContract({address:config.contracts.eas,abi,functionName:'getAttestation',args:[uid],blockNumber:finalized.number});
+    const attestation=attestations[index];
     const row=plan.receipts.find(item=>item.entityId===group.entityId && item.encodedData.toLowerCase()===attestation.data.toLowerCase());
     assert(row && !seen.has(row.receiptDigest),'Duplicate or unrecognized attested forecast');
     assertVerifiedAnchor(attestation,row,{uid,schemaUid:config.schemaUid,attester,blockTimestamp:block.timestamp});

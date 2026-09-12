@@ -392,7 +392,7 @@ never write metadata. Release the iPulse app after import to refresh its cached
 ledger and discovery projection, then check all affected public pages.
 
 The shared transaction link is labelled **See blockchain proof**; individual
-EAS links remain below each receipt. `/catalog?proof=blockchain` filters the
+EAS links remain below each receipt. `/assets?proof=blockchain` filters the
 existing catalog to assets with verified Base mainnet evidence and offers
 Latest AI Consensus, Latest AI Forecasts and Past Forecasts destinations.
 This filter uses actual proof coverage, not a subscription or pipeline tier.

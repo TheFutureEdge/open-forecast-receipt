@@ -13,6 +13,7 @@ import {
   UserCircle,
 } from "@phosphor-icons/react";
 import config from "../../data/eas-base-sepolia.json";
+import { BlockchainProofGuide } from "../information/BlockchainProofGuide";
 import { getLibraryManifest } from "../../lib/library/repository";
 import { useLocation } from "../../lib/router";
 import { KnowledgeGraphConceptDiagram, KnowledgeGraphExamples } from "../knowledge/KnowledgeGraphArchitecture";
@@ -64,6 +65,7 @@ export function StandardsPage() {
           <SectionLink href="#concept" label="Concept" />
           <SectionLink href="#knowledge-graph" label="Knowledge Graph" />
           <SectionLink href="#receipt-lifecycle" label="Receipt lifecycle" />
+          <SectionLink href="#blockchain-proof-guide" label="Read a blockchain proof" />
           <SectionLink href="#technical-standard" label="Technical standard" />
         </nav>
       </section>
@@ -125,6 +127,11 @@ export function StandardsPage() {
         </p>
       </section>
 
+      <section id="blockchain-proof-guide" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 sm:p-8">
+        <h2 className="mb-4 text-2xl font-black text-slate-950 dark:text-white">How to read a blockchain proof</h2>
+        <BlockchainProofGuide />
+      </section>
+
       <section id="technical-standard" className="scroll-mt-24 border-t border-slate-200 pt-8 dark:border-slate-800">
         <SectionHeading
           eyebrow="Technical standard"
@@ -142,7 +149,7 @@ export function StandardsPage() {
           <code className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded"> ofr-market-v0.1.0</code>, and
           <code className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded"> ofr-ai-v0.1.0</code> profiles.
           It binds a market prediction (anchor price, cadence, step returns) to cryptographic integrity verification
-          and, when published, to an Ethereum Attestation Service (EAS) record on Base Sepolia.
+          and, when published, to an Ethereum Attestation Service (EAS) record on the network identified by its proof. The live Batch 6 Showcase uses Base mainnet; development examples use Base Sepolia.
           The goal is transparent, verifiable, and portable forecast data while making the limits of each proof explicit.
         </p>
       </section>
@@ -191,10 +198,10 @@ export function StandardsPage() {
 
       {/* EAS Attestation */}
       <section>
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">EAS Attestation (Base Sepolia)</h2>
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">EAS Attestation on Base</h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
           When published, an OFR's key fields (17 fields covering market identity, prediction parameters, and the
-          receipt digest) are encoded as an EAS attestation on Base Sepolia (chain ID 84532) at contract
+          receipt digest) are encoded as an EAS attestation on Base mainnet (chain ID 8453), or Base Sepolia for test proofs (chain ID 84532), at contract
           <code className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded"> 0x4200...0021</code>.
           The EAS schema uses <code className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">bytes32 receiptDigest</code> and is non-revocable.
           Its deterministic schema UID is <code className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">{config.schemaUid}</code>.
@@ -208,7 +215,7 @@ export function StandardsPage() {
         <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
           The blockchain status axis shows whether the receipt's digest has been attested onchain.
           A selected but unissued receipt remains explicitly labeled <strong>not_issued</strong>.
-          When a real UID is available, the app reads the Base Sepolia EAS contract, ABI-decodes all 17 fields, and compares the onchain digest against the locally computed
+          When a real UID is available, the app reads the EAS contract on the proof's declared network, ABI-decodes all 17 fields, and compares the onchain digest against the locally computed
           digest and reports one of: verified, revoked, pending, or unavailable.
         </p>
       </section>
@@ -238,7 +245,7 @@ export function StandardsPage() {
           The public Library reads published collections, subjects, forecast indexes, receipts, and proof metadata
           from Cloud Firestore. The original reviewed Batch 6 JSON examples remain only as immutable test vectors
           and as the one-time source for the controlled Firestore import; the running application does not use them
-          as its database. A Base Sepolia RPC read occurs only when a receipt has a non-null attestation UID.
+          as its database. A network-specific RPC read occurs only when a receipt has a non-null attestation UID.
         </p>
       </section>
 
@@ -247,7 +254,7 @@ export function StandardsPage() {
         <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-400 mb-3">Limitations</h2>
         <ul className="list-disc list-inside text-sm text-gray-500 dark:text-gray-400 space-y-1">
           <li><strong>The receipt proves integrity and publication timing, not correctness.</strong> A valid digest confirms the document has not been tampered with; it does not validate the forecast's accuracy.</li>
-          <li>{verifiedCount} of the {selectedCount} selected showcase receipts currently verify on Base Sepolia; unselected receipts make no onchain-proof claim.</li>
+          <li>{verifiedCount} of the {selectedCount} selected showcase receipts have verified attestations. Each proof identifies its network; unselected receipts make no onchain-proof claim.</li>
           <li>All 60 Phase 1 advisor receipts are retrospective examples. Blockchain time must remain distinct from the original forecast time.</li>
           <li><strong>Named forecasters are software advisor personas.</strong> The receipt does not claim endorsement by or affiliation with the named person.</li>
           <li>This is an example retrospective receipt. The blockchain timestamp (when issued) must not be presented as the forecast creation time.</li>

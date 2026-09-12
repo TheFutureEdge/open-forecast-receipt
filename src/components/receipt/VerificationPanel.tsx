@@ -2,6 +2,7 @@ import { ArrowSquareOut, CheckCircle, LinkSimple, ShieldCheck, XCircle } from "@
 import type { VerificationResult } from "../../types/verification";
 import { CHAIN_CAIP2, getBaseTransactionUrl, getEasAttestationUrl, getEasNetwork } from "../../lib/eas/constants";
 import { StatusBadge } from "../common/StatusBadge";
+import { Link } from "../../lib/router";
 
 interface VerificationPanelProps {
   result: VerificationResult;
@@ -91,6 +92,10 @@ export function VerificationPanel({
             </div>
           )}
         </div>
+
+        {showPublicProof && (
+          <Link to="/how-it-works#blockchain-proof-guide" className="mt-3 block text-xs font-semibold text-blue-600 underline dark:text-blue-300">How to read this proof — screenshot guide</Link>
+        )}
 
         {showPublicProof && (
           <dl className="mt-4 grid gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-[10px] sm:grid-cols-3 dark:border-slate-800 dark:bg-slate-950/40">

@@ -17,7 +17,7 @@ import { servePublicationWallet } from './lib/publication-wallet.mjs';
 const root=resolve(import.meta.dirname,'..');
 const arg=name=>process.argv.find(a=>a.startsWith(`--${name}=`))?.slice(name.length+3);
 const command=process.argv[2];
-const commands=['prepare-library','adopt-library','adopt-signatures','publish-library','prepare','sign','recover','verify','catalog','export-ipulse','export-history','run','smoke','status'];
+const commands=['prepare-library','adopt-library','adopt-signatures','publish-library','prepare','sign','recover','verify','catalog','export-ipulse','export-history','sync-ipulse','run','smoke','status'];
 if(!commands.includes(command)){
   console.log('Usage: npm run publication -- <'+commands.join('|')+'> --config=publication/batch-6.json [--directory=PATH] [--apply] [--attester=PUBLIC_ADDRESS]');
   process.exit(command==='--help'||!command?0:1);
@@ -171,6 +171,17 @@ async function smoke(){
   await savePublicationState(path('public-verification.json'),result);
   console.log(JSON.stringify({forecasts:result.forecasts,urls:result.urls,proofsChecked:Boolean(registry),baseUrl}));
 }
+async function syncIpulse(){
+  await plan();
+  requireValue(arg('ipulse-project'),'Pass --ipulse-project=the-reviewed-iPulse-project');
+  requireValue(await exists('ipulse-forecast-history.json'),'Export the complete forecast history first');
+  requireValue((await read('proofs-published.json')).registryDigest===publicationDigest(await read('verified-proofs.json')),'Published proof registry checkpoint mismatch');
+  execute('sync-ipulse-ledger-proofs.mjs',[
+    `--project=${arg('ipulse-project')}`,`--plan=${path('plan.json')}`,
+    `--proofs=${path('verified-proofs.json')}`,`--history=${path('ipulse-forecast-history.json')}`,
+    `--output=${path(`ipulse-ledger-proofs-${arg('ipulse-project')}.json`)}`,...(apply?['--apply']:[]),
+  ]);
+}
 try{
   if(command==='prepare-library')await prepareLibrary();
   if(command==='adopt-library')await adoptLibrary();
@@ -182,12 +193,13 @@ try{
   if(command==='smoke')await smoke();
   if(command==='export-ipulse')await exportIpulse();
   if(command==='export-history')await exportHistory();
+  if(command==='sync-ipulse')await syncIpulse();
   if(command==='run'){
     if(await exists('library-bundle.json') && !(await exists('library-published.json'))){await publishLibrary();if(!apply){console.log('Library dry run finished. --apply is needed to publish before preparing blockchain calls.');process.exitCode=0;}else await catalog();}
     if(!(await exists('library-bundle.json')) || await exists('library-published.json')){
       if(apply && await exists('library-published.json') && !(await exists('proofs-published.json')))await catalog();
       await prepare();await verify();
-      if(apply){await catalog();await smoke();if(arg('registry'))await exportIpulse();if(arg('history'))await exportHistory();}
+      if(apply){await catalog();await smoke();if(arg('registry'))await exportIpulse();if(arg('history'))await exportHistory();if(arg('ipulse-project'))await syncIpulse();}
     }
   }
   if(command==='sign'){

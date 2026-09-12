@@ -343,13 +343,59 @@ npm run publication -- export-history --config=publication/batch-N.json --histor
 ```
 
 Copy the reviewed candidates to iPulse's corresponding `src/data` files through
-its existing release checkout. Run its proof-link/history tests and build,
+its existing release checkout. Its prebuild regenerates the compact
+`forecast-library-catalog.json` discovery projection. Run its proof-link/history tests and build,
 release to staging, inspect each Showcase asset's ledger, then promote staging
 to main and verify production. Expect **one proof link per included forecast and one shared
 transaction link per Showcase asset** (12 proof links for each current Batch 6
 Showcase asset), with the actual network visible. Re-merge
 from the latest registry if another release added records in the meantime.
 Do not overwrite another task's uncommitted work or force-push.
+
+### iPulse Firestore ledger evidence
+
+After verified publication and history export, synchronize the verified Base
+proof metadata into iPulse staging, then production. This step never signs a
+transaction or modifies an immutable forecast. Run without `--apply` first:
+
+```sh
+npm run publication -- sync-ipulse --config=publication/batch-6.json --ipulse-project=pulse-staging-e1394
+OFR_CONFIRM_FIRESTORE_PROJECT=oflapp-prod OFR_CONFIRM_IPULSE_PROJECT=pulse-staging-e1394 npm run publication -- sync-ipulse --config=publication/batch-6.json --ipulse-project=pulse-staging-e1394 --apply
+npm run publication -- sync-ipulse --config=publication/batch-6.json --ipulse-project=ipulse-401013
+OFR_CONFIRM_FIRESTORE_PROJECT=oflapp-prod OFR_CONFIRM_IPULSE_PROJECT=ipulse-401013 npm run publication -- sync-ipulse --config=publication/batch-6.json --ipulse-project=ipulse-401013 --apply
+```
+
+Use the next batch's reviewed configuration for future publications. To include
+this step in the existing end-to-end `run --apply`, add `--ipulse-project` and
+the matching `OFR_CONFIRM_IPULSE_PROJECT`; supply `--registry` and `--history`
+as above so their candidates are refreshed first.
+
+The iPulse collection is
+`papp_oracle_fincore_prediction_market__catalogs.forecast_publication_proofs`.
+Each document ID is the exact immutable batch prediction document ID. Fields
+bind the asset ID, batch key, source content digest, network, schema, issuance
+mode, actual receipt count, and a receipt map keyed by permanent forecast ID.
+Each receipt contains its digest, source forecast ID, attestation UID, shared
+transaction hash, issuer, anchoring time, Forecast Library URL, EAS URL and Base
+transaction URL. Cohort size is variable, never fixed at twelve.
+
+The importer checks the verified public Library records and the exact iPulse
+publication, including every source forecast ID, path value, horizon date,
+anchor and classification. It creates missing sidecars, skips identical ones,
+and refuses conflicts. Every applied document is read back. It never updates
+prediction payloads, release catalogs or historical pointers. Old sidecars are
+retained; a corrected publication requires a fresh import against its own ID.
+
+The ledger reads sidecars by exact publication ID with cached, bounded direct
+reads. Evidence from another revision cannot be inherited. Public page requests
+never write metadata. Release the iPulse app after import to refresh its cached
+ledger and discovery projection, then check all affected public pages.
+
+The shared transaction link is labelled **See blockchain proof**; individual
+EAS links remain below each receipt. `/catalog?proof=blockchain` filters the
+existing catalog to assets with verified Base mainnet evidence and offers
+Latest AI Consensus, Latest AI Forecasts and Past Forecasts destinations.
+This filter uses actual proof coverage, not a subscription or pipeline tier.
 
 A catalog/proof data update alone does not require rebuilding Forecast Library.
 If application code changes, run `npm test` and the appropriate build, release

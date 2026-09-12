@@ -4,6 +4,8 @@
 
 Open Forecast Receipt (OFR) is an open standard and verification toolkit for portable, tamper-evident forecast records. The first reference profile covers individual AI-generated market forecasts from iPulse AI and a compact Ethereum Attestation Service projection for Base.
 
+**Publishing and operations:** use the root [Publication Operating Guide](PUBLICATION_GUIDE.md) for the complete repeatable Library + Base + iPulse workflow.
+
 ## Current phase: Firestore-backed iPulse AI public Library
 
 The project now operates as a Firestore-backed, openly browsable Library of the complete public iPulse AI Batch 6 cohort: 376 governed forecast subjects and 4,511 individual forecast receipts. Batch 6 is the historical starting boundary; no earlier iPulse AI predictions are stored. Outside public-submission requests are reviewed manually through `support@ipulseai.com`; there are no customer accounts, payments, private storage, or automated public uploads.
@@ -52,9 +54,9 @@ The current Showcase issuance plan includes all 60 original Batch 6 receipts
 for PepsiCo, NVIDIA, Alphabet, Bitcoin, and SPY: all 12 advisor forecasts per
 asset in one `multiAttest` transaction, for five asset submissions and 60
 independent EAS UIDs. Selection does not depend on forecast outcomes. See the
-[full execution runbook](docs/BATCH6_SHOWCASE_PROOF_EXECUTION.md).
+[Publication Operating Guide](PUBLICATION_GUIDE.md).
 
-As of 10 September 2026, the plans are unsigned and no proofs are issued.
+As of 12 September 2026, the plans are unsigned and no proofs are issued.
 Network selection and wallet signing remain outstanding. The older six-receipt
 Sepolia fixtures and runbook are historical demonstration inputs, not the
 current full-cohort issuance plan.

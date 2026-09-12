@@ -817,6 +817,27 @@ async function applyInactiveAssetLifecycle(inactiveAssets, targetProject) {
   return { updated, unchanged, missing };
 }
 
+// Replay the reviewed entity snapshot without re-querying a changing source.
+const inputPlan = argumentValue("--input-plan");
+if (inputPlan) {
+  const saved = JSON.parse(await readFile(resolve(inputPlan), "utf8"));
+  const project = argumentValue("--project");
+  assert(["oflapp-staging", "oflapp-prod"].includes(project), "Explicit Library project required");
+  const allowed = new Set(["entities", "entity_versions", "public_entities", "entity_identifiers", "entity_identifier_keys", "entity_aliases", "entity_relationships", "public_entity_directory_catalogs"]);
+  assert(saved.formatVersion === "ofl-entity-publication-plan-v1", "Unsupported entity plan");
+  assert(saved.documents.every(item => allowed.has(item.collectionName) && typeof item.documentId === "string" && !item.documentId.includes("/")), "Invalid entity plan path");
+  assert(new Set(saved.documents.map(item => `${item.collectionName}/${item.documentId}`)).size === saved.documents.length, "Duplicate entity plan identity");
+  const applySaved = process.argv.includes("--apply");
+  if (applySaved) {
+    assert(process.env.OFR_CONFIRM_FIRESTORE_PROJECT === project, "Exact project confirmation required");
+    console.log(JSON.stringify(await applyPlan(new Map(saved.documents.map((item,index)=>[index,item])), project)));
+    console.log(JSON.stringify(await applyInactiveAssetLifecycle(saved.inactiveAssets, project)));
+    await getServerFirestore(project).terminate();
+  }
+  console.log(JSON.stringify({mode:applySaved?"apply-reviewed-snapshot":"reviewed-snapshot",project,documents:saved.documents.length}));
+  process.exit(0);
+}
+
 const sourceProject = argumentValue("--source-project") || DEFAULT_SOURCE_PROJECT;
 const targetProject = argumentValue("--project") || DEFAULT_TARGET_PROJECT;
 const semanticEnvironment = argumentValue("--semantic-environment") || "staging";
@@ -1108,7 +1129,7 @@ await mkdir(outputDir, { recursive: true });
 await writeFile(resolve(outputDir, `scoring-batch-${scoringBatch}-entity-catalog.json`), catalogJson);
 await writeFile(resolve(outputDir, `scoring-batch-${scoringBatch}-entity-catalog.sha256`), `${catalogDigest}\n`);
 const planOutput = argumentValue("--plan-output");
-if (planOutput) await writeFile(resolve(planOutput), `${JSON.stringify({ targetProject, catalogDigest, documents: [...plan.values()] }, null, 2)}\n`);
+if (planOutput) await writeFile(resolve(planOutput), `${JSON.stringify({ formatVersion: "ofl-entity-publication-plan-v1", targetProject, catalogDigest, inactiveAssets: inactiveAssetRows, documents: [...plan.values()] }, null, 2)}\n`);
 
 let applyResult;
 let lifecycleResult;

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forecast Library publication signing</title>
+<style>body{font:16px system-ui;max-width:880px;margin:48px auto;padding:0 24px;color:#e2e8f0;background:#071425}h1{font-size:34px}section{padding:22px;border:1px solid #334155;border-radius:16px;margin:20px 0}button{background:#2563eb;color:white;border:0;border-radius:8px;padding:14px 20px;font:inherit;cursor:pointer}button:disabled{opacity:.45}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}p{line-height:1.6}.muted{color:#94a3b8}</style>
+<h1>Publish forecast proofs</h1>
+<p>Review the fixed plan and sign with your wallet. Each asset is one submission containing all its individual forecasts. Private keys stay in your wallet.</p>
+<section><h2>Publication</h2><pre id="summary">Loading…</pre></section>
+<section><h2>Next transaction</h2><pre id="next"></pre><p id="fee" class="muted">Your wallet shows the network fee before you approve.</p><button id="sign" disabled>Connect wallet and review transaction</button></section>
+<p id="status" role="status"></p>
+<p class="muted">If the browser closes or a request times out after you sign, stop and recover the transaction hash from your wallet. The workflow blocks uncertain attempts instead of sending a duplicate.</p>
+<script type="module">
+const token=location.hash.slice(1), status=document.querySelector('#status'), button=document.querySelector('#sign');
+const api=async(path,body)=>{const r=await fetch('/api/'+path,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+token,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});const value=await r.json();if(!r.ok)throw new Error(value.error);return value;};
+let state;
+async function refresh(){
+  state=await api('state');
+  document.querySelector('#summary').textContent=JSON.stringify({network:state.network,chainId:state.chainId,collection:state.collectionId,assets:state.assetCount,forecasts:state.receiptCount,attester:state.attester,planDigest:state.planDigest},null,2);
+  document.querySelector('#next').textContent=state.next?JSON.stringify({purpose:state.next.label,to:state.next.to,value:'0 ETH (network fees still apply)',receipts:state.next.receiptCount,calldataBytes:(state.next.data.length-2)/2},null,2):state.waiting?'Waiting for the previous transaction to be included.':'All planned transaction hashes recorded. Return to the terminal for verification and publication.';
+  button.disabled=!state.next || state.uncertain;
+  if(state.waiting)setTimeout(()=>refresh().catch(error=>{status.textContent=error.message;}),5000);
+  if(state.uncertain)status.textContent='Uncertain prior signing attempt. Recover its hash using the operating guide; do not submit again.';
+}
+button.addEventListener('click',async()=>{
+  button.disabled=true;let intent=false;
+  try{
+    if(!window.ethereum)throw new Error('Open this URL in a browser with your wallet extension enabled.');
+    const accounts=await ethereum.request({method:'eth_requestAccounts'});
+    if(accounts[0]?.toLowerCase()!==state.attester.toLowerCase())throw new Error('Select the exact approved publishing wallet shown above.');
+    const chainId='0x'+state.chainId.toString(16);
+    if(await ethereum.request({method:'eth_chainId'})!==chainId)await ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId}]});
+    if(await ethereum.request({method:'eth_chainId'})!==chainId)throw new Error('Wallet network does not match the plan.');
+    const tx={from:state.attester,to:state.next.to,value:'0x0',data:state.next.data,chainId};
+    const gas=await ethereum.request({method:'eth_estimateGas',params:[tx]});
+    document.querySelector('#fee').textContent='Estimated execution gas: '+BigInt(gas).toString()+'. Review the total fee, including L1 data costs, in your wallet.';
+    await api('intent',{id:state.next.id});intent=true;
+    status.textContent='Review and approve the transaction in your wallet.';
+    const hash=await ethereum.request({method:'eth_sendTransaction',params:[tx]});
+    await api('hash',{id:state.next.id,hash});
+    status.textContent='Recorded '+hash+'. Waiting for inclusion before the next submission.';
+    await refresh();
+  }catch(error){
+    status.textContent=error.message;
+    if(intent && error.code===4001){
+      try{await api('rejected',{id:state.next.id,code:4001});await refresh();status.textContent='Wallet request cancelled. You can review it again.';}
+      catch(recovery){status.textContent=recovery.message+' The attempt is retained for recovery.';}
+    }else if(intent)status.textContent+=' The attempt is retained for recovery; do not retry blindly.';
+    else button.disabled=false;
+  }
+});
+refresh().catch(error=>{status.textContent=error.message;});
+</script></html>

@@ -15,6 +15,7 @@
     "start": "next start",
     "preview": "next start",
     "test": "vitest run",
+    "publication": "node scripts/publication.mjs",
     "readiness:check": "node scripts/check-production-readiness.mjs",
     "firestore:seed:staging": "node scripts/seed-firestore.mjs --project=oflapp-staging --apply",
     "showcase:plan": "node scripts/seed-firestore.mjs --project=oflapp-staging",

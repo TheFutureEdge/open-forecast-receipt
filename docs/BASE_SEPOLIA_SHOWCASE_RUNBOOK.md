@@ -1,5 +1,7 @@
 # Base Sepolia six-receipt showcase runbook
 
+Current operations start at the root [Publication Operating Guide](../PUBLICATION_GUIDE.md). This document retains the detailed contract or historical evidence; the root guide governs the current execution sequence.
+
 Status: ready for reviewed execution; no write has been authorized or performed
 
 ## Outcome

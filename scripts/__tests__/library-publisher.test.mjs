@@ -202,3 +202,11 @@ describe("OFL publication bundle planner", () => {
     expect(() => planPublicationBundle(bundle, permissiveValidator)).toThrow("more than 10 reviewers");
   });
 });
+
+it('uses the chosen mainnet network for requested proof jobs', () => {
+  const bundle = publicationBundle();
+  bundle.proofNetwork = 'base-mainnet';
+  const plan = planPublicationBundle(bundle, validateReceipt);
+  const job = plan.documents.find(item => item.collectionName === 'proof_jobs');
+  expect(job.value.network).toBe('eip155:8453');
+});

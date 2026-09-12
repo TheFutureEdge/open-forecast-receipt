@@ -25,3 +25,6 @@ submission/*
 !submission/AI_FACTORY_SUBMISSION_READY.md
 !submission/VEO3_PROMOTIONAL_VIDEO_PROMPT.txt
 !submission/open-forecast-receipt-ai-factory-deck.pdf
+
+# Fixed publication plans and local signing journals; archive outside Git.
+.publication-runs/

@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import process from "node:process";
+import { useSealedBatch6Fixtures, receiptIssuanceTime, proofNetworkCaip2 } from "./lib/publication-input.mjs";
 import ipulseAssetPaths from "../src/data/ipulse-public-asset-paths.json" with { type: "json" };
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
@@ -20,7 +21,7 @@ const DEFAULT_DATA_PROJECT = "data-platform-436809";
 const DEFAULT_SOURCE_FIRESTORE_PROJECT = "ipulse-401013";
 const DEFAULT_TARGET_PROJECT = "oflapp-staging";
 const DEFAULT_BATCH = 6;
-const DEFAULT_ISSUED_AT = "2026-08-06T12:00:00Z";
+
 const SOURCE_COLLECTION = "papp_oracle_fincore_prediction_market__datasets.eod_close_price_batch_predictions";
 
 function argumentValue(name) {
@@ -127,7 +128,7 @@ function executionProvenanceForReceipt(receipt) {
     channels.add("web_search");
   }
   return {
-    controlFlow: "single_model_invocation",
+    ...(receipt.receiptPayload.forecast.run.runNumber === 6 ? { controlFlow: "single_model_invocation" } : {}),
     contextAcquisition: [...channels],
     observedAt: provenance.temporal?.generation?.responseGeneratedAt,
     provenanceStatus: "reconstructed",
@@ -215,13 +216,15 @@ async function sourceDocuments(projectId, scoringBatch, assetIds) {
               ],
             },
           },
-          limit: 1,
+          limit: 2,
         },
       }),
     });
     const responseText = await response.text();
     assert(response.ok, `Firestore fallback query failed (${response.status}): ${responseText.slice(0, 1000)}`);
-    const row = JSON.parse(responseText).find((item) => item.document)?.document;
+    const candidates = JSON.parse(responseText).filter((item) => item.document);
+    assert(candidates.length <= 1, `Ambiguous publication revisions for ${assetId}; select the governed source revision explicitly`);
+    const row = candidates[0]?.document;
     if (!row) {
       console.warn(`Excluded internal-only Batch ${scoringBatch} subject without an immutable public publication: ${assetId}`);
       continue;
@@ -237,7 +240,10 @@ const dataProject = argumentValue("--data-project") || DEFAULT_DATA_PROJECT;
 const sourceFirestoreProject = argumentValue("--source-firestore-project") || DEFAULT_SOURCE_FIRESTORE_PROJECT;
 const targetProject = argumentValue("--project") || DEFAULT_TARGET_PROJECT;
 const scoringBatch = Number(argumentValue("--scoring-batch") || DEFAULT_BATCH);
-const issuedAt = argumentValue("--issued-at") || DEFAULT_ISSUED_AT;
+const issuedAt = receiptIssuanceTime(scoringBatch, argumentValue("--issued-at"));
+const proofNetwork = argumentValue("--proof-network") || "base-sepolia";
+proofNetworkCaip2(proofNetwork);
+const proofAssetIds = new Set((argumentValue("--proof-assets") || "").split(",").filter(Boolean));
 const resumeFrom = Number(argumentValue("--resume-from") || 0);
 const apply = process.argv.includes("--apply");
 assert(Number.isInteger(scoringBatch) && scoringBatch >= 6, "OFL iPulse AI publication starts at scoring Batch 6; earlier batches are intentionally excluded");
@@ -245,7 +251,7 @@ assert(Number.isInteger(resumeFrom) && resumeFrom >= 0, "--resume-from must be a
 
 const [schema, entityCatalog, showcaseSelection, manifest, fixtureCatalog] = await Promise.all([
   readFile(resolve(ROOT, "schema/open_forecast_receipt_v0_1.schema.json"), "utf8").then(JSON.parse),
-  readFile(resolve(ROOT, `data/ipulse/scoring-batch-${scoringBatch}-entity-catalog.json`), "utf8").then(JSON.parse),
+  readFile(resolve(argumentValue("--entity-catalog") || resolve(ROOT, `data/ipulse/scoring-batch-${scoringBatch}-entity-catalog.json`)), "utf8").then(JSON.parse),
   readFile(resolve(ROOT, "src/data/fixtures/batch6-showcase-selection.json"), "utf8").then(JSON.parse),
   readFile(resolve(ROOT, "src/data/fixtures/batch6-manifest.json"), "utf8").then(JSON.parse),
   readFile(resolve(ROOT, "src/data/fixtures/batch6-catalog.json"), "utf8").then(JSON.parse),
@@ -368,7 +374,7 @@ for (const [entitySortOrder, rawSource] of sources.entries()) {
     asset.ticker_on_exchange?.toLowerCase(),
     asset.asset_symbol_pulse?.toLowerCase(),
   ]);
-  if (legacySlug) {
+  if (useSealedBatch6Fixtures(scoringBatch, legacySlug)) {
     const fixtures = fixturesByAssetSlug.get(legacySlug) || [];
     assert(fixtures.length === 12, `Expected 12 sealed showcase fixtures for ${legacySlug}, found ${fixtures.length}`);
     for (const fixture of fixtures) {
@@ -421,7 +427,7 @@ for (const [entitySortOrder, rawSource] of sources.entries()) {
     entries.push({
       sortOrder: entries.length,
       entitySortOrder,
-      requestBlockchainProof: selectedDigests.has(built.payloadDigest),
+      requestBlockchainProof: proofAssetIds.has(source.asset_id) || selectedDigests.has(built.payloadDigest),
       forecasterLabel: `${advisor.persona_display_name} / ${advisor.persona_archetype_display_name} / ${advisor.advisor_mode}`,
       originalSource: originalSourceForReceipt(routeSlug, scoringBatch, built.document),
       executionProvenance: executionProvenanceForReceipt(built.document),
@@ -445,7 +451,7 @@ const unusedGenerationRows = generationRows.filter((row) => !usedForecastIds.has
 const bundle = {
   bundleVersion: PUBLICATION_BUNDLE_VERSION,
   createdAt: issuedAt,
-  proofNetwork: "base-sepolia",
+  proofNetwork,
   collection: {
     collectionId: `batch-${scoringBatch}`,
     label: `iPulse AI Batch ${scoringBatch} Forecast Library`,
@@ -483,6 +489,8 @@ console.log(JSON.stringify({
   resumeFrom,
 }, null, 2));
 
+const bundleOutput = argumentValue("--bundle-output");
+if (bundleOutput) await writeFile(resolve(bundleOutput), `${JSON.stringify(bundle)}\n`, { flag: "wx" });
 const planOutput = argumentValue("--plan-output");
 if (planOutput) await writeFile(resolve(planOutput), `${JSON.stringify(plan)}\n`);
 if (!apply) {

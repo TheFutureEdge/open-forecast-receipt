@@ -1,0 +1,38 @@
+{
+  "version": "ofl-publication-v1",
+  "runId": "ipulse-batch-6-showcase",
+  "projectId": "oflapp-staging",
+  "scoringBatch": 6,
+  "collectionId": "batch-6",
+  "receiptIssuedAt": "2026-08-06T12:00:00Z",
+  "chainId": 8453,
+  "sourceFirestoreProject": "ipulse-401013",
+  "dataProject": "data-platform-436809",
+  "assets": [
+    {
+      "entityId": "equity_ea8243e7-75bd-549b-9ba6-48e03cf982c1",
+      "label": "PepsiCo",
+      "expectedReceipts": 12
+    },
+    {
+      "entityId": "equity_aff2387b-9d08-5e40-8737-a5d658baf07c",
+      "label": "NVIDIA",
+      "expectedReceipts": 12
+    },
+    {
+      "entityId": "crypto_8f824f2d-c67f-55e7-8124-aa113059635d",
+      "label": "Bitcoin",
+      "expectedReceipts": 12
+    },
+    {
+      "entityId": "equity_e012cdce-768d-50c7-bb25-1ff8a901546c",
+      "label": "Alphabet",
+      "expectedReceipts": 12
+    },
+    {
+      "entityId": "fund_a02b062d-dd40-55e2-8113-721cc3c315af",
+      "label": "SPY",
+      "expectedReceipts": 12
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # OFL publication bundle v0.1
 
+Current operations start at the root [Publication Operating Guide](../PUBLICATION_GUIDE.md). This document retains the detailed contract or historical evidence; the root guide governs the current execution sequence.
+
 The controlled publisher is the initial internal submission interface for
 iPulse AI and other Future Edge products. It is a command, not a public API:
 there is no always-on service, public write endpoint, account system, or idle

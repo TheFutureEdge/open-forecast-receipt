@@ -1,3 +1,4 @@
+import { proofNetworkCaip2 } from "./publication-input.mjs";
 import { createHash } from "node:crypto";
 import { canonicalize } from "json-canonicalize";
 import { getServerFirestore } from "./firestore-client.mjs";
@@ -453,7 +454,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
         receiptDigest: digest,
         collectionId,
         state: "planned",
-        network: projection.chain.hackathonTarget.caip2,
+        network: proofNetworkCaip2(bundle.proofNetwork),
         projectionVersion: projection.projectionVersion,
         createdAt: bundle.createdAt,
         attempts: 0,

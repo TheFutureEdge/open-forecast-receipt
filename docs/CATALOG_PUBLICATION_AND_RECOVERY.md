@@ -1,5 +1,7 @@
 # Catalog publication and recovery
 
+Current operations start at the root [Publication Operating Guide](../PUBLICATION_GUIDE.md). This document retains the detailed contract or historical evidence; the root guide governs the current execution sequence.
+
 ## Launch scope
 
 The current product publishes curated forecasts with manual support submissions.

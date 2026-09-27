@@ -75,12 +75,17 @@ function slugify(value) {
     .replace(/-+/g, "-");
 }
 
-function publicTargetSlug(target) {
+export function publicTargetSlug(target, runNumber) {
   const governed = {
     eod_close_price_step_over_step_percentage_change: "adjusted-end-of-day-close-return",
     eod_close_price_pct_change: "adjusted-end-of-day-close-return",
   };
-  return governed[target.name] || slugify(target.name) || "unspecified-target";
+  const slug = governed[target.name] || slugify(target.name) || "unspecified-target";
+  // Earlier public descriptors used percent units under this slug. New receipts
+  // use basis points; append their descriptor rather than overwrite history.
+  return Number(runNumber) > 6 && governed[target.name] && target.unit === 'basis_point'
+    ? `${slug}-basis-points`
+    : slug;
 }
 
 function publicCollectionSlug(collectionId, publishedAt) {
@@ -363,7 +368,7 @@ export function planPublicationBundle(bundle, validateReceiptSchema) {
       subjectAssignmentId: assignmentId,
       receiptDigest: digest,
       targetName: forecast.target.name,
-      targetSlug: publicTargetSlug(forecast.target),
+      targetSlug: publicTargetSlug(forecast.target, forecast.run.runNumber),
       subjectCategory: forecast.entity.identifiers?.subjectCategory || forecast.entity.type,
       forecastCreatedAt: forecast.temporal.forecastCreatedAt,
       horizonStartAt: forecast.temporal.anchorAt,

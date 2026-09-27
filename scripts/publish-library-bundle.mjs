@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import process from "node:process";
 import Ajv2020 from "ajv/dist/2020.js";
@@ -35,6 +35,7 @@ const plan = planPublicationBundle(bundle, (document) => {
   const valid = validate(document);
   return { valid, errors: valid ? [] : (validate.errors || []).map((error) => `${error.instancePath || "/"} ${error.message}`) };
 });
+if (argumentValue('--plan-output')) await writeFile(resolve(argumentValue('--plan-output')), JSON.stringify(plan));
 
 console.log(JSON.stringify({
   mode: apply ? "apply" : "dry-run",

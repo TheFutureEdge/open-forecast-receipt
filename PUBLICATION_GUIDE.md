@@ -1,5 +1,11 @@
 # Forecast Library publication operating guide
 
+The cross-repository numbered continuation after prediction generation, parsing,
+QA, rankings and F2 public release is
+`/Users/russlan/Documents/futureedge/architecture_and_dev_operations/ipulse_prediction_and_editorial/04_FORECAST_LIBRARY_AND_BLOCKCHAIN_PUBLICATION_RUNBOOK.md`.
+It places initial Library/ledger publication before preservation of older
+proofs and preparation of the new Showcase for browser-wallet signing.
+
 This is the canonical end-to-end operating guide: source eligibility, frozen
 receipts, Library publication, Base proof issuance, catalog activation, iPulse AI
 links, verification and recovery. Older dated release notes are evidence, not

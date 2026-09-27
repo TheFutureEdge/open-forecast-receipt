@@ -1,0 +1,53 @@
+{
+  "version": "ofl-publication-v1",
+  "runId": "ipulse-batch-7-showcase",
+  "projectId": "oflapp-prod",
+  "scoringBatch": 7,
+  "collectionId": "batch-7",
+  "receiptIssuedAt": "2026-09-27T09:35:30Z",
+  "chainId": 8453,
+  "sourceFirestoreProject": "ipulse-401013",
+  "dataProject": "data-platform-436809",
+  "assets": [
+    {
+      "entityId": "commodity_7ea082a2-41ea-5733-9761-0157cf429e73",
+      "label": "Silver Spot in US Dollar",
+      "expectedReceipts": 14
+    },
+    {
+      "entityId": "crypto_8f824f2d-c67f-55e7-8124-aa113059635d",
+      "label": "Bitcoin (BTC)",
+      "expectedReceipts": 14
+    },
+    {
+      "entityId": "equity_aff2387b-9d08-5e40-8737-a5d658baf07c",
+      "label": "NVIDIA Corporation",
+      "expectedReceipts": 14
+    },
+    {
+      "entityId": "equity_e012cdce-768d-50c7-bb25-1ff8a901546c",
+      "label": "Alphabet Inc. Class C",
+      "expectedReceipts": 14
+    },
+    {
+      "entityId": "equity_ea8243e7-75bd-549b-9ba6-48e03cf982c1",
+      "label": "PepsiCo, Inc.",
+      "expectedReceipts": 14
+    },
+    {
+      "entityId": "equity_f71be61b-f2c9-5c76-8d38-441026d9f9c6",
+      "label": "BYD Company Limited",
+      "expectedReceipts": 14
+    },
+    {
+      "entityId": "forex_e6c66c0e-87f1-548c-90da-44ce67af00fa",
+      "label": "US Dollar / Chinese Yuan",
+      "expectedReceipts": 14
+    },
+    {
+      "entityId": "fund_a02b062d-dd40-55e2-8113-721cc3c315af",
+      "label": "SPDR S&P 500 ETF Trust",
+      "expectedReceipts": 14
+    }
+  ]
+}

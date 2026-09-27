@@ -34,6 +34,8 @@ for record in records:
     assert re.fullmatch(r'/(stocks|crypto|forex|commodities|indices)/[a-z0-9-]+', path), path
     task = record['forecastId']
     match = re.fullmatch(r'predrqst_batch_task__xrefsubjtskconf_([0-9a-f]{2})[0-9a-f-]+__sb\d+__\d+', task)
+    # OpenAI/Anthropic use the existing reserved request UUID as forecast ID.
+    match = match or re.fullmatch(r'predrqst_([0-9a-f]{2})[0-9a-f]{6}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', task)
     assert match, task
     prefix = match[1]
     assert re.fullmatch(r'f-[0-9a-hjkmnp-tv-z]{26}', record['forecastPublicId'])

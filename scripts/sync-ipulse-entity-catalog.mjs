@@ -7,6 +7,7 @@ import { resolve } from "node:path";
 import process from "node:process";
 import { canonicalize } from "json-canonicalize";
 import { getServerFirestore } from "./lib/firestore-client.mjs";
+import { entitySnapshotIdentityKey } from "./lib/entity-snapshot-version.mjs";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const DEFAULT_SOURCE_PROJECT = "data-platform-436809";
@@ -84,6 +85,12 @@ function uuidv5(value, namespace) {
 
 function versionId(entityId, sourceVersion) {
   return `entityv_${uuidv5(`ipulse-entity|${entityId}|source-version:${sourceVersion}|policy:${CATALOG_POLICY_VERSION}`, ENTITY_VERSION_NAMESPACE)}`;
+}
+
+function snapshotVersionId(entity, identifiers) {
+  // A source row version does not cover changing cohort/related metadata.
+  // Append a new content-bound snapshot rather than reuse a historical v1 ID.
+  return `entityv_${uuidv5(`ipulse-entity-snapshot-v2|${entitySnapshotIdentityKey({ ...entity, externalIdentifiers: identifiers })}`, ENTITY_VERSION_NAMESPACE)}`;
 }
 
 function relationshipId(subjectEntityId, predicate, objectEntityId, sourceVersion) {
@@ -441,7 +448,7 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
 
   for (const exchange of exchangeRows) {
     const sourceVersion = Number(exchange.version || 1);
-    const currentVersionId = versionId(exchange.exchange_id, sourceVersion);
+    let currentVersionId = versionId(exchange.exchange_id, sourceVersion);
     const entity = compact({
       entityId: exchange.exchange_id,
       currentVersionId,
@@ -476,6 +483,8 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
       )) === index
     ));
 
+    currentVersionId = snapshotVersionId(entity, identifiers);
+    entity.currentVersionId = currentVersionId;
     addDocument(plan, "entities", entity.entityId, entity, "mutable_current");
     addDocument(plan, "entity_versions", currentVersionId, { ...entity, versionId: currentVersionId }, "immutable");
     addDocument(plan, "public_entities", entity.entityId, publicEntityProjection(entity, identifiers), "mutable_current");
@@ -486,7 +495,7 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
     assert(exchangeById.has(asset.exchange_id), `Asset ${asset.asset_id} references missing exchange ${asset.exchange_id}`);
     const tags = parseJsonObject(asset.tags);
     const sourceVersion = Number(asset.version || 1);
-    const currentVersionId = versionId(asset.asset_id, sourceVersion);
+    let currentVersionId = versionId(asset.asset_id, sourceVersion);
     const semantic = semanticById.get(asset.asset_id);
     const type = semantic?.entity_type || entityType(asset);
     const fundamentalId = semantic?.parent_entity_id;
@@ -542,6 +551,8 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
       identifiersByEntityId.get(asset.asset_id) || [],
     );
 
+    currentVersionId = snapshotVersionId(entity, identifiers);
+    entity.currentVersionId = currentVersionId;
     addDocument(plan, "entities", entity.entityId, { ...entity, externalIdentifiers: identifiers }, "mutable_current");
     addDocument(plan, "entity_versions", currentVersionId, {
       ...entity,
@@ -627,7 +638,7 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
     const semanticTimestamp = semantic.updated_at || "1970-01-01T00:00:00Z";
     const profileTimestamp = snapshot?.observed_at_utc || "1970-01-01T00:00:00Z";
     const sourceVersion = Math.max(Date.parse(semanticTimestamp) || 1, Date.parse(profileTimestamp) || 1);
-    const currentVersionId = versionId(semantic.entity_id, sourceVersion);
+    let currentVersionId = versionId(semantic.entity_id, sourceVersion);
     const directIdentifiers = [
       semantic.wikidata_id && { scheme: "wikidata", value: semantic.wikidata_id, matchType: "same_as", verificationStatus: "verified", sourceSystem: "wikidata" },
       semantic.google_knowledge_graph_mid && { scheme: "google_knowledge_graph_mid", value: semantic.google_knowledge_graph_mid, matchType: "exact", verificationStatus: "verified", sourceSystem: "google_knowledge_graph" },
@@ -676,6 +687,8 @@ function buildPlan(assetRows, exchangeRows, scoringBatch, semanticRows, registry
       },
     });
 
+    currentVersionId = snapshotVersionId(entity, identifiers);
+    entity.currentVersionId = currentVersionId;
     addDocument(plan, "entities", entity.entityId, { ...entity, externalIdentifiers: identifiers }, "mutable_current");
     addDocument(plan, "entity_versions", currentVersionId, { ...entity, versionId: currentVersionId, externalIdentifiers: identifiers }, "immutable");
     const publicEntity = publicEntityProjection(entity, identifiers);

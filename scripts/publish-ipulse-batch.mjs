@@ -4,11 +4,12 @@ import { execFileSync } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import process from "node:process";
-import { useSealedBatch6Fixtures, receiptIssuanceTime, proofNetworkCaip2 } from "./lib/publication-input.mjs";
+import { useSealedBatch6Fixtures, receiptIssuanceTime, proofNetworkCaip2, publicLedgerBatchKey } from "./lib/publication-input.mjs";
 import ipulseAssetPaths from "../src/data/ipulse-public-asset-paths.json" with { type: "json" };
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { GoogleAuth } from "google-auth-library";
+import { getServerFirestore } from "./lib/firestore-client.mjs";
 import { buildProjection, buildReceipt } from "./generate-phase1-fixtures.mjs";
 import {
   planPublicationBundle,
@@ -97,13 +98,13 @@ function compact(values) {
   return [...new Set(values.filter(Boolean).map((value) => String(value).trim()).filter(Boolean))];
 }
 
-function originalSourceForReceipt(routeSlug, scoringBatch, receipt) {
+function originalSourceForReceipt(routeSlug, scoringBatch, receipt, source) {
   const assetPath = ipulseAssetPaths[receipt.receiptPayload.forecast.entity.id];
   assert(assetPath, "Refresh the governed iPulse public asset URL map before importing a new subject");
   const forecastCreatedAt = receipt.receiptPayload.forecast.temporal.forecastCreatedAt;
-  const publicationDate = String(forecastCreatedAt).slice(0, 10);
+  const publicationId = publicLedgerBatchKey(scoringBatch, forecastCreatedAt, source?.publicBatchKey);
+  const publicationDate = publicationId.slice(0, 10);
   assert(/^\d{4}-\d{2}-\d{2}$/.test(publicationDate), `Forecast ${receipt.receiptPayload.forecast.forecastId} has no public generation date`);
-  const publicationId = `${publicationDate}-sb${scoringBatch}`;
   return {
     publisherName: "iPulse AI",
     label: "View the original historical forecast",
@@ -172,6 +173,51 @@ function enrichSourceContext(source, details) {
 }
 
 async function sourceDocuments(projectId, scoringBatch, assetIds) {
+  // F2 is the public gate. An existing r1 document can still be staged or held.
+  // New batches follow the exact activated catalog pointer, including corrections.
+  if (scoringBatch > 6) {
+    const db = getServerFirestore(projectId);
+    const prefix = 'papp_oracle_fincore_prediction_market__';
+    try {
+      const pointer = await db.doc(`${prefix}controls.prediction_batch_releases/current`).get();
+      const active = pointer.data();
+      assert(active?.activeScoringBatch === scoringBatch && active.activeReleaseId && active.activeManifestSha256, 'Requested batch is not the active public F2 release');
+      const documents = [];
+      for (let offset = 0; offset < assetIds.length; offset += 50) {
+        const ids = assetIds.slice(offset, offset + 50);
+        const catalogs = await db.getAll(...ids.map(id => db.doc(`${prefix}catalogs.eod_close_price_predictions_by_release/${active.activeReleaseId}__${id}`)));
+        const selected = [];
+        for (let i = 0; i < ids.length; i++) {
+          const catalog = catalogs[i].data();
+          if (!catalog) {
+            console.warn(`Excluded subject outside the active public release: ${ids[i]}`);
+            continue;
+          }
+          assert(catalog.release_id === active.activeReleaseId && catalog.release_manifest_sha256 === active.activeManifestSha256 && catalog.asset_id === ids[i], 'Active catalog identity mismatch');
+          const entry = catalog.batch_overrides?.[`sb${scoringBatch}`] || catalog.batches?.[`sb${scoringBatch}`];
+          const publication = entry?.ai_forecasts;
+          assert(publication?.status === 'published', `Active release has no public forecast for ${ids[i]}`);
+          const id = publication.batch_prediction_document_id || publication.document_id;
+          assert(id && !id.includes('/'), 'Invalid public publication document ID');
+          const publicBatchKey = `${entry.generation_date_utc.slice(0, 10)}-sb${scoringBatch}`;
+          assert(/^\d{4}-\d{2}-\d{2}-sb\d+$/.test(publicBatchKey), 'Missing governed public batch date');
+          selected.push({assetId:ids[i], id, digest:publication.content_digest_sha256, publicBatchKey});
+        }
+        if (selected.length) {
+          const sources = await db.getAll(...selected.map(row => db.doc(`${SOURCE_COLLECTION}/${row.id}`)));
+          for (let i = 0; i < selected.length; i++) {
+            const row = selected[i], source = sources[i].data();
+            assert(source?.immutable && source.asset_id === row.assetId && source.scoring_batch === scoringBatch && source.content_digest_sha256 === row.digest, `Public source binding mismatch: ${row.id}`);
+            documents.push({documentId:row.id, ...plainFirestoreValue(source), publicBatchKey:row.publicBatchKey});
+          }
+        }
+        console.log(`Read ${Math.min(offset + ids.length, assetIds.length)} of ${assetIds.length} activated public publications...`);
+      }
+      const current = await pointer.ref.get();
+      assert(current.updateTime.isEqual(pointer.updateTime), 'Active release changed while freezing forecasts; retry preparation');
+      return documents;
+    } finally { await db.terminate(); }
+  }
   const documents = [];
   const auth = new GoogleAuth({ scopes: ["https://www.googleapis.com/auth/datastore"] });
   const token = await auth.getAccessToken();
@@ -387,7 +433,7 @@ for (const [entitySortOrder, rawSource] of sources.entries()) {
         entitySortOrder,
         requestBlockchainProof: selectedDigests.has(fixture.receiptDigest),
         forecasterLabel: fixture.forecasterLabel,
-        originalSource: originalSourceForReceipt(routeSlug, scoringBatch, receipt),
+        originalSource: originalSourceForReceipt(routeSlug, scoringBatch, receipt, source),
         executionProvenance: executionProvenanceForReceipt(receipt),
         entityPresentation: {
           routeSlug,
@@ -429,7 +475,7 @@ for (const [entitySortOrder, rawSource] of sources.entries()) {
       entitySortOrder,
       requestBlockchainProof: proofAssetIds.has(source.asset_id) || selectedDigests.has(built.payloadDigest),
       forecasterLabel: `${advisor.persona_display_name} / ${advisor.persona_archetype_display_name} / ${advisor.advisor_mode}`,
-      originalSource: originalSourceForReceipt(routeSlug, scoringBatch, built.document),
+      originalSource: originalSourceForReceipt(routeSlug, scoringBatch, built.document, source),
       executionProvenance: executionProvenanceForReceipt(built.document),
       entityPresentation: {
         routeSlug,

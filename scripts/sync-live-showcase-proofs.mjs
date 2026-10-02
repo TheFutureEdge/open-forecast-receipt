@@ -2,7 +2,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { canonicalize } from 'json-canonicalize';
-import { createPublicClient, http, parseAbi, decodeEventLog, getAddress, encodeAbiParameters, parseAbiParameters } from 'viem';
+import { createPublicClient, http, fallback, parseAbi, decodeEventLog, getAddress, encodeAbiParameters, parseAbiParameters } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import config from '../src/data/eas-base-sepolia.json' with {type:'json'};
 import { getServerFirestore } from './lib/firestore-client.mjs';
@@ -21,7 +21,8 @@ assert(hashes.length === plan.transactions.length && new Set(hashes).size === ha
 const attester = getAddress(arg('attester'));
 const chain = plan.chainId === 8453 ? base : baseSepolia;
 const network = `eip155:${chain.id}`;
-const client = createPublicClient({chain,transport:http(chain.id===8453?'https://mainnet.base.org':'https://sepolia.base.org')});
+const urls=chain.id===8453?['https://mainnet.base.org','https://base.drpc.org']:['https://sepolia.base.org','https://base-sepolia.drpc.org'];
+const client = createPublicClient({chain,transport:fallback(urls.map(url=>http(url,{retryCount:0,timeout:30000})),{retryCount:2,retryDelay:1000})});
 assert(await client.getChainId() === chain.id,'RPC chain mismatch');
 const abi = parseAbi([
   'event Attested(address indexed recipient,address indexed attester,bytes32 uid,bytes32 indexed schemaUID)',

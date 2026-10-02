@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { canonicalize } from 'json-canonicalize';
 import { getServerFirestore } from './lib/firestore-client.mjs';
 import { validatePublicationPlan } from './lib/publication-plan.mjs';
+import { selectIpulseProofCohort } from './lib/publication-scope.mjs';
 
 const arg = name => process.argv.find(v => v.startsWith(`--${name}=`))?.slice(name.length + 3);
 const project = arg('project');
@@ -22,7 +23,8 @@ const active = (await db.doc(`${prefix}controls.prediction_batch_releases/curren
 assert(active?.activeReleaseId, 'Active iPulse release is required');
 const results = [];
 // Validate every cohort before writing any sidecar. No fixed advisor count.
-for (const group of plan.transactions) {
+const cohort=selectIpulseProofCohort(plan.transactions,project,arg('entities'));
+for (const group of cohort) {
   console.log(`Checking immutable publication and verified proofs: ${group.entityId}`);
   const rows = plan.receipts.filter(r => r.entityId === group.entityId);
   assert.equal(rows.length, group.receiptCount);
@@ -106,6 +108,6 @@ for (const { ref, sourceRef, sourceSnapshot, value } of results) {
   });
   if (apply) assert.equal(canonicalize((await ref.get()).data()), canonicalize(value), 'Readback failed');
 }
-const report = { project, apply, documents: results.map(({ ref, value }) => ({ path: ref.path, assetPath: value.assetPath, batchKey: value.batchKey, receiptCount: value.receiptCount })) };
+const report = { project, apply, excludedEntities:plan.transactions.filter(t=>!cohort.includes(t)).map(t=>t.entityId), documents: results.map(({ ref, value }) => ({ path: ref.path, assetPath: value.assetPath, batchKey: value.batchKey, receiptCount: value.receiptCount })) };
 if (arg('output')) await writeFile(arg('output'), JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify(report, null, 2));

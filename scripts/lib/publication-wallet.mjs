@@ -28,13 +28,24 @@ export async function servePublicationWallet({ plan, client, attester, journalPa
     for(const call of calls){
       if(call.id==='schema' && schema.uid===eas.schemaUid)continue;
       const saved=journal.transactions[call.id];
-      if(!saved || saved.status==='wallet_rejected')return {next:call};
+      if(!saved || ['wallet_rejected','reviewed_retry'].includes(saved.status)){
+        if(saved?.nonce!==undefined){
+          const [latest,pending]=await Promise.all(['latest','pending'].map(blockTag=>client.getTransactionCount({address:attester,blockTag})));
+          requireValue(latest===saved.nonce&&pending===saved.nonce,'Reviewed retry nonce is no longer unused; reconcile the wallet before signing');
+        }
+        return {next:{...call,...(saved?.nonce!==undefined?{nonce:saved.nonce}:{}),...(saved?.recoveryReview?{recoveryReview:saved.recoveryReview}: {})}};
+      }
       if(!saved.hash)return {next:call,uncertain:true};
       let receipt;
       try{receipt=await client.getTransactionReceipt({hash:saved.hash});}
-      catch(error){if(error.name==='TransactionReceiptNotFoundError')return {waiting:true};throw error;}
+      catch(error){
+        if(error.name!=='TransactionReceiptNotFoundError')throw error;
+        try{await client.getTransaction({hash:saved.hash});return {waiting:true,broadcastStatus:'pending',transactionHash:saved.hash};}
+        catch(transactionError){if(transactionError.name==='TransactionNotFoundError')return {waiting:true,broadcastStatus:'not_visible',transactionHash:saved.hash};throw transactionError;}
+      }
       const tx=await client.getTransaction({hash:saved.hash});
       requireValue(receipt.status==='success' && tx.from.toLowerCase()===attester.toLowerCase() && tx.to?.toLowerCase()===call.to.toLowerCase() && tx.input.toLowerCase()===call.data.toLowerCase() && tx.value===0n,'Recorded transaction failed or differs from the plan; manual recovery required');
+      requireValue(saved.nonce===undefined||tx.nonce===saved.nonce,'Recovered transaction nonce differs from the reviewed retry');
       if(call.id==='schema'){
         // The initial latest-state read can precede transaction inclusion. Read
         // at its actual block before treating successful registration as absent.
@@ -53,6 +64,10 @@ export async function servePublicationWallet({ plan, client, attester, journalPa
       if(request.method==='GET' && request.url==='/'){
         response.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'",'X-Content-Type-Options':'nosniff'});
         response.end(await readFile(new URL('../publication-wallet.html',import.meta.url)));return;
+      }
+      if(request.method==='GET' && request.url==='/publication-gas.mjs'){
+        response.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+        response.end(await readFile(new URL('./publication-gas.mjs',import.meta.url)));return;
       }
       requireValue(request.headers.authorization===`Bearer ${token}`,'Invalid local session token');
       if(request.method==='GET' && request.url==='/api/state'){

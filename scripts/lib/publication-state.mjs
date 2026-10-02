@@ -16,8 +16,21 @@ export async function savePublicationState(path, value) {
 
 export function recordSigningIntent(journal, id) {
   const previous = journal.transactions[id];
-  if (previous && previous.status !== 'wallet_rejected') throw new Error('A signing attempt already exists. Recover its transaction before retrying.');
-  return { ...journal, transactions: { ...journal.transactions, [id]: { status: 'awaiting_wallet', startedAt: new Date().toISOString(), previousAttempts: previous ? [...(previous.previousAttempts || []), {status:previous.status,startedAt:previous.startedAt}] : [] } } };
+  if (previous && !['wallet_rejected','reviewed_retry'].includes(previous.status)) throw new Error('A signing attempt already exists. Recover its transaction before retrying.');
+  const previousAttempts=previous?.status==='reviewed_retry'?previous.previousAttempts:previous?[...(previous.previousAttempts || []),{status:previous.status,startedAt:previous.startedAt}]:[];
+  return { ...journal, transactions: { ...journal.transactions, [id]: { status: 'awaiting_wallet', startedAt: new Date().toISOString(), previousAttempts,...(previous?.nonce!==undefined?{nonce:previous.nonce}:{}),...(previous?.recoveryReview?{recoveryReview:previous.recoveryReview}:{}) } } };
+}
+
+// Absence of a receipt alone never authorizes retry. This path requires a
+// reviewed terminal wallet failure and independent RPC observations. The
+// retry uses the still-unused nonce, so a late original cannot issue twice.
+export function recordReviewedCancellation(journal,id,review) {
+  const previous=journal.transactions[id];
+  if(previous?.status!=='submitted'||previous.hash!==review.hash)throw new Error('Review must match the recorded submitted transaction');
+  if(!['smart_transaction_cancelled_failed_timeout','wallet_failed_not_broadcast'].includes(review.walletOutcome)||!Number.isSafeInteger(review.nonce)||review.nonce<0)throw new Error('Explicit terminal wallet failure and unused nonce required');
+  if(review.walletOutcome==='wallet_failed_not_broadcast'&&previous.nonce!==review.nonce)throw new Error('Terminal wallet failure recovery requires the original pinned nonce');
+  if(!Array.isArray(review.observations)||new Set(review.observations.map(r=>r.url)).size<2||!review.observations.every(r=>r.transaction===null&&r.receipt===null&&r.latestNonce===review.nonce&&r.pendingNonce===review.nonce))throw new Error('Two independent RPCs must agree that the hash is absent and nonce unused');
+  return {...journal,transactions:{...journal.transactions,[id]:{status:'reviewed_retry',nonce:review.nonce,previousAttempts:[...(previous.previousAttempts||[]),{...previous,previousAttempts:undefined,walletOutcome:review.walletOutcome,reviewedAt:review.checkedAt}],recoveryReview:review}}};
 }
 
 // EIP-1193 code 4001 explicitly means the user rejected the request. Timeouts,

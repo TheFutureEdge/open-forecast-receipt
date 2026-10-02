@@ -443,12 +443,65 @@ chain and wallet state. Do not reset an uncertain attempt simply because no
 receipt appears immediately. If `.lock` remains after a crash, inspect its PID
 and confirm that process is dead before removing **only the lock**.
 
+**MetaMask terminal Smart Transaction cancellation:** a wallet detail that
+explicitly says `cancelled` / `FAILED_TIMEOUT` is distinct from a pending or
+unknown send. Preserve that wallet evidence and stop the signing server. Use
+`review-cancelled` only after reviewing that exact terminal outcome:
+
+```sh
+npm run publication -- review-cancelled --config=publication/batch-N.json --directory=PROD_RUN --submission=ENTITY_ID --transaction=0xRECORDED_HASH --nonce=REVIEWED_UNUSED_NONCE --wallet-outcome=smart_transaction_cancelled_failed_timeout
+```
+
+The command checks two independent RPCs: the original hash must have neither a
+transaction nor a receipt, and both latest and pending account nonces must equal
+the reviewed unused nonce. It preserves the original journal and failed hash,
+then prepares a retry pinned to that nonce. The signing server checks the nonce
+again before accepting a new intent, and verifies it after inclusion. This does
+not resend anything. A known transaction, consumed nonce, pending replacement,
+RPC disagreement or unknown wallet outcome requires further reconciliation.
+
+For a standard wallet attempt visibly marked **Failed**, with no detailed error,
+use `review-failed` only if its original nonce is already pinned in the journal:
+
+```sh
+npm run publication -- review-failed --config=publication/batch-N.json --directory=PROD_RUN --submission=ENTITY_ID --transaction=0xRECORDED_HASH --nonce=ORIGINAL_PINNED_NONCE --wallet-outcome=wallet_failed_not_broadcast
+```
+
+This requires the same independent RPC checks, preserves the original attempt
+in a `failed-HASH.json` archive, and retries at the exact original nonce. Do not
+claim a Smart Transaction timeout when the wallet only shows Failed. A pending
+attempt or a failure with an unknown original nonce remains blocked.
+
+MetaMask Smart Transactions may keep a transaction outside the public mempool
+before inclusion; RPC absence alone therefore never proves cancellation. For
+the reviewed retry, the owner can use standard transaction submission by
+turning Smart Transactions off under Settings > Transactions, then review and
+sign from the publication page. This temporarily disables Smart Transactions'
+relay protections; restore the setting after the publication if desired. See
+[MetaMask's Smart Transactions guide](https://support.metamask.io/manage-crypto/transactions/smart-transactions/).
+
+**Transport gas limits:** the signing page estimates execution gas, supplies an
+explicit 10% reserve, and bounds the request by the Base per-transaction ceiling
+of 16,777,216 gas. This does not change receipt bytes or sealed calldata.
+MetaMask can otherwise apply its default 1.5 multiplier: an executable estimate
+of 12,532,654 would become 18,798,981, above that ceiling. The actual gas limit
+of a previously pending wallet attempt must be inspected before attributing its
+failure to this risk. See [MetaMask's gas implementation](https://github.com/MetaMask/core/blob/main/packages/transaction-controller/src/utils/gas.ts)
+and [EIP-7825](https://eips.ethereum.org/EIPS/eip-7825).
+
 **Catalog failure:** the existing active generation remains available while a
 new generation builds. A failed `building` generation is retained inactive and
 must not be overwritten. Archive its `catalog-library.json` or
 `catalog-proofs.json` checkpoint, investigate, and deliberately start a fresh
 candidate. A concurrent pointer change stops activation; review the new active
 state rather than automatically overwriting another publisher's work.
+
+**Staging QA scope:** Library verification and publication always cover the
+complete sealed proof cohort. If iPulse staging's active QA catalog excludes an
+asset, pass the explicitly reviewed available entity IDs to `sync-ipulse` with
+`--ipulse-entities=ID,ID`. This narrows only staging ledger sidecars and records
+excluded IDs in its report; production refuses partial scope. Do not modify a
+sealed plan or expand an F2 asset release to resolve a missing staging route.
 
 For a reviewed rollback to a retained ready generation:
 

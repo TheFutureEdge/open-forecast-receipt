@@ -6,7 +6,7 @@ import { encodeFunctionData,decodeFunctionData } from 'viem';
 import eas from '../../src/data/eas-base-sepolia.json' with {type:'json'};
 import config from '../../publication/batch-6.json' with {type:'json'};
 import { publicationDigest,groupedTransactions,encodeProjection,sealPublicationPlan,validatePublicationPlan,submissionAbi } from '../lib/publication-plan.mjs';
-import { recordSigningIntent,recordTransactionHash,recordWalletRejection,savePublicationState,mergeProofRegistries } from '../lib/publication-state.mjs';
+import { recordSigningIntent,recordTransactionHash,recordWalletRejection,recordReviewedCancellation,savePublicationState,mergeProofRegistries } from '../lib/publication-state.mjs';
 import { useSealedBatch6Fixtures,receiptIssuanceTime,proofNetworkCaip2 } from '../lib/publication-input.mjs';
 import { verifyPublicPublication } from '../lib/publication-http.mjs';
 
@@ -46,6 +46,46 @@ describe('repeatable asset publication',()=>{
   it('binds proof job network explicitly',()=>{expect(proofNetworkCaip2('base-mainnet')).toBe('eip155:8453');expect(proofNetworkCaip2()).toBe('eip155:84532');expect(()=>proofNetworkCaip2('constructor')).toThrow();});
 });
 describe('transaction recovery',()=>{
+  const sent=()=>recordTransactionHash(recordSigningIntent(journal,'asset'), 'asset',hash);
+  const review=()=>({hash,nonce:6,walletOutcome:'smart_transaction_cancelled_failed_timeout',checkedAt:'2026-09-27T11:30:00Z',observations:['rpc-a','rpc-b'].map(url=>({url,transaction:null,receipt:null,latestNonce:6,pendingNonce:6}))});
+  it('preserves a reviewed cancelled hash and pins its retry to the unused nonce',()=>{
+    const ready=recordReviewedCancellation(sent(),'asset',review());
+    expect(ready.transactions.asset.previousAttempts[0].hash).toBe(hash);
+    const pending=recordSigningIntent(ready,'asset');
+    expect(pending.transactions.asset.nonce).toBe(6);
+    expect(pending.transactions.asset.previousAttempts).toEqual(ready.transactions.asset.previousAttempts);
+    expect(pending.transactions.asset.hash).toBeUndefined();
+    expect(()=>recordSigningIntent(pending,'asset')).toThrow();
+    const rejected=recordWalletRejection(pending,'asset',4001);
+    expect(recordSigningIntent(rejected,'asset').transactions.asset.nonce).toBe(6);
+  });
+  it('retains every prior hash when reviewing a terminal wallet failure at its original nonce',()=>{
+    const first=recordReviewedCancellation(sent(),'asset',review());
+    const secondHash='0x'+'ef'.repeat(32);
+    const second=recordTransactionHash(recordSigningIntent(first,'asset'),'asset',secondHash);
+    const r={...review(),hash:secondHash,walletOutcome:'wallet_failed_not_broadcast'};
+    const ready=recordReviewedCancellation(second,'asset',r);
+    expect(ready.transactions.asset.previousAttempts.map(attempt=>attempt.hash)).toEqual([hash,secondHash]);
+    expect(recordSigningIntent(ready,'asset').transactions.asset.nonce).toBe(6);
+    expect(ready.transactions.asset.recoveryReview.walletOutcome).toBe('wallet_failed_not_broadcast');
+  });
+  it.each([undefined,7])('blocks a terminal wallet failure if its original nonce is %s',nonce=>{
+    const attempt=sent();attempt.transactions.asset.nonce=nonce;
+    expect(()=>recordReviewedCancellation(attempt,'asset',{...review(),walletOutcome:'wallet_failed_not_broadcast'})).toThrow('original pinned nonce');
+  });
+  it.each(['wrong hash','uncertain wallet','one rpc','duplicate rpc','known transaction','receipt present','nonce consumed','pending transaction'])('blocks cancellation recovery with %s',condition=>{
+    const r=review();
+    if(condition==='wrong hash')r.hash='0x'+'cd'.repeat(32);
+    if(condition==='uncertain wallet')r.walletOutcome='timeout';
+    if(condition==='one rpc')r.observations.pop();
+    if(condition==='duplicate rpc')r.observations[1].url=r.observations[0].url;
+    if(condition==='known transaction')r.observations[1].transaction={hash};
+    if(condition==='receipt present')r.observations[0].receipt={status:'0x1'};
+    if(condition==='nonce consumed')r.observations[0].latestNonce=7;
+    if(condition==='pending transaction')r.observations[1].pendingNonce=7;
+    expect(()=>recordReviewedCancellation(sent(),'asset',r)).toThrow();
+    expect(sent().transactions.asset.hash).toBe(hash);
+  });
   it('blocks uncertain attempts and submitted transactions from resending',()=>{const pending=recordSigningIntent(journal,'asset');expect(()=>recordSigningIntent(pending,'asset')).toThrow();const sent=recordTransactionHash(pending,'asset',hash);expect(()=>recordSigningIntent(sent,'asset')).toThrow();expect(recordTransactionHash(sent,'asset',hash)).toEqual(sent);expect(()=>recordTransactionHash(sent,'asset','0x'+'cd'.repeat(32))).toThrow();});
   it('only retries explicit wallet rejection and retains its history',()=>{const pending=recordSigningIntent(journal,'asset');expect(()=>recordWalletRejection(pending,'asset',-32000)).toThrow();const rejected=recordWalletRejection(pending,'asset',4001);expect(recordSigningIntent(rejected,'asset').transactions.asset.previousAttempts).toHaveLength(1);});
   it('cannot clear an already recorded hash as a rejection',()=>expect(()=>recordWalletRejection(recordTransactionHash(recordSigningIntent(journal,'asset'),'asset',hash),'asset',4001)).toThrow());

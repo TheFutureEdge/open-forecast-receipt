@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { createPublicClient, http } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import { validatePublicationConfig, validatePublicationPlan, publicationDigest, requireValue } from './lib/publication-plan.mjs';
-import { savePublicationState, mergeProofRegistries, recordTransactionHash } from './lib/publication-state.mjs';
+import { savePublicationState, mergeProofRegistries, recordTransactionHash, recordReviewedCancellation } from './lib/publication-state.mjs';
 import { getServerFirestore } from './lib/firestore-client.mjs';
 import { activateCatalogGeneration } from './lib/catalog-generation.mjs';
 import { assertEnvironmentPromotion,promoteSignedManifest } from './lib/publication-promotion.mjs';
@@ -17,7 +17,7 @@ import { servePublicationWallet } from './lib/publication-wallet.mjs';
 const root=resolve(import.meta.dirname,'..');
 const arg=name=>process.argv.find(a=>a.startsWith(`--${name}=`))?.slice(name.length+3);
 const command=process.argv[2];
-const commands=['prepare-library','adopt-library','adopt-signatures','publish-library','prepare','sign','recover','verify','catalog','export-ipulse','export-history','sync-ipulse','run','smoke','status'];
+const commands=['prepare-library','adopt-library','adopt-signatures','publish-library','prepare','sign','recover','review-cancelled','review-failed','verify','catalog','export-ipulse','export-history','sync-ipulse','run','smoke','status'];
 if(!commands.includes(command)){
   console.log('Usage: npm run publication -- <'+commands.join('|')+'> --config=publication/batch-6.json [--directory=PATH] [--apply] [--attester=PUBLIC_ADDRESS]');
   process.exit(command==='--help'||!command?0:1);
@@ -180,6 +180,7 @@ async function syncIpulse(){
     `--project=${arg('ipulse-project')}`,`--plan=${path('plan.json')}`,
     `--proofs=${path('verified-proofs.json')}`,`--history=${path('ipulse-forecast-history.json')}`,
     `--output=${path(`ipulse-ledger-proofs-${arg('ipulse-project')}.json`)}`,...(apply?['--apply']:[]),
+    ...(arg('ipulse-entities')!==undefined?[`--entities=${arg('ipulse-entities')}`]:[]),
   ]);
 }
 try{
@@ -208,7 +209,9 @@ try{
     const chain=config.chainId===8453?base:baseSepolia;
     const client=createPublicClient({chain,transport:http(chain.id===8453?'https://mainnet.base.org':'https://sepolia.base.org')});
     requireValue(await client.getChainId()===chain.id,'RPC network mismatch');
-    const server=await servePublicationWallet({plan:value,client,attester:arg('attester'),journalPath:path('signing-journal.json'),journal:await exists('signing-journal.json')?await read('signing-journal.json'):null,signedPath:path('signed-transactions.json'),saveSigned:savePublicationState});
+    const port=Number(arg('port')||0);
+    requireValue(Number.isSafeInteger(port)&&port>=0&&port<=65535,'Invalid loopback port');
+    const server=await servePublicationWallet({plan:value,client,attester:arg('attester'),journalPath:path('signing-journal.json'),journal:await exists('signing-journal.json')?await read('signing-journal.json'):null,signedPath:path('signed-transactions.json'),saveSigned:savePublicationState,port});
     serverRunning=true;
     for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>server.close(async()=>{await release();process.exit(0);}));
   }
@@ -219,6 +222,35 @@ try{
     requireValue(id==='schema'||value.transactions.some(t=>t.entityId===id),'Unknown submission');
     await savePublicationState(path('signing-journal.json'),recordTransactionHash(journal,id,hash));
     console.log('Recovered transaction hash recorded. Verification still checks its exact contents.');
+  }
+  if(command==='review-cancelled'||command==='review-failed'){
+    const value=await plan(),journal=await read('signing-journal.json');
+    requireValue(journal.planDigest===value.planDigest,'Journal plan mismatch');
+    const id=arg('submission'),hash=arg('transaction'),nonce=Number(arg('nonce'));
+    requireValue(id==='schema'||value.transactions.some(t=>t.entityId===id),'Unknown submission');
+    requireValue(journal.transactions[id]?.hash===hash,'Review the exact recorded hash');
+    const walletOutcome=command==='review-cancelled'?'smart_transaction_cancelled_failed_timeout':'wallet_failed_not_broadcast';
+    requireValue(arg('wallet-outcome')===walletOutcome&&Number.isSafeInteger(nonce)&&nonce>=0,'Review the exact terminal wallet outcome and supply its still-unused nonce');
+    if(command==='review-failed')requireValue(journal.transactions[id]?.nonce===nonce,'Review the original pinned nonce');
+    const urls=value.chainId===8453?['https://mainnet.base.org','https://base.drpc.org']:['https://sepolia.base.org','https://base-sepolia.drpc.org'];
+    const observations=await Promise.all(urls.map(async url=>{
+      const rpc=async(method,params)=>{
+        for(let attempt=0;;attempt++){
+          try{
+            const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params}),signal:AbortSignal.timeout(30000)});
+            const result=await r.json();requireValue(r.ok&&!result.error&&Object.hasOwn(result,'result'),`RPC observation failed: ${url} ${method} (${result.error?.code??r.status})`);return result.result;
+          }catch(error){if(attempt>=2)throw error;await new Promise(resolve=>setTimeout(resolve,2000*(attempt+1)));}
+        }
+      };
+      const [chain,transaction,receipt,latest,pending]=await Promise.all([rpc('eth_chainId',[]),rpc('eth_getTransactionByHash',[hash]),rpc('eth_getTransactionReceipt',[hash]),rpc('eth_getTransactionCount',[journal.attester,'latest']),rpc('eth_getTransactionCount',[journal.attester,'pending'])]);
+      requireValue(Number(BigInt(chain))===value.chainId,'Recovery RPC network mismatch');
+      return {url,transaction,receipt,latestNonce:Number(BigInt(latest)),pendingNonce:Number(BigInt(pending))};
+    }));
+    const review={checkedAt:new Date().toISOString(),hash,nonce,walletOutcome:arg('wallet-outcome'),observations};
+    const reviewed=recordReviewedCancellation(journal,id,review);
+    await savePublicationState(path(`${command==='review-cancelled'?'cancelled':'failed'}-${hash}.json`),{journal,review});
+    await savePublicationState(path('signing-journal.json'),reviewed);
+    console.log('Terminal wallet outcome reviewed; original hash retained. Retry is pinned to the unused nonce. No transaction sent.');
   }
   if(command==='status'){
     const files=['library-bundle.json','library-published.json','plan.json','signing-journal.json','signed-transactions.json','verified-proofs.json','proofs-published.json','catalog-proofs.json','ipulse-proof-registry.json'];

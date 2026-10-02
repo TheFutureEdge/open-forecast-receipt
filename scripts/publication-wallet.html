@@ -9,16 +9,22 @@
 <p id="status" role="status"></p>
 <p class="muted">If the browser closes or a request times out after you sign, stop and recover the transaction hash from your wallet. The workflow blocks uncertain attempts instead of sending a duplicate.</p>
 <script type="module">
+import {publicationGasLimit} from '/publication-gas.mjs';
 const token=location.hash.slice(1), status=document.querySelector('#status'), button=document.querySelector('#sign');
 const api=async(path,body)=>{const r=await fetch('/api/'+path,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+token,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});const value=await r.json();if(!r.ok)throw new Error(value.error);return value;};
 let state;
 async function refresh(){
   state=await api('state');
   document.querySelector('#summary').textContent=JSON.stringify({network:state.network,chainId:state.chainId,collection:state.collectionId,assets:state.assetCount,forecasts:state.receiptCount,attester:state.attester,planDigest:state.planDigest},null,2);
-  document.querySelector('#next').textContent=state.next?JSON.stringify({purpose:state.next.label,to:state.next.to,value:'0 ETH (network fees still apply)',receipts:state.next.receiptCount,calldataBytes:(state.next.data.length-2)/2},null,2):state.waiting?'Waiting for the previous transaction to be included.':'All planned transaction hashes recorded. Return to the terminal for verification and publication.';
+  const retryReason=state.next?.recoveryReview?.walletOutcome==='wallet_failed_not_broadcast'?'Previous wallet attempt is marked Failed. Its hash is absent from two RPCs; retry is pinned to the original unused nonce.': 'Previous MetaMask Smart Transaction was cancelled with FAILED_TIMEOUT. Its hash is absent from two RPCs; retry is pinned to the unused nonce.';
+  document.querySelector('#next').textContent=state.next?JSON.stringify({purpose:state.next.label,to:state.next.to,value:'0 ETH (network fees still apply)',receipts:state.next.receiptCount,calldataBytes:(state.next.data.length-2)/2,...(state.next.nonce!==undefined?{nonce:state.next.nonce}:{}),...(state.next.recoveryReview?{retryReason}: {})},null,2):state.waiting?'Waiting for the previous transaction to be included.':'All planned transaction hashes recorded. Return to the terminal for verification and publication.';
   button.disabled=!state.next || state.uncertain;
   if(state.next){document.querySelector('#fee').textContent='Your wallet shows the network fee before you approve.';status.textContent='Ready to review the next transaction.';}
   else if(state.complete)status.textContent='All submissions recorded. No further wallet approvals are needed. Verification and website publication are the next steps.';
+  if(state.waiting){
+    document.querySelector('#next').textContent=state.broadcastStatus==='not_visible'?'The wallet returned a hash, but Base RPC cannot find the transaction yet. Check MetaMask Activity for its actual status.':'Base RPC can see the transaction. Waiting for block inclusion.';
+    status.textContent=(state.broadcastStatus==='not_visible'?'Not visible on Base yet: ':'Pending on Base: ')+state.transactionHash+'. No further submission is allowed until this attempt is reconciled.';
+  }
   if(state.waiting)setTimeout(()=>refresh().catch(error=>{status.textContent=error.message;}),5000);
   if(state.uncertain)status.textContent='Uncertain prior signing attempt. Recover its hash using the operating guide; do not submit again.';
 }
@@ -31,9 +37,11 @@ button.addEventListener('click',async()=>{
     const chainId='0x'+state.chainId.toString(16);
     if(await ethereum.request({method:'eth_chainId'})!==chainId)await ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId}]});
     if(await ethereum.request({method:'eth_chainId'})!==chainId)throw new Error('Wallet network does not match the plan.');
-    const tx={from:state.attester,to:state.next.to,value:'0x0',data:state.next.data,chainId};
+    const tx={from:state.attester,to:state.next.to,value:'0x0',data:state.next.data,chainId,...(state.next.nonce!==undefined?{nonce:'0x'+state.next.nonce.toString(16)}:{})};
     const gas=await ethereum.request({method:'eth_estimateGas',params:[tx]});
-    document.querySelector('#fee').textContent='Estimated execution gas: '+BigInt(gas).toString()+'. Review the total fee, including L1 data costs, in your wallet.';
+    const gasLimit=publicationGasLimit(gas);
+    tx.gas='0x'+gasLimit.toString(16);
+    document.querySelector('#fee').textContent='Estimated execution gas: '+BigInt(gas).toString()+'. Explicit gas limit: '+gasLimit.toString()+' (10% reserve, bounded by Base’s transaction cap). Review the total fee, including L1 data costs, in your wallet.';
     await api('intent',{id:state.next.id});intent=true;
     status.textContent='Review and approve the transaction in your wallet.';
     const hash=await ethereum.request({method:'eth_sendTransaction',params:[tx]});

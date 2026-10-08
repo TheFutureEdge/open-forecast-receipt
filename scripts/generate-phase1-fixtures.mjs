@@ -205,7 +205,9 @@ export function buildReceipt({
 
   const receiptPayload = {
     receipt: {
-      receiptId: `https://ipulseai.com/receipts/sha256/${receiptIdDigest}`,
+      // Identity is separate from the Forecast Library URL and payload digest.
+      // New receipts must not advertise an unimplemented publisher web page.
+      receiptId: `urn:ofr:receipt:sha256:${receiptIdDigest}`,
       status: "example",
       issuanceMode: "retrospective",
       revisionNumber: 1,
@@ -316,7 +318,7 @@ export function buildReceipt({
         sourceValueUnit: "percent",
         outputValueEncoding: "basis_points = source_percent * 100; one basis point is 0.01 percentage point",
         sourceForecastDigestScope: "SHA-256 over RFC 8785 canonical JSON for the logically unwrapped individual predictions[*] object, preserving array order",
-        receiptIdDerivation: "SHA-256 over UTF-8 forecastId + LF + sourcePublication.id + LF + specVersion; rendered under https://ipulseai.com/receipts/sha256/",
+        receiptIdDerivation: "SHA-256 over UTF-8 forecastId + LF + sourcePublication.id + LF + specVersion; represented as urn:ofr:receipt:sha256:<digest>, an identity URI rather than a web address",
       },
       temporal: {
         baseModelKnowledge: {

@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { connection } from "next/server";
 import { listPublicSitemapEntriesServer } from "../src/lib/library/server-repository";
 import { getPublicSiteOrigin } from "../src/lib/siteOrigin";
+import { sitemapLastModified } from "../src/lib/library/sitemapDate";
 
 // App Hosting build workers do not need Firestore data access. The sitemap is
 // assembled at request time from bounded materialized catalogs instead.
@@ -43,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticPaths.map((path) => ({ url: `${origin}${path}`, changeFrequency: "weekly" as const, priority: path === "" ? 1 : 0.7 })),
     ...dynamicEntries.map((entry) => ({
       url: `${origin}${entry.path}`,
-      lastModified: entry.lastModified,
+      lastModified: sitemapLastModified(entry.lastModified),
       changeFrequency: "weekly" as const,
       priority: entry.path.includes("/forecasts/") ? 0.7 : 0.6,
     })),

@@ -36,6 +36,9 @@ jobs:
       - name: Check TypeScript
         run: npx tsc --noEmit
 
+      - name: Check publication and deployment boundaries
+        run: npm run readiness:check
+
       - name: Build production application
         run: npm run build
 

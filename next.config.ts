@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
+import { deploymentProfile } from "./gcp-auth.cjs";
+
+if (process.env.VERCEL === "1") deploymentProfile();
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  serverExternalPackages: ["@google-cloud/firestore", "google-auth-library"],
   // Resolve metadata before streaming so public redirects and missing routes
   // retain their real HTTP status instead of an already-sent 200 response.
   htmlLimitedBots: /.*/,

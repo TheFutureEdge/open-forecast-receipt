@@ -1,0 +1,16 @@
+{
+  "staging": {
+    "firebaseProjectId": "oflapp-staging",
+    "gcpProjectNumber": "876906954189",
+    "vercelProjectId": "prj_hBFBnif5b4eQHIecWiolxQ6EZNal",
+    "serviceAccountEmail": "vercel-library-staging@oflapp-staging.iam.gserviceaccount.com",
+    "origin": "https://forecast-library-staging-ipulseai.vercel.app"
+  },
+  "production": {
+    "firebaseProjectId": "oflapp-prod",
+    "gcpProjectNumber": "174334033844",
+    "vercelProjectId": "prj_f0TWHEE7tK86E5D5gTT6v7nDXDUE",
+    "serviceAccountEmail": "vercel-library-production@oflapp-prod.iam.gserviceaccount.com",
+    "origin": "https://forecastlibrary.com"
+  }
+}

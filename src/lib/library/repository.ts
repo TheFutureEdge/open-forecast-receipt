@@ -1,4 +1,5 @@
 import { getCatalogCollectionClient, getCatalogGenerationClient } from "./catalog-client";
+import { entityDirectoryItemForWeb, entityForWeb, knowledgeGraphIdentifierForWeb } from "./entityPresentation";
 import {
   collection,
   doc,
@@ -72,7 +73,7 @@ function publicEntityDirectoryItem(entity: PublicEntityRecord): PublicEntityDire
     displayIdentifier: relatedIdentifiers.length > 0
       ? `${relatedIdentifiers.slice(0, 2).join(" · ")}${relatedIdentifiers.length > 2 ? ` · +${relatedIdentifiers.length - 2}` : ""}`
       : preferredIdentifier || entity.entityId,
-    searchTerms: [...new Set((entity.externalIdentifiers || []).flatMap(({ scheme, value }) => [scheme, value]))],
+    searchTerms: [...new Set((entity.externalIdentifiers || []).flatMap(({ scheme, value }) => [scheme, knowledgeGraphIdentifierForWeb(value)]))],
     sameAsCount: entity.sameAs?.length || 0,
     relatedEntityCount: entity.relatedEntities?.length || 0,
     latestActivityAt: entity.lifecycle?.sourceUpdatedAt
@@ -86,7 +87,7 @@ function publicEntityDirectoryItem(entity: PublicEntityRecord): PublicEntityDire
 async function listPublicEntitiesByClass(entityClass: string): Promise<PublicEntityDirectoryItem[]> {
   const catalogId = entityClass === "forecastable_entity" ? "forecast-subjects" : "organizations";
   const catalog = await readEntityDirectoryCatalog(catalogId);
-  if (catalog) return [...catalog].sort((left, right) => left.canonicalName.localeCompare(right.canonicalName));
+  if (catalog) return catalog.map(entityDirectoryItemForWeb).sort((left, right) => left.canonicalName.localeCompare(right.canonicalName));
   const snapshots = await getDocs(query(
     collection(getLibraryFirestore(), "public_entities"),
     where("entityClasses", "array-contains", entityClass),
@@ -166,7 +167,7 @@ export async function listPublicForecastStatsByEntity(): Promise<Map<string, Pub
 export async function getPublicEntity(routeKey: string, routeKind?: PublicEntityRouteKind): Promise<PublicEntityRecord | null> {
   const db = getLibraryFirestore();
   const directSnapshot = await getDoc(doc(db, "public_entities", routeKey));
-  if (directSnapshot.exists()) return directSnapshot.data() as PublicEntityRecord;
+  if (directSnapshot.exists()) return entityForWeb(directSnapshot.data() as PublicEntityRecord);
 
   const [publicSlugSnapshots, legacySlugSnapshots] = await Promise.all([
     getDocs(query(
@@ -178,8 +179,8 @@ export async function getPublicEntity(routeKey: string, routeKind?: PublicEntity
       where("stableSlug", "==", routeKey),
     )),
   ]);
-  if (!publicSlugSnapshots.empty) return publicSlugSnapshots.docs[0].data() as PublicEntityRecord;
-  if (!legacySlugSnapshots.empty) return legacySlugSnapshots.docs[0].data() as PublicEntityRecord;
+  if (!publicSlugSnapshots.empty) return entityForWeb(publicSlugSnapshots.docs[0].data() as PublicEntityRecord);
+  if (!legacySlugSnapshots.empty) return entityForWeb(legacySlugSnapshots.docs[0].data() as PublicEntityRecord);
 
   // Transitional fallback for catalogs published before publicSlug was added.
   if (routeKind === "listed-securities") return null;
@@ -188,6 +189,7 @@ export async function getPublicEntity(routeKey: string, routeKind?: PublicEntity
     : await getDocs(collection(db, "public_entities"));
   return snapshots.docs
     .map((snapshot) => snapshot.data() as PublicEntityRecord)
+    .map(entityForWeb)
     .find((entity) => publicEntitySlug(entity) === routeKey) || null;
 }
 

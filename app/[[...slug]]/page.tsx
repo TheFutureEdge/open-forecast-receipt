@@ -71,8 +71,12 @@ import {
 } from "../../src/lib/library/server-repository";
 import { ENTITY_CATALOG_PRESETS } from "../../src/lib/library/catalog-presets";
 import type { PublicEntityRecord } from "../../src/lib/library/types";
+import { entityForWeb } from "../../src/lib/library/entityPresentation";
 
 export const revalidate = 300;
+// Cache public routes on first request, without reading Firestore at build
+// time. A revalidation number alone leaves unknown dynamic paths uncached.
+export function generateStaticParams() { return []; }
 
 interface RouteParams {
   slug?: string[];
@@ -82,7 +86,10 @@ interface PageProps {
   params: Promise<RouteParams>;
 }
 
-const getPublicEntityCached = cache(getPublicEntityServer);
+const getPublicEntityCached = cache(async (...args: Parameters<typeof getPublicEntityServer>) => {
+  const entity = await getPublicEntityServer(...args);
+  return entity ? entityForWeb(entity) : null;
+});
 const getLibraryReceiptCached = cache(getLibraryReceiptServer);
 const getPublicForecastCached = cache(getPublicForecastByPublicIdServer);
 const getPublicForecasterCached = cache(getPublicForecasterServer);

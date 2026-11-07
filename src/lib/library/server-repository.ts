@@ -1,4 +1,5 @@
 import "server-only";
+import { entityDirectoryItemForWeb, knowledgeGraphIdentifierForWeb } from "./entityPresentation";
 import { getCatalogCollectionServer, getCatalogGenerationServer } from "./catalog-server";
 import { publicForecastOriginalSource } from "./entityRoutes";
 import { ipulsePublisherForIssuer } from "../publishers/ipulse";
@@ -58,7 +59,7 @@ function publicEntityDirectoryItem(entity: PublicEntityRecord): PublicEntityDire
     displayIdentifier: relatedIdentifiers.length > 0
       ? `${relatedIdentifiers.slice(0, 2).join(" · ")}${relatedIdentifiers.length > 2 ? ` · +${relatedIdentifiers.length - 2}` : ""}`
       : preferredIdentifier || entity.entityId,
-    searchTerms: [...new Set((entity.externalIdentifiers || []).flatMap(({ scheme, value }) => [scheme, value]))],
+    searchTerms: [...new Set((entity.externalIdentifiers || []).flatMap(({ scheme, value }) => [scheme, knowledgeGraphIdentifierForWeb(value)]))],
     sameAsCount: entity.sameAs?.length || 0,
     relatedEntityCount: entity.relatedEntities?.length || 0,
     latestActivityAt: entity.lifecycle?.sourceUpdatedAt
@@ -77,7 +78,7 @@ async function readEntityDirectoryCatalog(catalogId: "forecast-subjects" | "orga
 async function listPublicEntitiesByClass(entityClass: string): Promise<PublicEntityDirectoryItem[]> {
   const catalogId = entityClass === "forecastable_entity" ? "forecast-subjects" : "organizations";
   const catalog = await readEntityDirectoryCatalog(catalogId).catch(() => null);
-  if (catalog) return [...catalog].sort((left, right) => left.canonicalName.localeCompare(right.canonicalName));
+  if (catalog) return catalog.map(entityDirectoryItemForWeb).sort((left, right) => left.canonicalName.localeCompare(right.canonicalName));
   if (isProductionDeployment()) throw new Error(`Required production entity catalog ${catalogId} is missing`);
   const snapshot = await getLibraryServerFirestore()
     .collection("public_entities")

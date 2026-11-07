@@ -1,6 +1,7 @@
 import "server-only";
 
 import { Firestore } from "@google-cloud/firestore";
+import { getLibraryGoogleAuth } from "../../../gcp-auth.cjs";
 
 let firestore: Firestore | undefined;
 
@@ -29,6 +30,7 @@ export function getLibraryServerFirestore(): Firestore {
   // Firestore, so avoid pulling the broader Firebase Admin surface into SSR.
   // SSR uses finite reads, not realtime listeners. REST also avoids loading
   // the gRPC transport for the public request path.
-  firestore = new Firestore({ projectId, databaseId: process.env.FIRESTORE_DATABASE_ID || "(default)", preferRest: true });
+  const auth = getLibraryGoogleAuth();
+  firestore = new Firestore({ projectId, databaseId: process.env.FIRESTORE_DATABASE_ID || "(default)", preferRest: true, ...(auth ? { auth } : {}) });
   return firestore;
 }

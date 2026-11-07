@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getLibraryReceiptServer } from "../../../../../src/lib/library/server-repository";
 
 export const revalidate = 300;
+export const dynamic = "force-static";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ digest: string }> }) {
   const { digest: rawDigest } = await params;

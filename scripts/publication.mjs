@@ -166,8 +166,12 @@ async function smoke(){
   const value=await plan();
   const registry=await exists('proofs-published.json')?await read('verified-proofs.json'):null;
   if(registry)requireValue((await read('proofs-published.json')).registryDigest===publicationDigest(registry),'Registry checkpoint mismatch');
-  const baseUrl=config.projectId==='oflapp-prod'?'https://forecastlibrary.com':'https://ofl-staging--oflapp-staging.us-central1.hosted.app';
-  const result=await verifyPublicPublication(value,baseUrl,registry);
+  const baseUrl=arg('base-url')||process.env.OFL_LIBRARY_BASE_URL||(config.projectId==='oflapp-prod'?'https://forecastlibrary.com':'https://forecast-library-staging.vercel.app');
+  const expectedHosts=config.projectId==='oflapp-prod'?['forecastlibrary.com']:['forecast-library-staging.vercel.app','ofl-staging--oflapp-staging.us-central1.hosted.app'];
+  const origin=new URL(baseUrl);
+  requireValue(origin.protocol==='https:' && expectedHosts.includes(origin.hostname) && origin.origin===baseUrl,'Publication verification requires an exact HTTPS origin for its environment');
+  const fetcher=(url,options)=>fetch(url,{...options,headers:{...(process.env.OFL_AUTOMATION_BYPASS_SECRET?{'x-vercel-protection-bypass':process.env.OFL_AUTOMATION_BYPASS_SECRET}:{})}});
+  const result=await verifyPublicPublication(value,baseUrl,registry,fetcher);
   await savePublicationState(path('public-verification.json'),result);
   console.log(JSON.stringify({forecasts:result.forecasts,urls:result.urls,proofsChecked:Boolean(registry),baseUrl}));
 }

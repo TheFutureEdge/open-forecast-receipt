@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import ipulseAssetPaths from '../src/data/ipulse-public-asset-paths.json' with {type:'json'};
+import deploymentProfiles from '../deployment-profiles.json' with {type:'json'};
 import { readFile, mkdir, open, rm, access } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -166,8 +167,8 @@ async function smoke(){
   const value=await plan();
   const registry=await exists('proofs-published.json')?await read('verified-proofs.json'):null;
   if(registry)requireValue((await read('proofs-published.json')).registryDigest===publicationDigest(registry),'Registry checkpoint mismatch');
-  const baseUrl=arg('base-url')||process.env.OFL_LIBRARY_BASE_URL||(config.projectId==='oflapp-prod'?'https://forecastlibrary.com':'https://forecast-library-staging.vercel.app');
-  const expectedHosts=config.projectId==='oflapp-prod'?['forecastlibrary.com']:['forecast-library-staging.vercel.app','ofl-staging--oflapp-staging.us-central1.hosted.app'];
+  const baseUrl=arg('base-url')||process.env.OFL_LIBRARY_BASE_URL||(config.projectId==='oflapp-prod'?deploymentProfiles.production.origin:deploymentProfiles.staging.origin);
+  const expectedHosts=config.projectId==='oflapp-prod'?['forecastlibrary.com']:[new URL(deploymentProfiles.staging.origin).hostname,'ofl-staging--oflapp-staging.us-central1.hosted.app'];
   const origin=new URL(baseUrl);
   requireValue(origin.protocol==='https:' && expectedHosts.includes(origin.hostname) && origin.origin===baseUrl,'Publication verification requires an exact HTTPS origin for its environment');
   const fetcher=(url,options)=>fetch(url,{...options,headers:{...(process.env.OFL_AUTOMATION_BYPASS_SECRET?{'x-vercel-protection-bypass':process.env.OFL_AUTOMATION_BYPASS_SECRET}:{})}});

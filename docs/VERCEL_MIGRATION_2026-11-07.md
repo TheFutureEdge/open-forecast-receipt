@@ -14,7 +14,7 @@ observation and rollback window.
 
 | Environment | Vercel project | Firebase project | Provider origin |
 | --- | --- | --- | --- |
-| Staging | forecast-library-staging / prj_hBFBnif5b4eQHIecWiolxQ6EZNal | oflapp-staging | https://forecast-library-staging.vercel.app |
+| Staging | forecast-library-staging / prj_hBFBnif5b4eQHIecWiolxQ6EZNal | oflapp-staging | https://forecast-library-staging-ipulseai.vercel.app |
 | Production | forecast-library-production / prj_f0TWHEE7tK86E5D5gTT6v7nDXDUE | oflapp-prod | https://forecast-library-production.vercel.app |
 
 Canonical production origin stays https://forecastlibrary.com. Provider-owned
@@ -57,7 +57,7 @@ Do not issue new attestations or publish new forecast data for a hosting test.
 ## Publication verification
 
 Production smoke verification defaults to https://forecastlibrary.com. Staging
-defaults to https://forecast-library-staging.vercel.app. Use
+defaults to https://forecast-library-staging-ipulseai.vercel.app. Use
 --base-url=EXACT_ENVIRONMENT_ORIGIN or OFL_LIBRARY_BASE_URL for the retained
 Firebase staging origin. Protected staging verification accepts the owned
 OFL_AUTOMATION_BYPASS_SECRET in memory; never print or commit its value.

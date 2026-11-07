@@ -1,6 +1,8 @@
+import profiles from "../../deployment-profiles.json";
+
 export const CANONICAL_PRODUCTION_ORIGIN = "https://forecastlibrary.com";
 export const CANONICAL_STAGING_ORIGIN = "https://ofl-staging--oflapp-staging.us-central1.hosted.app";
-export const VERCEL_STAGING_ORIGIN = "https://forecast-library-staging.vercel.app";
+export const VERCEL_STAGING_ORIGIN = profiles.staging.origin;
 
 /** Keep metadata, canonical tags, robots, and sitemaps on one configured origin. */
 export function getPublicSiteOrigin(): string {

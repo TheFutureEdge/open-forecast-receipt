@@ -4,7 +4,7 @@
     "gcpProjectNumber": "876906954189",
     "vercelProjectId": "prj_hBFBnif5b4eQHIecWiolxQ6EZNal",
     "serviceAccountEmail": "vercel-library-staging@oflapp-staging.iam.gserviceaccount.com",
-    "origin": "https://forecast-library-staging.vercel.app"
+    "origin": "https://forecast-library-staging-ipulseai.vercel.app"
   },
   "production": {
     "firebaseProjectId": "oflapp-prod",

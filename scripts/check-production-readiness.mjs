@@ -45,6 +45,7 @@ const [
 ]);
 
 check(Number(process.versions.node.split(".")[0]) >= 22, "Node.js 22 or newer");
+check(packageJson.engines?.node === "22.x", "Node.js major is pinned consistently with CI and Vercel");
 check(packageJson.dependencies?.next?.startsWith("16."), "Next.js 16 is pinned");
 check(packageJson.scripts?.test === "vitest run", "Deterministic test command exists");
 check(packageJson.scripts?.["build:production"], "Explicit production build command exists");

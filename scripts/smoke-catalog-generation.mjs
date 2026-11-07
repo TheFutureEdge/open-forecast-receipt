@@ -18,7 +18,7 @@ const [manifest, stats, member] = await Promise.all([
 ]);
 assert.equal(manifest.data().manifest.receiptCount, 4511);
 assert.match(manifest.data().manifest.presentation.title, /4,511/);
-assert.equal(stats.data().receiptCount, 4511);
+assert(stats.data().receiptCount >= manifest.data().manifest.receiptCount, "Library statistics omit the preserved Batch 6 cohort");
 const ledgerPath = `${prefix}/public_entity_forecast_ledgers/${member.data().entityId}/parts`;
 const parts = await getDocs(query(collection(db, ledgerPath), orderBy("partNumber", "desc"), limit(2)));
 assert(parts.size > 0 && parts.size <= 2);

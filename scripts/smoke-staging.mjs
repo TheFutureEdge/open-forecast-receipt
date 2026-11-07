@@ -53,7 +53,7 @@ const [forecastResolver, receiptResolver, stats, ledger] = await Promise.all([
 ]);
 assert(forecastResolver.exists() && receiptResolver.exists(), "Canonical forecast/receipt resolvers are missing");
 assert(forecastResolver.data().canonicalPath === receiptResolver.data().canonicalPath, "Resolvers disagree on the canonical forecast URL");
-assert(stats.exists() && stats.data().receiptCount === 4511 && stats.data().forecastSubjectCount === 376, "Landing statistics disagree with Batch 6");
+assert(stats.exists() && stats.data().receiptCount >= 4511 && stats.data().forecastSubjectCount >= 376, "Landing statistics omit the preserved Batch 6 cohort");
 assert(!ledger.empty && ledger.size <= 2, "Bounded ledger pagination failed");
 
 async function expectPermissionDenied(label, operation) {

@@ -7,6 +7,7 @@ import { getLibraryReceiptServer } from "../../../src/lib/library/server-reposit
 import { publicForecastSubjectSource } from "../../../src/lib/library/entityRoutes";
 
 export const revalidate = 300;
+export function generateStaticParams() { return []; }
 const readReceipt = cache(getLibraryReceiptServer);
 type Props = { params: Promise<{ digest: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

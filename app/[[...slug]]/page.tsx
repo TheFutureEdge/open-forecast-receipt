@@ -74,6 +74,9 @@ import type { PublicEntityRecord } from "../../src/lib/library/types";
 import { entityForWeb } from "../../src/lib/library/entityPresentation";
 
 export const revalidate = 300;
+// Cache public routes on first request, without reading Firestore at build
+// time. A revalidation number alone leaves unknown dynamic paths uncached.
+export function generateStaticParams() { return []; }
 
 interface RouteParams {
   slug?: string[];

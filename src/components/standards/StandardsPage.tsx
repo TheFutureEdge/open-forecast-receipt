@@ -15,7 +15,6 @@ import {
 import config from "../../data/eas-base-sepolia.json";
 import { BlockchainProofGuide } from "../information/BlockchainProofGuide";
 import { getLibraryManifest } from "../../lib/library/repository";
-import { useLocation } from "../../lib/router";
 import { KnowledgeGraphConceptDiagram, KnowledgeGraphExamples } from "../knowledge/KnowledgeGraphArchitecture";
 
 const InteractiveKnowledgeGraph = lazy(() =>
@@ -25,16 +24,29 @@ const InteractiveKnowledgeGraph = lazy(() =>
 );
 
 export function StandardsPage() {
-  const { hash } = useLocation();
   const [proofCounts, setProofCounts] = useState({ selected: 0, verified: 0 });
 
   useEffect(() => {
-    if (!hash) return;
-    const targetId = decodeURIComponent(hash.slice(1));
-    window.requestAnimationFrame(() => {
-      document.getElementById(targetId)?.scrollIntoView({ block: "start", behavior: "auto" });
-    });
-  }, [hash]);
+    // Anchors are browser-only; subscribing to URL query parameters here
+    // would force this otherwise prerenderable page to bail out of ISR.
+    let frame = 0;
+    const scrollToHash = () => {
+      if (!window.location.hash) return;
+      let targetId: string;
+      try { targetId = decodeURIComponent(window.location.hash.slice(1)); }
+      catch { return; }
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        document.getElementById(targetId)?.scrollIntoView({ block: "start", behavior: "auto" });
+      });
+    };
+    scrollToHash();
+    window.addEventListener("hashchange", scrollToHash);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("hashchange", scrollToHash);
+    };
+  }, []);
 
   useEffect(() => {
     getLibraryManifest("batch-6")

@@ -39,10 +39,36 @@ export function AboutPage() {
     eyebrow="About Forecast Library"
     title="A lasting public record for every forecasting method"
     summary="Forecast Library makes forecasts durable, inspectable, and comparable without confusing a prediction, its evidence, its receipt, and its eventual outcome."
+    updated="8 November 2026"
     sections={[
       { heading: "The problem", body: <p>Forecasts often disappear into reports, dashboards, and model outputs. Their original wording, timing, context, and assumptions become difficult to recover. That makes honest evaluation—and institutional learning—far harder than it should be.</p> },
       { heading: "The Library", body: <><p>Forecast Library organizes stable entities, approved targets, forecasters, forecasts, receipts, optional proofs, and later evaluations as separate linked records.</p><p>The first public publisher is <a href="https://ipulseai.com" className="font-semibold text-blue-600 hover:underline">iPulse AI</a>, the open agentic investment research platform built by Future Edge Group FZE.</p></> },
       { heading: "The open standard underneath", body: <p><a href="https://github.com/TheFutureEdge/open-forecast-receipt" className="font-semibold text-blue-600 hover:underline">Open Forecast Receipt</a> is the open-source receipt standard and verification toolkit. Forecast Library is the public product that indexes and presents records built on that standard.</p> },
+      {
+        heading: "Meet the founder",
+        body: <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
+          <img
+            src="/images/founder-professional-400.webp"
+            alt="Russlan Ramdowar"
+            width={400}
+            height={400}
+            loading="lazy"
+            decoding="async"
+            className="h-28 w-28 shrink-0 rounded-xl border border-slate-200 object-cover dark:border-slate-700 sm:h-32 sm:w-32"
+          />
+          <div className="space-y-2">
+            <h3 className="text-lg font-bold text-slate-950 dark:text-white">Russlan Ramdowar</h3>
+            <p className="font-semibold">Founder &amp; CEO, Future Edge Group · Creator of iPulse AI</p>
+            <p>Working on investment research, AI and more transparent forecasting.</p>
+            <a
+              href="https://ipulseai.com/authors/russlan-ramdowar"
+              className="inline-flex items-center gap-1.5 rounded font-semibold text-blue-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 dark:text-blue-400"
+            >
+              View iPulse AI profile <ArrowSquareOut size={16} aria-hidden="true" />
+            </a>
+          </div>
+        </div>,
+      },
     ]}
   />;
 }

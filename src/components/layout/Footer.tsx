@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { BookOpenText, GithubLogo, InstagramLogo, LinkedinLogo } from "@phosphor-icons/react";
+import { ApplePodcastsLogo, BookOpenText, GithubLogo, InstagramLogo, LinkedinLogo, SpotifyLogo, YoutubeLogo } from "@phosphor-icons/react";
 import { Link } from "../../lib/router";
 
 const internalLinks = [
@@ -23,6 +23,9 @@ const legalLinks = [
 const socialLinks = [
   { label: "LinkedIn", href: "https://www.linkedin.com/company/future-edge-group", Icon: LinkedinLogo },
   { label: "GitHub", href: "https://github.com/TheFutureEdge", Icon: GithubLogo },
+  { label: "YouTube", href: "https://www.youtube.com/@ipulseai", Icon: YoutubeLogo },
+  { label: "Apple Podcasts", href: "https://podcasts.apple.com/us/podcast/ai-investment-edge-research-with-receipts/id6819286473", Icon: ApplePodcastsLogo },
+  { label: "Spotify", href: "https://open.spotify.com/show/5SIzXCLMlkkcmwYYGE07k2", Icon: SpotifyLogo },
   { label: "Instagram", href: "https://www.instagram.com/ipulseai/", Icon: InstagramLogo },
   { label: "Medium", href: "https://medium.com/@russlan", Icon: BookOpenText },
 ] as const;
@@ -84,6 +87,7 @@ export function Footer() {
                 </a>
               ))}
               <a href="https://ipulseai.com" target="_blank" rel="noreferrer" className={linkClass}>iPulse AI</a>
+              <a href="https://ipulseai.com/listen" target="_blank" rel="noreferrer" className={linkClass}>AI Investment Edge Podcast</a>
             </FooterSection>
           </div>
 
